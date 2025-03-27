@@ -1,5 +1,3 @@
-'use client';
-
 import Image from 'next/image';
 import { LogOut } from 'lucide-react';
 
@@ -19,7 +17,8 @@ export function Profile() {
         height={32}
         src={profile.imageUrl}
         alt={`${profile.name} profile image`}
-        className="rounded-full"
+        priority
+        className="rounded-full object-cover"
       />
 
       {/* 프로필 info(이름, email) */}
