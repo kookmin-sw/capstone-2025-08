@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { AppSidebar } from '@/components/Sidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -29,11 +27,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* open == false일 때 icon 버전, open == true일 때 일반 버전 사이드바 */}
-        <SidebarProvider open={false}>
-          <AppSidebar />
-          <main>{children}</main>
-        </SidebarProvider>
+        {children}
       </body>
     </html>
   );
