@@ -22,39 +22,6 @@ def start_background_task():
 def hello_world():
     return {"message": "FastAPI is running!"}
 
-@app.get("/send")
-def send_message():
-    settings = app.state.settings
-    sqs = boto3.client("sqs", region_name=settings.AWS_REGION_NAME, aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                       aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
-    response = sqs.send_message(
-        QueueUrl=settings.AWS_SQS_URL,
-        MessageBody=json.dumps(
-            '''
-            {
-              "model_url": "s3://pathos-images/model.pth",
-              "svs_url": "s3://pathos-images/cells/TCGA-DM-A285-01Z-00-DX1.219e2829-8ffd-4b51-adce-cfd48293191b.svs",
-              "images": [
-                {
-                  "tiled_png_url": "s3://pathos-images/test/1.png",
-                  "roi": {
-                    "x": 87341,
-                    "y": 13016,
-                    "width": 3276,
-                    "height": 2415
-                  }
-                }
-              ]
-            }
-            '''
-        ),
-        MessageGroupId="1",
-        MessageDeduplicationId=str(uuid.uuid4())
-    )
-    print("Message Sent:", response["MessageId"])
-
-
-
 @app.post("/send")
 def send_message(request: Request):
     settings = app.state.settings
