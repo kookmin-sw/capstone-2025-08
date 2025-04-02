@@ -24,12 +24,12 @@ const bottomItems = [
   },
   {
     title: 'Docs & Help',
-    url: '/docs-help',
+    url: '/main/docs-help',
     icon: FileQuestion,
   },
   {
     title: 'Policies & Terms',
-    url: '/policies-terms',
+    url: '/main/policies-terms',
     icon: ShieldCheck,
   },
 ];

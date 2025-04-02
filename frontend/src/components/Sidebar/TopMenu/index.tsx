@@ -33,36 +33,36 @@ import {
 const topItems = [
   {
     title: 'Recents',
-    url: '/recents',
+    url: '/main/recents',
     icon: History,
   },
   {
     title: 'Projects',
-    url: '/projects',
+    url: '/main/projects',
     icon: FolderOpenDot,
   },
   {
     title: 'Public Space',
-    url: '/public-space',
+    url: '/main/public-space',
     icon: Earth,
     items: [
       {
         title: 'Community',
-        url: '/public-space/community',
+        url: '/main/public-space/community',
       },
       {
         title: 'Downloaded Model',
-        url: '/public-space/downloaded-model',
+        url: '/main/public-space/downloaded-model',
       },
       {
         title: 'Shared Model',
-        url: '/public-space/shared-model',
+        url: '/main/public-space/shared-model',
       },
     ],
   },
   {
     title: 'Settings',
-    url: '/settings',
+    url: '/main/settings',
     icon: Settings,
   },
 ];
