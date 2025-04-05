@@ -10,7 +10,7 @@ type ProjectWithModel = Project & {
   modelType?: string;
 };
 
-const OSDViewer = dynamic(
+const AnnotationViewer = dynamic(
   () => import('@/components/annotation/annotation-viewer'),
   {
     ssr: false,
@@ -51,8 +51,11 @@ export default function Annotation({
   return (
     <div>
       <div>
-        {/* OSDViewer에 어노테이션 데이터 대신 빈 배열과 modelType 전달 */}
-        <OSDViewer annotations={[]} modelType={project?.modelType || 'MULTI'} />
+        {/* AnnotationViewer에 어노테이션 데이터 대신 빈 배열과 modelType 전달 */}
+        <AnnotationViewer
+          annotations={[]}
+          modelType={project?.modelType || 'MULTI'}
+        />
       </div>
     </div>
   );

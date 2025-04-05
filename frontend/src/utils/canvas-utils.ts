@@ -89,15 +89,30 @@ export const redrawCanvas = (
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // 캔버스 전체 클리어
+  // 디바이스 해상도 대응
+  const ratio = window.devicePixelRatio || 1;
+  const { width, height } = viewerInstance.container.getBoundingClientRect();
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(ratio, ratio);
+
+  // 스타일 초기화
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.shadowBlur = 0;
+  ctx.shadowColor = 'transparent';
+  ctx.globalAlpha = 1.0;
 
   const tiledImage = viewerInstance.world.getItemAt(0);
   if (!tiledImage) {
     console.warn('tiledImage가 아직 준비되지 않음');
   }
 
-  // PNG 오버레이 이미지 그리기 (50% 투명도 적용)
+  // PNG 오버레이 이미지
   if (
     pngImageRef.current &&
     tiledImage &&
@@ -127,7 +142,7 @@ export const redrawCanvas = (
     ctx.restore();
   }
 
-  // ROI 클리핑 (ROI가 있을 경우)
+  // ROI가 있다면 클립
   if (roi) {
     ctx.save();
     ctx.beginPath();
@@ -135,31 +150,57 @@ export const redrawCanvas = (
     ctx.clip();
   }
 
-  // 저장된 stroke들과 현재 stroke 그리기
-  strokes.forEach((stroke) => {
-    drawStroke(stroke, viewerInstance, ctx);
+  // 그리기 (보간 포함)
+  [...strokes, ...(currentStroke ? [currentStroke] : [])].forEach((stroke) => {
+    drawStrokeSmooth(stroke, viewerInstance, ctx);
   });
-  if (currentStroke) {
-    drawStroke(currentStroke, viewerInstance, ctx);
-  }
 
   if (roi) {
     ctx.restore();
   }
 
-  // ROI 영역 테두리: 선택 중이면 점선, 선택 완료면 실선으로 표시
+  // ROI 테두리
   if (roi) {
     ctx.save();
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 2;
-    if (isSelectingROI) {
-      ctx.setLineDash([6, 6]); // 선택 중: 점선
-    } else {
-      ctx.setLineDash([]); // 선택 완료: 실선
-    }
+    if (isSelectingROI) ctx.setLineDash([6, 6]);
+    else ctx.setLineDash([]);
     ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
     ctx.restore();
   }
+};
+
+const drawStrokeSmooth = (
+  stroke: Stroke,
+  viewer: any,
+  ctx: CanvasRenderingContext2D,
+) => {
+  if (stroke.points.length < 2) return;
+
+  const pixelPoints = stroke.points.map((pt) =>
+    viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(pt.x, pt.y)),
+  );
+
+  ctx.beginPath();
+  ctx.strokeStyle = stroke.color;
+  ctx.lineWidth = stroke.size;
+
+  ctx.moveTo(pixelPoints[0].x, pixelPoints[0].y);
+  for (let i = 1; i < pixelPoints.length; i++) {
+    const prev = pixelPoints[i - 1];
+    const curr = pixelPoints[i];
+    const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
+    const steps = Math.floor(dist / 1.5); // 보간 간격 조절 가능
+    for (let j = 1; j <= steps; j++) {
+      const t = j / steps;
+      const x = prev.x + (curr.x - prev.x) * t;
+      const y = prev.y + (curr.y - prev.y) * t;
+      ctx.lineTo(x, y);
+    }
+  }
+
+  ctx.stroke();
 };
 
 const drawStroke = (

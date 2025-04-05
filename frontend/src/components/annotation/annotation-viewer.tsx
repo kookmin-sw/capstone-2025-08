@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
 
-const OSDViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
+const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   /* ================================
      Ref 및 State 선언
   ================================== */
@@ -33,8 +33,8 @@ const OSDViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   const currentStrokeRef = useRef<Stroke | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState<boolean>(false);
   const [isEraserMode, setIsEraserMode] = useState<boolean>(false);
-  const [penColor, setPenColor] = useState<string>('#000000');
-  const [penSize, setPenSize] = useState<number>(0.5);
+  const [penColor, setPenColor] = useState<string>('#FF0000');
+  const [penSize, setPenSize] = useState<number>(10);
 
   // ROI 관련 상태
   const [isSelectingROI, setIsSelectingROI] = useState<boolean>(false);
@@ -448,4 +448,4 @@ const OSDViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   );
 };
 
-export default OSDViewer;
+export default AnnotationViewer;
