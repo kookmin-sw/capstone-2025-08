@@ -4,7 +4,7 @@ import { enableGeoTIFFTileSource } from 'geotiff-tilesource';
 
 enableGeoTIFFTileSource(OpenSeadragon);
 
-export const useOSDViewer = (
+export const useOsdviewer = (
   viewerRef: React.RefObject<HTMLDivElement | null>,
 ) => {
   const viewerInstance = useRef<any>(null);
