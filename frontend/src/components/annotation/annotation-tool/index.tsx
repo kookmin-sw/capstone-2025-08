@@ -21,7 +21,7 @@ interface AnnotationToolProps {
   onChangePenSize: (size: number) => void;
 }
 
-const AnnotationTool: React.FC<AnnotationToolProps> = ({
+const Index: React.FC<AnnotationToolProps> = ({
   modelType,
   isActive,
   penColor,
@@ -207,4 +207,4 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
   );
 };
 
-export default AnnotationTool;
+export default Index;
