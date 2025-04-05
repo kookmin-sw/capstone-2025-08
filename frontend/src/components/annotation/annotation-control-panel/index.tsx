@@ -19,7 +19,7 @@ interface ControlPanelProps {
   onReset: () => void;
 }
 
-const Index: React.FC<ControlPanelProps> = ({
+const AnnotationControlPanel: React.FC<ControlPanelProps> = ({
   onToggleAnnotationMode,
   onSetMove,
   onSelectROI,
@@ -103,4 +103,4 @@ const Index: React.FC<ControlPanelProps> = ({
   );
 };
 
-export default Index;
+export default AnnotationControlPanel;
