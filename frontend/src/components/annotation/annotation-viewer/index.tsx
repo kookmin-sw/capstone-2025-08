@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import OpenSeadragon from 'openseadragon';
 import { useOsdviewer } from '@/hooks/use-osdviewer';
 import AnnotationTool from '@/components/annotation/annotation-tool';
-import ControlPanel from '@/components/annotation/annotation-control-panel';
+import AnnotationControlPanel from '@/components/annotation/annotation-control-panel';
 import {
   processPNGImage,
   syncCanvasWithOSD,
@@ -434,7 +434,7 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
         />
       </div>
 
-      <ControlPanel
+      <AnnotationControlPanel
         onToggleAnnotationMode={handleToggleAnnotationMode}
         onSetMove={handleSetMove}
         onSelectROI={handleSelectROI}

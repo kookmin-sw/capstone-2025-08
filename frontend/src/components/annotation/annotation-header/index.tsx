@@ -4,7 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { dummyProjects } from '@/data/dummy';
 
-export default function Index() {
+export default function AnnotationHeader() {
   const router = useRouter();
   const { id } = useParams(); // 현재 프로젝트 ID 가져오기
 
