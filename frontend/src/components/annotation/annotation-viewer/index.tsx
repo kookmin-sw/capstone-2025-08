@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import OpenSeadragon from 'openseadragon';
 import { useOsdviewer } from '@/hooks/use-osdviewer';
-import AnnotationTool from './annotation-tool';
-import ControlPanel from './control-panel';
+import AnnotationTool from '@/components/annotation/annotation-tool';
+import ControlPanel from '@/components/annotation/annotation-control-panel';
 import {
   processPNGImage,
   syncCanvasWithOSD,
@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
 
-const OSDViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
+const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   /* ================================
      Ref 및 State 선언
   ================================== */
@@ -448,4 +448,4 @@ const OSDViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   );
 };
 
-export default OSDViewer;
+export default AnnotationViewer;

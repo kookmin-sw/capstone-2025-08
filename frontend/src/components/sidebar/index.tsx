@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 
-import { TopMenu } from '@/components/Sidebar/TopMenu';
-import { BottomMenu } from '@/components/Sidebar/BottomMenu';
-import { Profile } from '@/components/Sidebar/Profile';
+import { TopMenu } from '@/components/sidebar/sidebar-top-menu';
+import { BottomMenu } from '@/components/sidebar/sidebar-bottom-menu';
+import { Profile } from '@/components/sidebar/sidebar-profile';
 
 export function AppSidebar() {
   const router = useRouter();
