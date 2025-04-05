@@ -125,9 +125,14 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // 캔버스 좌표를 뷰포트 좌표로 변환
+    const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
+      new OpenSeadragon.Point(x, y),
+    );
+
     if (isSelectingROI) {
-      roiStartRef.current = { x, y };
-      setROI({ x, y, width: 0, height: 0 });
+      roiStartRef.current = viewportPoint; // 뷰포트 좌표 저장
+      setROI({ x: viewportPoint.x, y: viewportPoint.y, width: 0, height: 0 });
     } else if (isDrawingMode) {
       const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
         new OpenSeadragon.Point(x, y),
@@ -148,13 +153,17 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
+      new OpenSeadragon.Point(x, y),
+    );
+
     if (isSelectingROI && roiStartRef.current) {
       const start = roiStartRef.current;
       setROI({
-        x: Math.min(start.x, x),
-        y: Math.min(start.y, y),
-        width: Math.abs(x - start.x),
-        height: Math.abs(y - start.y),
+        x: Math.min(start.x, viewportPoint.x),
+        y: Math.min(start.y, viewportPoint.y),
+        width: Math.abs(viewportPoint.x - start.x),
+        height: Math.abs(viewportPoint.y - start.y),
       });
     } else if (isDrawingMode && currentStrokeRef.current) {
       const viewportPoint = viewerInstance.current.viewport.pointFromPixel(

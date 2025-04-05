@@ -129,9 +129,21 @@ export const redrawCanvas = (
 
   // ROI 클리핑 (ROI가 있을 경우)
   if (roi) {
+    // 뷰포트 좌표로 저장된 ROI 값을 캔버스 좌표로 변환
+    const topLeft = viewerInstance.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(roi.x, roi.y),
+    );
+    const bottomRight = viewerInstance.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(roi.x + roi.width, roi.y + roi.height),
+    );
+    const clipX = topLeft.x;
+    const clipY = topLeft.y;
+    const clipWidth = bottomRight.x - topLeft.x;
+    const clipHeight = bottomRight.y - topLeft.y;
+
     ctx.save();
     ctx.beginPath();
-    ctx.rect(roi.x, roi.y, roi.width, roi.height);
+    ctx.rect(clipX, clipY, clipWidth, clipHeight);
     ctx.clip();
   }
 
@@ -149,6 +161,15 @@ export const redrawCanvas = (
 
   // ROI 영역 테두리: 선택 중이면 점선, 선택 완료면 실선으로 표시
   if (roi) {
+    const topLeft = viewerInstance.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(roi.x, roi.y),
+    );
+    const bottomRight = viewerInstance.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(roi.x + roi.width, roi.y + roi.height),
+    );
+    const width = bottomRight.x - topLeft.x;
+    const height = bottomRight.y - topLeft.y;
+
     ctx.save();
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 2;
@@ -157,7 +178,7 @@ export const redrawCanvas = (
     } else {
       ctx.setLineDash([]); // 선택 완료: 실선
     }
-    ctx.strokeRect(roi.x, roi.y, roi.width, roi.height);
+    ctx.strokeRect(topLeft.x, topLeft.y, width, height);
     ctx.restore();
   }
 };
