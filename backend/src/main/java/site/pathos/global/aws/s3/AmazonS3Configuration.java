@@ -1,5 +1,6 @@
 package site.pathos.global.aws.s3;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,12 +10,24 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.internal.crt.S3CrtAsyncClient;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
 @RequiredArgsConstructor
 public class AmazonS3Configuration {
 
     private final AwsProperty awsProperty;
+
+    private String accessKey;
+    private String secretKey;
+    private String region;
+
+    @PostConstruct
+    public void init() {
+        this.accessKey = awsProperty.credentials().accessKey();
+        this.secretKey = awsProperty.credentials().secretKey();
+        this.region = awsProperty.region();
+    }
 
     @Bean
     public S3AsyncClient amazonS3Client() {
@@ -34,4 +47,12 @@ public class AmazonS3Configuration {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid AWS region: " + regionStr));
     }
 
+    @Bean
+    public S3Presigner s3Presigner() {
+        AwsBasicCredentials creds = AwsBasicCredentials.create(accessKey, secretKey);
+        return S3Presigner.builder()
+                .credentialsProvider(StaticCredentialsProvider.create(creds))
+                .region(resolveRegion(region))
+                .build();
+    }
 }
