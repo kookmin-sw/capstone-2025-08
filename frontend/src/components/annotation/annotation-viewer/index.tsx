@@ -9,6 +9,7 @@ import {
   processPNGImage,
   syncCanvasWithOSD,
   redrawCanvas,
+  drawStroke,
 } from '@/utils/canvas-utils';
 import { Stroke, ROI } from '@/utils/canvas-utils';
 import { Button } from '@/components/ui/button';
@@ -33,8 +34,8 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   const currentStrokeRef = useRef<Stroke | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState<boolean>(false);
   const [isEraserMode, setIsEraserMode] = useState<boolean>(false);
-  const [penColor, setPenColor] = useState<string>('#000000');
-  const [penSize, setPenSize] = useState<number>(0.5);
+  const [penColor, setPenColor] = useState<string>('#FF0000');
+  const [penSize, setPenSize] = useState<number>(10);
 
   // ROI 관련 상태
   const [isSelectingROI, setIsSelectingROI] = useState<boolean>(false);
@@ -166,6 +167,7 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
         width: Math.abs(viewportPoint.x - start.x),
         height: Math.abs(viewportPoint.y - start.y),
       });
+      redraw(); // ROI 시는 redraw 유지
     } else if (isDrawingMode && currentStrokeRef.current) {
       const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
         new OpenSeadragon.Point(x, y),
@@ -174,8 +176,15 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
         x: viewportPoint.x,
         y: viewportPoint.y,
       });
+
+      // 현재 stroke만 빠르게 그리기
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.save();
+      drawStroke(currentStrokeRef.current, viewerInstance.current, ctx);
+      ctx.restore();
     }
-    redraw();
   };
 
   const handleMouseUp = () => {
@@ -223,15 +232,16 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
       }
     }
 
-    // 드로잉 모드: stroke 저장 및 undo/redo 스택 업데이트
     if (isDrawingMode && currentStrokeRef.current) {
       const prevStrokes = deepCopyStrokes(strokesRef.current);
       setUndoStack((prev) => [...prev, prevStrokes]);
       setRedoStack([]);
       strokesRef.current.push(currentStrokeRef.current);
       currentStrokeRef.current = null;
+
+      // 이 시점에서만 전체 stroke + 보간 렌더링
+      redraw();
     }
-    redraw();
   };
 
   const handleSetMove = () => {
