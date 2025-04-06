@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AppSidebar } from '@/components/Sidebar';
+import { AppSidebar } from '@/components/sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { usePathname } from 'next/navigation';
 
