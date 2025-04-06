@@ -135,9 +135,6 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
       roiStartRef.current = viewportPoint; // 뷰포트 좌표 저장
       setROI({ x: viewportPoint.x, y: viewportPoint.y, width: 0, height: 0 });
     } else if (isDrawingMode) {
-      const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
-        new OpenSeadragon.Point(x, y),
-      );
       currentStrokeRef.current = {
         points: [{ x: viewportPoint.x, y: viewportPoint.y }],
         color: isEraserMode ? 'rgba(0,0,0,0)' : penColor,
