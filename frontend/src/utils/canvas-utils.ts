@@ -187,70 +187,74 @@ const drawStrokeSmooth = (
   ctx.lineWidth = stroke.size;
 
   ctx.moveTo(pixelPoints[0].x, pixelPoints[0].y);
+
   for (let i = 1; i < pixelPoints.length; i++) {
     const prev = pixelPoints[i - 1];
     const curr = pixelPoints[i];
+
     const dist = Math.hypot(curr.x - prev.x, curr.y - prev.y);
-    const steps = Math.floor(dist / 1.5); // 보간 간격 조절 가능
-    for (let j = 1; j <= steps; j++) {
-      const t = j / steps;
-      const x = prev.x + (curr.x - prev.x) * t;
-      const y = prev.y + (curr.y - prev.y) * t;
-      ctx.lineTo(x, y);
+    const minDist = 3; // 최소 보간 거리 (너무 빽빽하지 않게 조절)
+
+    if (dist < minDist) {
+      ctx.lineTo(curr.x, curr.y); // 가까우면 그냥 이어줌
+    } else {
+      const steps = Math.floor(dist / minDist);
+      for (let j = 1; j <= steps; j++) {
+        const t = j / steps;
+        const x = prev.x + (curr.x - prev.x) * t;
+        const y = prev.y + (curr.y - prev.y) * t;
+        ctx.lineTo(x, y);
+      }
     }
   }
 
   ctx.stroke();
 };
 
-const drawStroke = (
+export const drawStroke = (
   stroke: Stroke,
   viewerInstance: any,
   ctx: CanvasRenderingContext2D,
 ) => {
   if (stroke.points.length === 0) return;
-  ctx.beginPath();
-  const zoom = viewerInstance.viewport.getZoom();
-  const firstPt = stroke.points[0];
-  // 여기서 OpenSeadragon.Point 대신, import한 OSD를 사용합니다.
-  const containerFirstPt = viewerInstance.viewport.pixelFromPoint(
-    new OSD.Point(firstPt.x, firstPt.y),
-  );
-  ctx.moveTo(containerFirstPt.x, containerFirstPt.y);
 
-  if (stroke.points.length === 1) {
-    const radius = (stroke.size * zoom) / 2;
-    ctx.arc(
-      containerFirstPt.x,
-      containerFirstPt.y,
-      radius,
-      0,
-      Math.PI * 2,
-      false,
-    );
-  } else {
-    stroke.points.forEach((pt, idx) => {
-      if (idx === 0) return;
-      const containerPt = viewerInstance.viewport.pixelFromPoint(
-        new OSD.Point(pt.x, pt.y),
-      );
-      ctx.lineTo(containerPt.x, containerPt.y);
-    });
-  }
+  const canvas = viewerInstance.container;
+  const rect = canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+
+  const pixelPoints = stroke.points.map((pt) =>
+    viewerInstance.viewport.pixelFromPoint(new OpenSeadragon.Point(pt.x, pt.y)),
+  );
+
+  ctx.beginPath();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // ✅ 확대 비율과 무관하게 고정된 굵기
+  ctx.lineWidth = stroke.size;
+  ctx.strokeStyle = stroke.color;
 
   if (stroke.isEraser) {
     ctx.globalCompositeOperation = 'destination-out';
   } else {
     ctx.globalCompositeOperation = 'source-over';
-    ctx.strokeStyle = stroke.color;
   }
-  ctx.lineWidth = stroke.size * zoom;
-  ctx.lineCap = 'round';
+
+  const p0 = pixelPoints[0];
 
   if (stroke.points.length === 1) {
+    // ✅ 정확한 penSize만큼 점 찍기
+    ctx.beginPath();
+    ctx.arc(p0.x, p0.y, stroke.size / 2, 0, Math.PI * 2);
+    ctx.fillStyle = stroke.color;
     ctx.fill();
   } else {
+    ctx.moveTo(p0.x, p0.y);
+    for (let i = 1; i < pixelPoints.length; i++) {
+      ctx.lineTo(pixelPoints[i].x, pixelPoints[i].y);
+    }
     ctx.stroke();
   }
+
   ctx.globalCompositeOperation = 'source-over';
 };
