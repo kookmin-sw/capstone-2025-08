@@ -187,7 +187,8 @@ export const redrawCanvas = (
     ctx.lineWidth = 2;
     if (isSelectingROI) ctx.setLineDash([6, 6]);
     else ctx.setLineDash([]);
-    ctx.strokeRect(topLeft.x, topLeft.y, width, height);    ctx.restore();
+    ctx.strokeRect(topLeft.x, topLeft.y, width, height);
+    ctx.restore();
   }
 };
 
