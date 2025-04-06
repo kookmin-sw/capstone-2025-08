@@ -118,19 +118,11 @@ export const dummyInferenceResult = {
   results: [
     {
       roiId: 101,
-      x: 120,
-      y: 85,
-      width: 200,
-      height: 200,
-      maskUrl: '결과물이미지.png',
-    },
-    {
-      roiId: 102,
-      x: 300,
-      y: 210,
-      width: 180,
-      height: 180,
-      maskUrl: '결과물이미지2.png',
+      x: 63465,
+      y: 11220,
+      width: 31248,
+      height: 27978,
+      maskUrl: 'test.png',
     },
   ],
 };

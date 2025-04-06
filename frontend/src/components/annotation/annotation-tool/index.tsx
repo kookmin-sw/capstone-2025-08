@@ -180,7 +180,7 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
           ref={sizeMenuRef}
           className="absolute bottom-0 left-full z-50 ml-2 flex flex-col items-center gap-3 rounded-lg bg-white p-4 shadow"
         >
-          {[0.1, 0.3, 0.5, 0.7, 1.0].map((size) => {
+          {[10, 20, 30, 40, 50].map((size) => {
             const isSelected = penSize === size;
             return (
               <button
