@@ -153,6 +153,7 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
+    // 캔버스 좌표를 뷰포트 좌표로 변환
     const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
       new OpenSeadragon.Point(x, y),
     );
@@ -186,33 +187,38 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
       roiStartRef.current = null;
       setIsSelectingROI(false);
       if (roi) {
-        // 조정된 ROI: 테두리 제외
+        // 테두리를 뷰포트 좌표에서 계산하기 위한 변환 작업
+        const borderOffset =
+          viewerInstance.current.viewport.deltaPointsFromPixels(
+            new OpenSeadragon.Point(BORDER_THICKNESS, BORDER_THICKNESS),
+            true,
+          );
+
+        // 조정된 ROI (뷰포트 단위에서 테두리 제외)
         const adjustedROI = {
-          x: roi.x + BORDER_THICKNESS,
-          y: roi.y + BORDER_THICKNESS,
-          width: roi.width - 2 * BORDER_THICKNESS,
-          height: roi.height - 2 * BORDER_THICKNESS,
+          x: roi.x + borderOffset.x,
+          y: roi.y + borderOffset.y,
+          width: roi.width - 2 * borderOffset.x,
+          height: roi.height - 2 * borderOffset.y,
         };
-        const topLeftViewport = viewerInstance.current.viewport.pointFromPixel(
+
+        const topLeftImage = tiledImage.viewportToImageCoordinates(
           new OpenSeadragon.Point(adjustedROI.x, adjustedROI.y),
         );
-        const bottomRightViewport =
-          viewerInstance.current.viewport.pointFromPixel(
-            new OpenSeadragon.Point(
-              adjustedROI.x + adjustedROI.width,
-              adjustedROI.y + adjustedROI.height,
-            ),
-          );
-        const topLeftImage =
-          tiledImage.viewportToImageCoordinates(topLeftViewport);
-        const bottomRightImage =
-          tiledImage.viewportToImageCoordinates(bottomRightViewport);
+        const bottomRightImage = tiledImage.viewportToImageCoordinates(
+          new OpenSeadragon.Point(
+            adjustedROI.x + adjustedROI.width,
+            adjustedROI.y + adjustedROI.height,
+          ),
+        );
+
         const imageROI = {
           x: Math.round(topLeftImage.x),
           y: Math.round(topLeftImage.y),
           width: Math.round(bottomRightImage.x - topLeftImage.x),
           height: Math.round(bottomRightImage.y - topLeftImage.y),
         };
+
         console.log('ROI (이미지 좌표):', imageROI);
       }
     }
@@ -316,15 +322,31 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     const tiledImage = viewerInstance.current.world.getItemAt(0);
     if (!tiledImage) return;
 
-    // 조정된 ROI (실선 제외)
-    const adjustedROI = {
-      x: roi.x + BORDER_THICKNESS,
-      y: roi.y + BORDER_THICKNESS,
-      width: roi.width - 2 * BORDER_THICKNESS,
-      height: roi.height - 2 * BORDER_THICKNESS,
+    // 뷰포트 좌표를 캔버스 좌표로 변환
+    const topLeftCanvas = viewerInstance.current.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(roi.x, roi.y),
+    );
+    const bottomRightCanvas = viewerInstance.current.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(roi.x + roi.width, roi.y + roi.height),
+    );
+
+    // 변환한 캔버스 좌표를 저장
+    const canvasROI = {
+      x: topLeftCanvas.x,
+      y: topLeftCanvas.y,
+      width: bottomRightCanvas.x - topLeftCanvas.x,
+      height: bottomRightCanvas.y - topLeftCanvas.y,
     };
 
-    // 컨테이너 좌표(adjustedROI)를 이미지 좌표로 변환
+    // 조정된 ROI (실선 제외)
+    const adjustedROI = {
+      x: canvasROI.x + BORDER_THICKNESS,
+      y: canvasROI.y + BORDER_THICKNESS,
+      width: canvasROI.width - 2 * BORDER_THICKNESS,
+      height: canvasROI.height - 2 * BORDER_THICKNESS,
+    };
+
+    // 캔버스 좌표(adjustedROI)를 뷰포트 좌표로 변환
     const topLeftViewport = viewerInstance.current.viewport.pointFromPixel(
       new OpenSeadragon.Point(adjustedROI.x, adjustedROI.y),
     );
@@ -334,6 +356,8 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
         adjustedROI.y + adjustedROI.height,
       ),
     );
+
+    // 뷰포트 좌표를 이미지 좌표로 변환
     const topLeftImage = tiledImage.viewportToImageCoordinates(topLeftViewport);
     const bottomRightImage =
       tiledImage.viewportToImageCoordinates(bottomRightViewport);
