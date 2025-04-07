@@ -1,4 +1,4 @@
-package site.pathos.domain.annotation.tissueAnnotation.entity;
+package site.pathos.domain.annotation.cellAnnotation.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
