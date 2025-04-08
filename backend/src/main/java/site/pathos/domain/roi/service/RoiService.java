@@ -31,7 +31,7 @@ public class RoiService {
         //updated_at 갱신 로직
 
         for(RoiSaveRequestDto roiDto : rois){
-            Roi roi1 = upsertRoi(history, roiDto);
+            Roi roi = upsertRoi(history, roiDto);
 
             // 2. ROI에 해당하는 이미지 리스트 추출
             List<MultipartFile> matchedImages = images.stream()
@@ -42,7 +42,7 @@ public class RoiService {
             tissueAnnotationService.uploadTissueAnnotations(
                     subProjectId,
                     annotationHistoryId,
-                    roiDto.getRoiId(),
+                    roi.getId(),
                     matchedImages
             );
         }

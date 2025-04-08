@@ -13,13 +13,13 @@ import site.pathos.domain.roi.service.RoiService;
 import java.util.List;
 
 @RestController
-@RequestMapping("Rois")
+@RequestMapping("rois")
 @RequiredArgsConstructor
 public class RoiController {
 
     private final RoiService roiService;
 
-    @PostMapping("/save-rois")
+    @PostMapping
     public ResponseEntity<Void> uploadRois(
             @RequestPart("subProjectId") Long subProjectId,
             @RequestPart("annotationHistoryId") Long annotationHistoryId,
