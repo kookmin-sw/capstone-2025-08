@@ -1,10 +1,15 @@
 package site.pathos.domain.subProject;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import site.pathos.domain.project.entity.Project;
 
 @Entity
 @Table(name = "sub_project")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SubProject {
 
     @Id
