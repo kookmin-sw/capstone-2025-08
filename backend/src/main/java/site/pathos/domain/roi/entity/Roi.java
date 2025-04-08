@@ -2,6 +2,7 @@ package site.pathos.domain.roi.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
@@ -31,4 +32,22 @@ public class Roi {
 
     @Column(name = "height", nullable = false)
     private int height;
+
+    @Builder
+    public Roi(AnnotationHistory annotationHistory, int x, int y, int width, int height) {
+        if (annotationHistory == null) throw new IllegalArgumentException("annotationHistory cannot be null");
+
+        this.annotationHistory = annotationHistory;
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    public void changeCoordinates(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
 }
