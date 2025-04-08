@@ -2,15 +2,16 @@ package site.pathos.domain.annotation.tissueAnnotation.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.pathos.domain.roi.entity.Roi;
 
 @Entity
-@Table(name = "cell_annotation")
+@Table(name = "TissueAnnotation")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CellAnnotation {
+public class TissueAnnotation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -19,18 +20,14 @@ public class CellAnnotation {
     @JoinColumn(name = "roi_id", nullable = false)
     private Roi roi;
 
-    @Column(name = "x", nullable = false)
-    private int x;
+    @Column(name = "annotation_image_url", nullable = false)
+    private String annotationImagePath;
 
-    @Column(name = "y", nullable = false)
-    private int y;
+    @Builder
+    public TissueAnnotation(Roi roi, String annotationImagePath){
+        if (roi == null) throw new IllegalArgumentException("roi cannot be null in TissueAnnotation");
 
-    @Column(name = "radius", nullable = false)
-    private float radius;
-
-    @Column(name = "color", nullable = false)
-    private String color;
-
-    @Column(name = "label", nullable = false)
-    private String label;
+        this.roi = roi;
+        this.annotationImagePath = annotationImagePath;
+    }
 }

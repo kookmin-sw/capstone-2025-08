@@ -7,18 +7,30 @@ import lombok.NoArgsConstructor;
 import site.pathos.domain.roi.entity.Roi;
 
 @Entity
-@Table(name = "TissueAnnotation")
+@Table(name = "cell_annotation")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class TissueAnnotation {
+public class CellAnnotation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "roi_id", nullable = false)
     private Roi roi;
 
-    @Column(name = "annoation_image_url", nullable = false)
-    private String annotationImageUrl;
+    @Column(name = "x", nullable = false)
+    private int x;
+
+    @Column(name = "y", nullable = false)
+    private int y;
+
+    @Column(name = "radius", nullable = false)
+    private float radius;
+
+    @Column(name = "color", nullable = false)
+    private String color;
+
+    @Column(name = "label", nullable = false)
+    private String label;
 }

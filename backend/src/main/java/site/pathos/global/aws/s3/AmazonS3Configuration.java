@@ -6,6 +6,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.internal.crt.S3CrtAsyncClient;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
@@ -37,13 +38,22 @@ public class AmazonS3Configuration {
     }
 
     @Bean
-    public S3AsyncClient amazonS3Client(
+    public S3AsyncClient S3ClientAsync(
             StaticCredentialsProvider awsCredentialsProvider,
             Region awsRegion
     ) {
         return S3CrtAsyncClient.builder()
                 .credentialsProvider(awsCredentialsProvider)
                 .region(awsRegion)
+                .build();
+    }
+
+    @Bean
+    public S3Client s3Client(StaticCredentialsProvider credentialsProvider,
+                             Region region) {
+        return S3Client.builder()
+                .region(region)
+                .credentialsProvider(credentialsProvider)
                 .build();
     }
 
