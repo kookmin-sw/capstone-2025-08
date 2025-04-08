@@ -21,15 +21,6 @@ public class AmazonS3Configuration {
     }
 
     @Bean
-    public StaticCredentialsProvider awsCredentialsProvider() {
-        AwsBasicCredentials creds = AwsBasicCredentials.create(
-                awsProperty.credentials().accessKey(),
-                awsProperty.credentials().secretKey()
-        );
-        return StaticCredentialsProvider.create(creds);
-    }
-
-    @Bean
     public S3AsyncClient S3ClientAsync(
             StaticCredentialsProvider awsCredentialsProvider
     ) {
@@ -40,10 +31,10 @@ public class AmazonS3Configuration {
     }
 
     @Bean
-    public S3Client s3Client(StaticCredentialsProvider credentialsProvider) {
+    public S3Client s3Client(StaticCredentialsProvider awsCredentialsProvider) {
         return S3Client.builder()
                 .region(awsProperty.regionAsEnum())
-                .credentialsProvider(credentialsProvider)
+                .credentialsProvider(awsCredentialsProvider)
                 .build();
     }
 
