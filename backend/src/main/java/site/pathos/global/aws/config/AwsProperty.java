@@ -8,10 +8,12 @@ import software.amazon.awssdk.regions.Region;
 public record AwsProperty(
         @NotBlank String region,
         Credentials credentials,
-        S3 s3
+        S3 s3,
+        Sqs sqs
 ) {
     public record Credentials(@NotBlank String accessKey, @NotBlank String secretKey) {}
     public record S3(@NotBlank String bucket) {}
+    public record Sqs(@NotBlank String queueUrl) {}
 
     public Region regionAsEnum() {
         return Region.of(region); // Region.of는 유효한 region 문자열만 허용
