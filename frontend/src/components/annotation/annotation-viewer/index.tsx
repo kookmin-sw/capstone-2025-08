@@ -6,18 +6,24 @@ import { useOsdviewer } from '@/hooks/use-osdviewer';
 import AnnotationTool from '@/components/annotation/annotation-tool';
 import AnnotationControlPanel from '@/components/annotation/annotation-control-panel';
 import {
-  processPNGImage,
+  processMaskTile,
   syncCanvasWithOSD,
   redrawCanvas,
   drawStroke,
 } from '@/utils/canvas-utils';
-import { Stroke, ROI } from '@/utils/canvas-utils';
+import { Point, Stroke, ROI, LoadedROI } from '@/utils/canvas-utils';
 import { Button } from '@/components/ui/button';
+import { SubProject } from '@/types/project-schema';
+import { dummyInferenceResult } from '@/data/dummy';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
 
-const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
+const AnnotationViewer: React.FC<{
+  subProject: SubProject;
+  inferenceResult: typeof dummyInferenceResult;
+  modelType?: string;
+}> = ({ subProject, inferenceResult, modelType = 'MULTI' }) => {
   /* ================================
      Ref 및 State 선언
   ================================== */
@@ -40,6 +46,8 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   // ROI 관련 상태
   const [isSelectingROI, setIsSelectingROI] = useState<boolean>(false);
   const [roi, setROI] = useState<ROI | null>(null);
+  const [userDefinedROIs, setUserDefinedROIs] = useState<ROI[]>([]);
+  const [loadedROIs, setLoadedROIs] = useState<LoadedROI[]>([]);
   const roiStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Undo / Redo 스택
@@ -47,9 +55,108 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   const [redoStack, setRedoStack] = useState<Stroke[][]>([]);
   const isRedoingRef = useRef(false);
 
-  // helper: 깊은 복사를 위한 함수 (JSON 방식)
+  /* ================================
+      초기화 및 타일소스 로딩
+  ================================== */
+  useEffect(() => {
+    const load = async () => {
+      const roiPromises = inferenceResult.results.map(async (res) => {
+        const tiles = await Promise.all(
+          res.maskUrl.map((u) => processMaskTile(res, u)),
+        );
+        return {
+          bbox: { x: res.x, y: res.y, w: res.width, h: res.height },
+          tiles,
+        };
+      });
+      setLoadedROIs(await Promise.all(roiPromises));
+    };
+    load();
+  }, [inferenceResult]);
+
+  /* =============================================
+      모델 ROI가 준비되면 첫 번째 ROI를 자동으로 선택
+  ============================================== */
+  useEffect(() => {
+    const viewer = viewerInstance.current;
+    if (!viewer || !loadedROIs.length) return;
+
+    const tiledImage = viewer.world.getItemAt(0);
+    if (!tiledImage) {
+      const retry = setTimeout(() => {
+        const newTiledImage = viewer.world.getItemAt(0);
+        if (!newTiledImage) return;
+        const bbox = loadedROIs[0].bbox;
+        const tlImg = new OpenSeadragon.Point(bbox.x, bbox.y);
+        const brImg = new OpenSeadragon.Point(bbox.x + bbox.w, bbox.y + bbox.h);
+        const tlVp = viewer.viewport.imageToViewportCoordinates(tlImg);
+        const brVp = viewer.viewport.imageToViewportCoordinates(brImg);
+        const viewportROI = {
+          x: tlVp.x,
+          y: tlVp.y,
+          width: brVp.x - tlVp.x,
+          height: brVp.y - tlVp.y,
+        };
+        setROI(viewportROI);
+      }, 500);
+
+      return () => clearTimeout(retry);
+    }
+
+    const bbox = loadedROIs[0].bbox;
+    const tlImg = new OpenSeadragon.Point(bbox.x, bbox.y);
+    const brImg = new OpenSeadragon.Point(bbox.x + bbox.w, bbox.y + bbox.h);
+    const tlVp = viewer.viewport.imageToViewportCoordinates(tlImg);
+    const brVp = viewer.viewport.imageToViewportCoordinates(brImg);
+    const viewportROI = {
+      x: tlVp.x,
+      y: tlVp.y,
+      width: brVp.x - tlVp.x,
+      height: brVp.y - tlVp.y,
+    };
+    setROI(viewportROI);
+  }, [viewerInstance.current, loadedROIs]);
+
+  /* ================================
+     핸들러 및 헬퍼 함수
+  ================================== */
   const deepCopyStrokes = (strokes: Stroke[]): Stroke[] =>
     JSON.parse(JSON.stringify(strokes));
+
+  const isInsideAnyROI = (pt: Point): boolean => {
+    if (!viewerInstance.current) return false;
+    const viewer = viewerInstance.current;
+    const tiledImage = viewer.world.getItemAt(0);
+    if (!tiledImage) return false;
+
+    const inferenceROIs: ROI[] = loadedROIs.map((r) => {
+      const tlImg = new OpenSeadragon.Point(r.bbox.x, r.bbox.y);
+      const brImg = new OpenSeadragon.Point(
+        r.bbox.x + r.bbox.w,
+        r.bbox.y + r.bbox.h,
+      );
+      const tlVp = tiledImage.imageToViewportCoordinates(tlImg);
+      const brVp = tiledImage.imageToViewportCoordinates(brImg);
+      return {
+        x: tlVp.x,
+        y: tlVp.y,
+        width: brVp.x - tlVp.x,
+        height: brVp.y - tlVp.y,
+      };
+    });
+
+    const allROIs = [...inferenceROIs, ...userDefinedROIs];
+    const padding = 0.0001;
+
+    return allROIs.some((roi) => {
+      return (
+        pt.x >= roi.x - padding &&
+        pt.x <= roi.x + roi.width + padding &&
+        pt.y >= roi.y - padding &&
+        pt.y <= roi.y + roi.height + padding
+      );
+    });
+  };
 
   /* ================================
      캔버스 및 뷰어 동기화
@@ -59,10 +166,11 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     redrawCanvas(
       viewerInstance.current,
       canvasRef,
-      pngImageRef,
+      loadedROIs,
       strokesRef.current,
       currentStrokeRef.current,
       roi,
+      userDefinedROIs,
       isSelectingROI,
     );
   }, [viewerInstance, canvasRef, pngImageRef, roi, isSelectingROI]);
@@ -78,44 +186,125 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     viewerInstance.current.addHandler('animation', updateHandler);
     viewerInstance.current.addHandler('zoom', updateHandler);
     viewerInstance.current.addHandler('pan', updateHandler);
-    // 초기 동기화
     syncCanvas();
 
     window.addEventListener('resize', syncCanvas);
     return () => window.removeEventListener('resize', syncCanvas);
   }, [viewerInstance, syncCanvas]);
 
-  /* ================================
-     타일 소스 및 PNG 오버레이 이미지 로드
-  ================================== */
+  /* ===========================================
+   타일소스 로딩 useEffect – param 기반으로 수정
+  =========================================== */
   useEffect(() => {
-    if (!viewerInstance.current) return;
+    if (!viewerInstance.current || !subProject) return;
+
     const loadTileSource = async () => {
       try {
         const tiffTileSources =
           await OpenSeadragon.GeoTIFFTileSource.getAllTileSources(
-            '/svs_example.svs',
+            subProject.svsPath,
           );
+
         if (tiffTileSources.length > 0) {
           viewerInstance.current.addTiledImage({
             tileSource: tiffTileSources[0],
           });
           console.log('타일 소스 추가 완료');
+        } else {
+          console.warn('SVS 파일을 읽었지만 타일소스가 없습니다.');
         }
       } catch (error) {
         console.error('타일 소스 로드 실패:', error);
       }
     };
-    loadTileSource();
-  }, [viewerInstance]);
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    // const img = new Image();
-    // img.src = "/roopy.png"; // public 폴더 내 파일
-    // img.onload = () => processPNGImage(img, pngImageRef, redraw);
-    // img.onerror = () => console.error("PNG 오버레이 이미지 로드 실패");
-  }, [canvasRef, redraw]);
+    loadTileSource();
+  }, [viewerInstance, subProject]);
+
+  /* ================================
+     지우개 기능 구현
+  ================================== */
+  const subtractStroke = (
+    pencilStroke: Stroke,
+    eraserStroke: Stroke,
+    viewerInstance: any,
+    canvasRef: React.RefObject<HTMLCanvasElement | null>,
+  ): Stroke[] => {
+    if (
+      !viewerInstance ||
+      !canvasRef.current ||
+      pencilStroke.points.length === 0
+    ) {
+      return [pencilStroke];
+    }
+
+    const result: Stroke[] = [];
+    let currentSegment: Point[] = [];
+
+    const canvas = canvasRef.current;
+    const ratio = window.devicePixelRatio || 1;
+
+    const eraserCanvas = document.createElement('canvas');
+    eraserCanvas.width = canvas.width;
+    eraserCanvas.height = canvas.height;
+
+    const ctx = eraserCanvas.getContext('2d');
+    if (!ctx) return [pencilStroke];
+
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = eraserStroke.size * ratio;
+    ctx.beginPath();
+
+    const toCanvasPoint = (pt: Point) => {
+      const pixel = viewerInstance.viewport.pixelFromPoint(
+        new OpenSeadragon.Point(pt.x, pt.y),
+      );
+      return {
+        x: pixel.x * ratio,
+        y: pixel.y * ratio,
+      };
+    };
+
+    const first = toCanvasPoint(eraserStroke.points[0]);
+    ctx.moveTo(first.x, first.y);
+
+    for (let i = 1; i < eraserStroke.points.length; i++) {
+      const pt = toCanvasPoint(eraserStroke.points[i]);
+      ctx.lineTo(pt.x, pt.y);
+    }
+
+    ctx.stroke();
+
+    for (const pt of pencilStroke.points) {
+      const canvasPt = toCanvasPoint(pt);
+      const erased = ctx.isPointInStroke?.(canvasPt.x, canvasPt.y) ?? false;
+
+      if (!erased) {
+        currentSegment.push(pt);
+      } else {
+        if (currentSegment.length > 0) {
+          result.push({
+            ...pencilStroke,
+            points: [...currentSegment],
+            isEraser: false,
+          });
+          currentSegment = [];
+        }
+      }
+    }
+
+    if (currentSegment.length > 0) {
+      result.push({
+        ...pencilStroke,
+        points: [...currentSegment],
+        isEraser: false,
+      });
+    }
+
+    strokesRef.current = result;
+    return result.length > 0 ? result : [];
+  };
 
   /* ================================
      마우스 이벤트 핸들러
@@ -126,18 +315,20 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // 캔버스 좌표를 뷰포트 좌표로 변환
     const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
       new OpenSeadragon.Point(x, y),
     );
 
     if (isSelectingROI) {
-      roiStartRef.current = viewportPoint; // 뷰포트 좌표 저장
+      roiStartRef.current = viewportPoint;
       setROI({ x: viewportPoint.x, y: viewportPoint.y, width: 0, height: 0 });
     } else if (isDrawingMode) {
       const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
         new OpenSeadragon.Point(x, y),
       );
+
+      if (!isInsideAnyROI(viewportPoint)) return;
+
       currentStrokeRef.current = {
         points: [{ x: viewportPoint.x, y: viewportPoint.y }],
         color: isEraserMode ? 'rgba(0,0,0,0)' : penColor,
@@ -154,7 +345,6 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // 캔버스 좌표를 뷰포트 좌표로 변환
     const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
       new OpenSeadragon.Point(x, y),
     );
@@ -167,17 +357,19 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
         width: Math.abs(viewportPoint.x - start.x),
         height: Math.abs(viewportPoint.y - start.y),
       });
-      redraw(); // ROI 시는 redraw 유지
+      redraw();
     } else if (isDrawingMode && currentStrokeRef.current) {
       const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
         new OpenSeadragon.Point(x, y),
       );
+
+      if (!isInsideAnyROI(viewportPoint)) return;
+
       currentStrokeRef.current.points.push({
         x: viewportPoint.x,
         y: viewportPoint.y,
       });
 
-      // 현재 stroke만 빠르게 그리기
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
@@ -195,21 +387,23 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     if (isSelectingROI) {
       roiStartRef.current = null;
       setIsSelectingROI(false);
+
       if (roi) {
-        // 테두리를 뷰포트 좌표에서 계산하기 위한 변환 작업
         const borderOffset =
           viewerInstance.current.viewport.deltaPointsFromPixels(
             new OpenSeadragon.Point(BORDER_THICKNESS, BORDER_THICKNESS),
             true,
           );
 
-        // 조정된 ROI (뷰포트 단위에서 테두리 제외)
         const adjustedROI = {
           x: roi.x + borderOffset.x,
           y: roi.y + borderOffset.y,
           width: roi.width - 2 * borderOffset.x,
           height: roi.height - 2 * borderOffset.y,
         };
+
+        setUserDefinedROIs((prev) => [...prev, adjustedROI]);
+        setROI(null);
 
         const topLeftImage = tiledImage.viewportToImageCoordinates(
           new OpenSeadragon.Point(adjustedROI.x, adjustedROI.y),
@@ -227,19 +421,45 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
           width: Math.round(bottomRightImage.x - topLeftImage.x),
           height: Math.round(bottomRightImage.y - topLeftImage.y),
         };
-
-        console.log('ROI (이미지 좌표):', imageROI);
       }
+
+      return;
     }
 
     if (isDrawingMode && currentStrokeRef.current) {
+      const isEraser = currentStrokeRef.current.isEraser;
       const prevStrokes = deepCopyStrokes(strokesRef.current);
       setUndoStack((prev) => [...prev, prevStrokes]);
       setRedoStack([]);
-      strokesRef.current.push(currentStrokeRef.current);
-      currentStrokeRef.current = null;
 
-      // 이 시점에서만 전체 stroke + 보간 렌더링
+      if (isEraser) {
+        const eraserStroke = currentStrokeRef.current;
+
+        const pencilStrokes = strokesRef.current.filter((s) => !s.isEraser);
+        const oldEraserStrokes = strokesRef.current.filter((s) => s.isEraser);
+
+        const updatedStrokes: Stroke[] = [];
+
+        for (const pencilStroke of pencilStrokes) {
+          const segs = subtractStroke(
+            pencilStroke,
+            eraserStroke,
+            viewerInstance.current,
+            canvasRef,
+          );
+          updatedStrokes.push(...segs);
+        }
+
+        strokesRef.current = [
+          ...updatedStrokes,
+          ...oldEraserStrokes,
+          eraserStroke,
+        ];
+      } else {
+        strokesRef.current.push(currentStrokeRef.current);
+      }
+
+      currentStrokeRef.current = null;
       redraw();
     }
   };
@@ -250,12 +470,15 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
     viewerInstance.current?.setMouseNavEnabled(true);
   };
 
+  /* ================================
+     어노테이션 도구 및 핸들러
+  ================================== */
   const handleToggleEraser = () => setIsEraserMode((prev) => !prev);
+
   const handleSelectPen = () => setIsEraserMode(false);
 
-  // 드로잉 모드 토글 (활성화 시 스택 초기화)
   const handleToggleAnnotationMode = (): boolean => {
-    if (!isDrawingMode && !roi) {
+    if (!isDrawingMode && !roi && loadedROIs.length === 0) {
       alert('먼저 ROI를 선택하세요.');
       return false;
     }
