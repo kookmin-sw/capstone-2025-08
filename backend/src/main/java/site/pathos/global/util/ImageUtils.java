@@ -28,8 +28,8 @@ public class ImageUtils {
 
         for (MultipartFile file : imageFiles) {
             String[] parts = file.getOriginalFilename().replace(".png", "").split("_");
-            int row = Integer.parseInt(parts[2]);
-            int col = Integer.parseInt(parts[3]);
+            int row = Integer.parseInt(parts[parts.length - 2]);
+            int col = Integer.parseInt(parts[parts.length - 1]);
 
             BufferedImage tile = ImageIO.read(file.getInputStream());
 
