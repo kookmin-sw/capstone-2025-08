@@ -39,7 +39,7 @@ def process_message():
                 # 모델 실행 (비동기 실행)
                 print("process function call")
                 time.sleep(5)
-                # TODO process(request_data_list)
+                process(request_data_list)
 
                 with processing_lock:
                     is_processing = False
