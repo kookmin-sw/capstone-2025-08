@@ -20,7 +20,7 @@ public class TissueAnnotation {
     @JoinColumn(name = "roi_id", nullable = false)
     private Roi roi;
 
-    @Column(name = "annoation_image_url", nullable = false)
+    @Column(name = "annotation_image_url", nullable = false)
     private String annotationImagePath;
 
     @Builder
