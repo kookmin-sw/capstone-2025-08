@@ -2,6 +2,7 @@ package site.pathos.domain.annotation.tissueAnnotation.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.pathos.domain.roi.entity.Roi;
@@ -20,5 +21,13 @@ public class TissueAnnotation {
     private Roi roi;
 
     @Column(name = "annoation_image_url", nullable = false)
-    private String annotationImageUrl;
+    private String annotationImagePath;
+
+    @Builder
+    public TissueAnnotation(Roi roi, String annotationImagePath){
+        if (roi == null) throw new IllegalArgumentException("roi cannot be null in TissueAnnotation");
+
+        this.roi = roi;
+        this.annotationImagePath = annotationImagePath;
+    }
 }
