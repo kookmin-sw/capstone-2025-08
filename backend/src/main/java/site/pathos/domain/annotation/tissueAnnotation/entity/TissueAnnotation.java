@@ -16,7 +16,7 @@ public class TissueAnnotation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "roi_id", nullable = false)
     private Roi roi;
 
