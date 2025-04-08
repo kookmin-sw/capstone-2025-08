@@ -19,7 +19,7 @@ public class Model {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "annotation_history_id", nullable = false)
+    @JoinColumn(name = "annotation_history_id")
     private AnnotationHistory annotationHistory;
 
     @Column(name = "name", nullable = false)
