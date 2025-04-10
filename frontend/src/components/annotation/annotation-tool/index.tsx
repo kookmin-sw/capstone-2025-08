@@ -19,6 +19,7 @@ interface AnnotationToolProps {
   onToggleEraser: () => void;
   onChangePenColor: (color: string) => void;
   onChangePenSize: (size: number) => void;
+  onTogglePolygonMode: () => void;
 }
 
 const AnnotationTool: React.FC<AnnotationToolProps> = ({
@@ -30,6 +31,7 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
   onToggleEraser,
   onChangePenColor,
   onChangePenSize,
+  onTogglePolygonMode,
 }) => {
   const [activeTool, setActiveTool] = useState<string | null>('paintbrush');
   const [penSizeMenuOpen, setPenSizeMenuOpen] = useState(false);
@@ -68,6 +70,8 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
     setActiveTool(tool);
     if (tool === 'eraser') {
       onToggleEraser();
+    } else if (tool === 'waypoints') {
+      onTogglePolygonMode();
     } else {
       onSelectPen();
     }
