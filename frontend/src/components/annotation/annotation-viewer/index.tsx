@@ -35,7 +35,6 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   const strokesRef = useRef<Stroke[]>([]);
   const currentStrokeRef = useRef<Stroke | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState<boolean>(false);
-  const [activeTool, setActiveTool] = useState<Tool>(null);
   const [penColor, setPenColor] = useState<string>('#FF0000');
   const [penSize, setPenSize] = useState<number>(10);
 
@@ -57,6 +56,24 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   // helper: 깊은 복사를 위한 함수 (JSON 방식)
   const deepCopyStrokes = (strokes: Stroke[]): Stroke[] =>
     JSON.parse(JSON.stringify(strokes));
+
+  // 모델 타입별 디폴트 어노테이션 도구 (셀/멀티 -> circle, 티슈 -> ploygon)
+  const getDefaultToolByModel = (modelType: string): Tool => {
+    switch (modelType) {
+      case 'CELL':
+      case 'MULTI':
+        return 'circle';
+      case 'TISSUE':
+        return 'polygon';
+      default:
+        return null;
+    }
+  };
+
+  // 사용할 어노테이션 도구
+  const [activeTool, setActiveTool] = useState<Tool>(() =>
+    getDefaultToolByModel(modelType),
+  );
 
   /* ================================
      캔버스 및 뷰어 동기화
