@@ -22,6 +22,12 @@ export interface ROI {
   height: number;
 }
 
+export interface Polygon {
+  points: Point[];
+  closed: boolean;
+  color: string;
+}
+
 export const processPNGImage = (
   img: HTMLImageElement,
   pngImageRef: React.MutableRefObject<HTMLImageElement | null>,
@@ -83,6 +89,9 @@ export const redrawCanvas = (
   currentStroke: Stroke | null,
   roi: ROI | null,
   isSelectingROI: boolean,
+  polygons: Polygon[],
+  currentPolygon: Polygon | null,
+  mousePosition?: Point | null,
 ) => {
   if (!canvasRef.current || !viewerInstance) return;
   const canvas = canvasRef.current;
@@ -166,6 +175,24 @@ export const redrawCanvas = (
   [...strokes, ...(currentStroke ? [currentStroke] : [])].forEach((stroke) => {
     drawStrokeSmooth(stroke, viewerInstance, ctx);
   });
+
+  // 완성된 폴리곤들 먼저 그리기
+  polygons.forEach((polygon) => {
+    if (polygon.closed) {
+      drawPolygon(viewerInstance, ctx, polygon.points, null, polygon.color);
+    }
+  });
+
+  // 지금 그리는 중인 미완성 폴리곤 그리기
+  if (currentPolygon) {
+    drawPolygon(
+      viewerInstance,
+      ctx,
+      currentPolygon.points,
+      mousePosition,
+      currentPolygon.color,
+    );
+  }
 
   if (roi) {
     ctx.restore();
@@ -278,4 +305,48 @@ export const drawStroke = (
   }
 
   ctx.globalCompositeOperation = 'source-over';
+};
+
+export const drawPolygon = (
+  viewerInstance: any,
+  ctx: CanvasRenderingContext2D,
+  points: Point[],
+  mousePosition: Point | null | undefined,
+  color: string,
+) => {
+  if (points.length === 0) return;
+
+  const pixelPoints = points.map((pt) =>
+    viewerInstance.viewport.pixelFromPoint(new OpenSeadragon.Point(pt.x, pt.y)),
+  );
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(pixelPoints[0].x, pixelPoints[0].y);
+  for (let i = 1; i < pixelPoints.length; i++) {
+    ctx.lineTo(pixelPoints[i].x, pixelPoints[i].y);
+  }
+
+  // 폴리곤이 완성 되었을 때 내부 색깔 채우기
+  if (
+    points.length > 2 &&
+    points[0].x === points[points.length - 1].x &&
+    points[0].y === points[points.length - 1].y
+  ) {
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  // 점을 그릴 때 마우스를 따라다니는 선
+  if (mousePosition) {
+    const mousePixel = viewerInstance.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(mousePosition.x, mousePosition.y),
+    );
+    ctx.lineTo(mousePixel.x, mousePixel.y);
+  }
+
+  ctx.stroke();
+  ctx.restore();
 };
