@@ -372,6 +372,7 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   const handleSelectROI = () => {
     setIsSelectingROI(true);
     setIsDrawingMode(false);
+    setActiveTool(null);
     viewerInstance.current?.setMouseNavEnabled(true);
   };
 
