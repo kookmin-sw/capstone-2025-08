@@ -179,7 +179,14 @@ export const redrawCanvas = (
   // 완성된 폴리곤들 먼저 그리기
   polygons.forEach((polygon) => {
     if (polygon.closed) {
-      drawPolygon(viewerInstance, ctx, polygon.points, null, polygon.color);
+      drawPolygon(
+        viewerInstance,
+        ctx,
+        polygon.points,
+        null,
+        polygon.color,
+        true,
+      );
     }
   });
 
@@ -191,6 +198,7 @@ export const redrawCanvas = (
       currentPolygon.points,
       mousePosition,
       currentPolygon.color,
+      false,
     );
   }
 
@@ -313,6 +321,7 @@ export const drawPolygon = (
   points: Point[],
   mousePosition: Point | null | undefined,
   color: string,
+  isClosed = false,
 ) => {
   if (points.length === 0) return;
 
@@ -351,36 +360,36 @@ export const drawPolygon = (
     ctx.fill();
   }
 
-  // 첫 점 강조 (마우스가 가까우면 확대)
-  if (mousePosition && points.length > 0) {
-    const firstPoint = viewerInstance.viewport.pixelFromPoint(
-      new OpenSeadragon.Point(points[0].x, points[0].y),
-    );
-    const mousePoint = viewerInstance.viewport.pixelFromPoint(
-      new OpenSeadragon.Point(mousePosition.x, mousePosition.y),
-    );
+  // 모든 점 그리기 (isClosed가 아닐 때만)
+  if (!isClosed && points.length > 0) {
+    pixelPoints.forEach((pt, index) => {
+      const isFirst = index === 0;
 
-    const dist = Math.hypot(
-      firstPoint.x - mousePoint.x,
-      firstPoint.y - mousePoint.y,
-    );
+      // 첫 점 강조 (마우스 근처면 더 크게)
+      if (isFirst && mousePosition) {
+        const mousePixel = viewerInstance.viewport.pixelFromPoint(
+          new OpenSeadragon.Point(mousePosition.x, mousePosition.y),
+        );
+        const dist = Math.hypot(pt.x - mousePixel.x, pt.y - mousePixel.y);
 
-    if (dist < 10) {
-      // 가까우면 더 크게 강조
+        if (dist < 10) {
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fill();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          return;
+        }
+      }
+
+      // 일반 점 그리기
       ctx.beginPath();
-      ctx.arc(firstPoint.x, firstPoint.y, 6, 0, 2 * Math.PI);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.fill();
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    } else {
-      // 평소엔 작은 점
-      ctx.beginPath();
-      ctx.arc(firstPoint.x, firstPoint.y, 3, 0, 2 * Math.PI);
+      ctx.arc(pt.x, pt.y, 3, 0, 2 * Math.PI);
       ctx.fillStyle = color;
       ctx.fill();
-    }
+    });
   }
 
   ctx.restore();
