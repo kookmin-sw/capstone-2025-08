@@ -10,9 +10,8 @@ import {
   syncCanvasWithOSD,
   redrawCanvas,
   drawStroke,
-  Point,
 } from '@/utils/canvas-utils';
-import { Stroke, ROI, Polygon } from '@/utils/canvas-utils';
+import { Stroke, ROI, Polygon, Point } from '@/utils/canvas-utils';
 import { Button } from '@/components/ui/button';
 
 // ROI 선 두께 상수
@@ -42,10 +41,7 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   const [isPolygonMode, setIsPolygonMode] = useState(false);
   const polygonsRef = useRef<Polygon[]>([]);
   const currentPolygonRef = useRef<Polygon | null>(null);
-  const [mousePosition, setMousePosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
+  const [mousePosition, setMousePosition] = useState<Point | null>(null);
 
   // ROI 관련 상태
   const [isSelectingROI, setIsSelectingROI] = useState<boolean>(false);
@@ -140,7 +136,6 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   /* ================================
      마우스 이벤트 핸들러
   ================================== */
-
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !viewerInstance.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -163,21 +158,28 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
       const points = currentPolygonRef.current.points;
       if (points.length > 2) {
         const first = points[0];
-        const dist = Math.hypot(
-          first.x - viewportPoint.x,
-          first.y - viewportPoint.y,
+        const firstPixel = viewerInstance.current.viewport.pixelFromPoint(
+          new OpenSeadragon.Point(first.x, first.y),
         );
-        if (dist < 0.01) {
-          currentPolygonRef.current.points.push(first);
+        const mousePixel = viewerInstance.current.viewport.pixelFromPoint(
+          new OpenSeadragon.Point(viewportPoint.x, viewportPoint.y),
+        );
+        const dist = Math.hypot(
+          firstPixel.x - mousePixel.x,
+          firstPixel.y - mousePixel.y,
+        );
+
+        if (dist < 10) {
+          currentPolygonRef.current.points.push(first); // 닫기용
           currentPolygonRef.current.closed = true;
           polygonsRef.current.push(currentPolygonRef.current);
           currentPolygonRef.current = null;
-          // setIsPolygonMode(false);
           setMousePosition(null);
           redraw();
           return;
         }
       }
+
       currentPolygonRef.current.points.push(viewportPoint);
       redraw();
       return;
