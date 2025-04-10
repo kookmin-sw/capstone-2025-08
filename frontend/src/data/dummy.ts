@@ -122,7 +122,14 @@ export const dummyInferenceResult = {
       y: 11220,
       width: 31248,
       height: 27978,
-      maskUrl: 'test.png',
+      maskUrl: [
+        '/0_0.png',
+        '/0_1.png',
+        '/0_2.png',
+        '/1_0.png',
+        '/1_1.png',
+        '/1_2.png',
+      ],
     },
   ],
 };
