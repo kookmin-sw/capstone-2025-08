@@ -164,6 +164,14 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
       new OpenSeadragon.Point(x, y),
     );
 
+    // ROI
+    if (isSelectingROI) {
+      roiStartRef.current = viewportPoint;
+      setROI({ x: viewportPoint.x, y: viewportPoint.y, width: 0, height: 0 });
+      redraw();
+      return;
+    }
+
     if (activeTool === 'polygon') {
       if (!currentPolygonRef.current) {
         currentPolygonRef.current = {
@@ -199,14 +207,6 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
       }
 
       currentPolygonRef.current.points.push(viewportPoint);
-      redraw();
-      return;
-    }
-
-    // ROI
-    if (isSelectingROI) {
-      roiStartRef.current = viewportPoint;
-      setROI({ x: viewportPoint.x, y: viewportPoint.y, width: 0, height: 0 });
       redraw();
       return;
     }
@@ -372,7 +372,6 @@ const AnnotationViewer: React.FC<{ modelType: string }> = ({ modelType }) => {
   const handleSelectROI = () => {
     setIsSelectingROI(true);
     setIsDrawingMode(false);
-    setActiveTool(null);
     viewerInstance.current?.setMouseNavEnabled(true);
   };
 
