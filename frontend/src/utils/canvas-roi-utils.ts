@@ -32,7 +32,7 @@ export const drawROIs = (
   const tiledImage = viewerInstance.world.getItemAt(0);
   if (!tiledImage) return;
 
-  // 1. 모델 ROI (파란 실선)
+  // 1. 모델 ROI
   loadedROIs.forEach(({ bbox }) => {
     const vpTL = tiledImage.imageToViewportCoordinates(
       new OpenSeadragon.Point(bbox.x, bbox.y),
@@ -51,7 +51,7 @@ export const drawROIs = (
     ctx.restore();
   });
 
-  // 2. 유저 ROI (빨간 실선)
+  // 2. 유저 ROI
   userDefinedROIs.forEach((roi) => {
     const p1 = viewerInstance.viewport.pixelFromPoint(
       new OpenSeadragon.Point(roi.x, roi.y),
@@ -68,7 +68,7 @@ export const drawROIs = (
     ctx.restore();
   });
 
-  // 3. 선택 중인 ROI (점선)
+  // 3. 선택 중인 ROI
   if (roi) {
     const p1 = viewerInstance.viewport.pixelFromPoint(
       new OpenSeadragon.Point(roi.x, roi.y),
