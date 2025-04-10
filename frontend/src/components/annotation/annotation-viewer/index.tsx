@@ -5,13 +5,19 @@ import OpenSeadragon from 'openseadragon';
 import { useOsdviewer } from '@/hooks/use-osdviewer';
 import AnnotationTool from '@/components/annotation/annotation-tool';
 import AnnotationControlPanel from '@/components/annotation/annotation-control-panel';
+import { syncCanvasWithOSD, redrawCanvas } from '@/utils/canvas-utils';
+import { processMaskTile, exportROIAsPNG } from '@/utils/canvas-image-utils';
 import {
-  processMaskTile,
-  syncCanvasWithOSD,
-  redrawCanvas,
+  getAllViewportROIs,
+  isPointInsideROIs,
+  drawROIs,
+} from '@/utils/canvas-roi-utils';
+import {
+  deepCopyStrokes,
   drawStroke,
-} from '@/utils/canvas-utils';
-import { Point, Stroke, ROI, LoadedROI } from '@/utils/canvas-utils';
+  subtractStroke,
+} from '@/utils/canvas-drawing-utils';
+import { Point, Stroke, ROI, LoadedROI } from '@/types/annotation';
 import { Button } from '@/components/ui/button';
 import { SubProject } from '@/types/project-schema';
 import { dummyInferenceResult } from '@/data/dummy';
@@ -32,9 +38,6 @@ const AnnotationViewer: React.FC<{
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const viewerInstance = useOsdviewer(viewerRef);
 
-  // PNG 오버레이 이미지 참조
-  const pngImageRef = useRef<HTMLImageElement | null>(null);
-
   // 드로잉/어노테이션 관련
   const strokesRef = useRef<Stroke[]>([]);
   const currentStrokeRef = useRef<Stroke | null>(null);
@@ -44,6 +47,7 @@ const AnnotationViewer: React.FC<{
   const [penSize, setPenSize] = useState<number>(10);
 
   // ROI 관련 상태
+  const roiCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isSelectingROI, setIsSelectingROI] = useState<boolean>(false);
   const [roi, setROI] = useState<ROI | null>(null);
   const [userDefinedROIs, setUserDefinedROIs] = useState<ROI[]>([]);
@@ -75,6 +79,32 @@ const AnnotationViewer: React.FC<{
   }, [inferenceResult]);
 
   /* =============================================
+      ROI 캔버스 그리기
+  ============================================== */
+  const redrawROICanvas = useCallback(() => {
+    if (!viewerInstance.current || !roiCanvasRef.current) return;
+    drawROIs(
+      viewerInstance.current,
+      roiCanvasRef.current,
+      roi,
+      userDefinedROIs,
+      loadedROIs,
+      isSelectingROI,
+    );
+  }, [
+    viewerInstance,
+    roiCanvasRef,
+    roi,
+    userDefinedROIs,
+    loadedROIs,
+    isSelectingROI,
+  ]);
+
+  useEffect(() => {
+    redrawROICanvas();
+  }, [roi, userDefinedROIs, isSelectingROI, redrawROICanvas]);
+
+  /* =============================================
       모델 ROI가 준비되면 첫 번째 ROI를 자동으로 선택
   ============================================== */
   useEffect(() => {
@@ -85,12 +115,13 @@ const AnnotationViewer: React.FC<{
     if (!tiledImage) {
       const retry = setTimeout(() => {
         const newTiledImage = viewer.world.getItemAt(0);
-        if (!newTiledImage) return;
+        if (!newTiledImage?.imageToViewportCoordinates) return;
+
         const bbox = loadedROIs[0].bbox;
         const tlImg = new OpenSeadragon.Point(bbox.x, bbox.y);
         const brImg = new OpenSeadragon.Point(bbox.x + bbox.w, bbox.y + bbox.h);
-        const tlVp = viewer.viewport.imageToViewportCoordinates(tlImg);
-        const brVp = viewer.viewport.imageToViewportCoordinates(brImg);
+        const tlVp = newTiledImage.imageToViewportCoordinates(tlImg);
+        const brVp = newTiledImage.imageToViewportCoordinates(brImg);
         const viewportROI = {
           x: tlVp.x,
           y: tlVp.y,
@@ -115,47 +146,18 @@ const AnnotationViewer: React.FC<{
       height: brVp.y - tlVp.y,
     };
     setROI(viewportROI);
-  }, [viewerInstance.current, loadedROIs]);
+  }, [viewerInstance, loadedROIs]);
 
   /* ================================
      핸들러 및 헬퍼 함수
   ================================== */
-  const deepCopyStrokes = (strokes: Stroke[]): Stroke[] =>
-    JSON.parse(JSON.stringify(strokes));
-
   const isInsideAnyROI = (pt: Point): boolean => {
     if (!viewerInstance.current) return false;
-    const viewer = viewerInstance.current;
-    const tiledImage = viewer.world.getItemAt(0);
-    if (!tiledImage) return false;
-
-    const inferenceROIs: ROI[] = loadedROIs.map((r) => {
-      const tlImg = new OpenSeadragon.Point(r.bbox.x, r.bbox.y);
-      const brImg = new OpenSeadragon.Point(
-        r.bbox.x + r.bbox.w,
-        r.bbox.y + r.bbox.h,
-      );
-      const tlVp = tiledImage.imageToViewportCoordinates(tlImg);
-      const brVp = tiledImage.imageToViewportCoordinates(brImg);
-      return {
-        x: tlVp.x,
-        y: tlVp.y,
-        width: brVp.x - tlVp.x,
-        height: brVp.y - tlVp.y,
-      };
-    });
-
-    const allROIs = [...inferenceROIs, ...userDefinedROIs];
-    const padding = 0.0001;
-
-    return allROIs.some((roi) => {
-      return (
-        pt.x >= roi.x - padding &&
-        pt.x <= roi.x + roi.width + padding &&
-        pt.y >= roi.y - padding &&
-        pt.y <= roi.y + roi.height + padding
-      );
-    });
+    const allROIs = [
+      ...getAllViewportROIs(viewerInstance.current, loadedROIs),
+      ...userDefinedROIs,
+    ];
+    return isPointInsideROIs(pt, allROIs);
   };
 
   /* ================================
@@ -169,11 +171,8 @@ const AnnotationViewer: React.FC<{
       loadedROIs,
       strokesRef.current,
       currentStrokeRef.current,
-      roi,
-      userDefinedROIs,
-      isSelectingROI,
     );
-  }, [viewerInstance, canvasRef, pngImageRef, roi, isSelectingROI]);
+  }, [viewerInstance, canvasRef, loadedROIs]);
 
   const syncCanvas = useCallback(() => {
     if (!viewerInstance.current || !canvasRef.current) return;
@@ -181,16 +180,43 @@ const AnnotationViewer: React.FC<{
   }, [viewerInstance, canvasRef, redraw]);
 
   useEffect(() => {
-    if (!viewerInstance.current) return;
-    const updateHandler = () => syncCanvas();
-    viewerInstance.current.addHandler('animation', updateHandler);
-    viewerInstance.current.addHandler('zoom', updateHandler);
-    viewerInstance.current.addHandler('pan', updateHandler);
-    syncCanvas();
+    const viewer = viewerInstance.current;
+    if (!viewer) return;
 
-    window.addEventListener('resize', syncCanvas);
-    return () => window.removeEventListener('resize', syncCanvas);
-  }, [viewerInstance, syncCanvas]);
+    const updateHandler = () => {
+      syncCanvas(); // 드로잉 캔버스 위치/크기 맞추기
+      drawROIs(
+        // ROI 실선 다시 그리기
+        viewerInstance.current,
+        roiCanvasRef.current,
+        roi,
+        userDefinedROIs,
+        loadedROIs,
+        isSelectingROI,
+      );
+    };
+
+    viewer.addHandler('animation', updateHandler);
+    viewer.addHandler('zoom', updateHandler);
+    viewer.addHandler('pan', updateHandler);
+    window.addEventListener('resize', updateHandler);
+
+    updateHandler();
+
+    return () => {
+      viewer.removeHandler('animation', updateHandler);
+      viewer.removeHandler('zoom', updateHandler);
+      viewer.removeHandler('pan', updateHandler);
+      window.removeEventListener('resize', updateHandler);
+    };
+  }, [
+    viewerInstance,
+    syncCanvas,
+    roi,
+    userDefinedROIs,
+    loadedROIs,
+    isSelectingROI,
+  ]);
 
   /* ===========================================
    타일소스 로딩 useEffect – param 기반으로 수정
@@ -220,91 +246,6 @@ const AnnotationViewer: React.FC<{
 
     loadTileSource();
   }, [viewerInstance, subProject]);
-
-  /* ================================
-     지우개 기능 구현
-  ================================== */
-  const subtractStroke = (
-    pencilStroke: Stroke,
-    eraserStroke: Stroke,
-    viewerInstance: any,
-    canvasRef: React.RefObject<HTMLCanvasElement | null>,
-  ): Stroke[] => {
-    if (
-      !viewerInstance ||
-      !canvasRef.current ||
-      pencilStroke.points.length === 0
-    ) {
-      return [pencilStroke];
-    }
-
-    const result: Stroke[] = [];
-    let currentSegment: Point[] = [];
-
-    const canvas = canvasRef.current;
-    const ratio = window.devicePixelRatio || 1;
-
-    const eraserCanvas = document.createElement('canvas');
-    eraserCanvas.width = canvas.width;
-    eraserCanvas.height = canvas.height;
-
-    const ctx = eraserCanvas.getContext('2d');
-    if (!ctx) return [pencilStroke];
-
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = eraserStroke.size * ratio;
-    ctx.beginPath();
-
-    const toCanvasPoint = (pt: Point) => {
-      const pixel = viewerInstance.viewport.pixelFromPoint(
-        new OpenSeadragon.Point(pt.x, pt.y),
-      );
-      return {
-        x: pixel.x * ratio,
-        y: pixel.y * ratio,
-      };
-    };
-
-    const first = toCanvasPoint(eraserStroke.points[0]);
-    ctx.moveTo(first.x, first.y);
-
-    for (let i = 1; i < eraserStroke.points.length; i++) {
-      const pt = toCanvasPoint(eraserStroke.points[i]);
-      ctx.lineTo(pt.x, pt.y);
-    }
-
-    ctx.stroke();
-
-    for (const pt of pencilStroke.points) {
-      const canvasPt = toCanvasPoint(pt);
-      const erased = ctx.isPointInStroke?.(canvasPt.x, canvasPt.y) ?? false;
-
-      if (!erased) {
-        currentSegment.push(pt);
-      } else {
-        if (currentSegment.length > 0) {
-          result.push({
-            ...pencilStroke,
-            points: [...currentSegment],
-            isEraser: false,
-          });
-          currentSegment = [];
-        }
-      }
-    }
-
-    if (currentSegment.length > 0) {
-      result.push({
-        ...pencilStroke,
-        points: [...currentSegment],
-        isEraser: false,
-      });
-    }
-
-    strokesRef.current = result;
-    return result.length > 0 ? result : [];
-  };
 
   /* ================================
      마우스 이벤트 핸들러
@@ -404,23 +345,6 @@ const AnnotationViewer: React.FC<{
 
         setUserDefinedROIs((prev) => [...prev, adjustedROI]);
         setROI(null);
-
-        const topLeftImage = tiledImage.viewportToImageCoordinates(
-          new OpenSeadragon.Point(adjustedROI.x, adjustedROI.y),
-        );
-        const bottomRightImage = tiledImage.viewportToImageCoordinates(
-          new OpenSeadragon.Point(
-            adjustedROI.x + adjustedROI.width,
-            adjustedROI.y + adjustedROI.height,
-          ),
-        );
-
-        const imageROI = {
-          x: Math.round(topLeftImage.x),
-          y: Math.round(topLeftImage.y),
-          width: Math.round(bottomRightImage.x - topLeftImage.x),
-          height: Math.round(bottomRightImage.y - topLeftImage.y),
-        };
       }
 
       return;
@@ -445,7 +369,7 @@ const AnnotationViewer: React.FC<{
             pencilStroke,
             eraserStroke,
             viewerInstance.current,
-            canvasRef,
+            canvasRef.current,
           );
           updatedStrokes.push(...segs);
         }
@@ -539,132 +463,6 @@ const AnnotationViewer: React.FC<{
   };
 
   /* ================================
-     동적 분할 개수 계산 및 ROI Export
-  ================================== */
-  const getDivisionCountDynamic = (dimension: number): number => {
-    if (dimension <= 20000) return 1;
-    else if (dimension <= 30000) return 2;
-    else if (dimension <= 40000) return 3;
-    else {
-      return 3 + Math.ceil((dimension - 40000) / 10000);
-    }
-  };
-
-  const exportROIAsPNG = () => {
-    if (!roi || !canvasRef.current || !viewerInstance.current) return;
-    const tiledImage = viewerInstance.current.world.getItemAt(0);
-    if (!tiledImage) return;
-
-    // 뷰포트 좌표를 캔버스 좌표로 변환
-    const topLeftCanvas = viewerInstance.current.viewport.pixelFromPoint(
-      new OpenSeadragon.Point(roi.x, roi.y),
-    );
-    const bottomRightCanvas = viewerInstance.current.viewport.pixelFromPoint(
-      new OpenSeadragon.Point(roi.x + roi.width, roi.y + roi.height),
-    );
-
-    // 변환한 캔버스 좌표를 저장
-    const canvasROI = {
-      x: topLeftCanvas.x,
-      y: topLeftCanvas.y,
-      width: bottomRightCanvas.x - topLeftCanvas.x,
-      height: bottomRightCanvas.y - topLeftCanvas.y,
-    };
-
-    // 조정된 ROI (실선 제외)
-    const adjustedROI = {
-      x: canvasROI.x + BORDER_THICKNESS,
-      y: canvasROI.y + BORDER_THICKNESS,
-      width: canvasROI.width - 2 * BORDER_THICKNESS,
-      height: canvasROI.height - 2 * BORDER_THICKNESS,
-    };
-
-    // 캔버스 좌표(adjustedROI)를 뷰포트 좌표로 변환
-    const topLeftViewport = viewerInstance.current.viewport.pointFromPixel(
-      new OpenSeadragon.Point(adjustedROI.x, adjustedROI.y),
-    );
-    const bottomRightViewport = viewerInstance.current.viewport.pointFromPixel(
-      new OpenSeadragon.Point(
-        adjustedROI.x + adjustedROI.width,
-        adjustedROI.y + adjustedROI.height,
-      ),
-    );
-
-    // 뷰포트 좌표를 이미지 좌표로 변환
-    const topLeftImage = tiledImage.viewportToImageCoordinates(topLeftViewport);
-    const bottomRightImage =
-      tiledImage.viewportToImageCoordinates(bottomRightViewport);
-    const imageROI = {
-      x: Math.round(topLeftImage.x),
-      y: Math.round(topLeftImage.y),
-      width: Math.round(bottomRightImage.x - topLeftImage.x),
-      height: Math.round(bottomRightImage.y - topLeftImage.y),
-    };
-    console.log('Export ROI (이미지 좌표):', imageROI);
-
-    // 전체 export 크기 (이미지 좌표 기준)
-    const totalExportWidth = imageROI.width;
-    const totalExportHeight = imageROI.height;
-
-    // 동적 분할 개수 계산
-    const cols = getDivisionCountDynamic(totalExportWidth);
-    const rows = getDivisionCountDynamic(totalExportHeight);
-
-    // devicePixelRatio 적용
-    const ratio = window.devicePixelRatio || 1;
-
-    // canvas 상의 ROI 영역 (adjustedROI 사용)
-    const sourceROI_X = adjustedROI.x * ratio;
-    const sourceROI_Y = adjustedROI.y * ratio;
-    const sourceROI_W = adjustedROI.width * ratio;
-    const sourceROI_H = adjustedROI.height * ratio;
-
-    // 타일당 출력 크기 (균등 분할)
-    const tileTargetWidth = totalExportWidth / cols;
-    const tileTargetHeight = totalExportHeight / rows;
-
-    // 타일당 canvas 상의 영역 크기 (균등 분할)
-    const sourceTileWidth = sourceROI_W / cols;
-    const sourceTileHeight = sourceROI_H / rows;
-
-    // 각 타일별 이미지 추출 및 저장
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const sourceX = sourceROI_X + c * sourceTileWidth;
-        const sourceY = sourceROI_Y + r * sourceTileHeight;
-
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = Math.round(tileTargetWidth);
-        offscreenCanvas.height = Math.round(tileTargetHeight);
-        const offCtx = offscreenCanvas.getContext('2d');
-        if (!offCtx) continue;
-
-        offCtx.drawImage(
-          canvasRef.current,
-          sourceX,
-          sourceY,
-          sourceTileWidth,
-          sourceTileHeight,
-          0,
-          0,
-          offscreenCanvas.width,
-          offscreenCanvas.height,
-        );
-
-        offscreenCanvas.toBlob((blob) => {
-          if (!blob) return;
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `${r}_${c}.png`;
-          a.click();
-          URL.revokeObjectURL(url);
-        }, 'image/png');
-      }
-    }
-  };
-
-  /* ================================
      Render
   ================================== */
   return (
@@ -683,12 +481,11 @@ const AnnotationViewer: React.FC<{
       ) : (
         <div className="flex w-14 flex-col items-center justify-center" />
       )}
-
       <div className="relative h-[600px] w-[1000px] bg-white">
-        <div ref={viewerRef} className="h-full w-full" />
+        <div ref={viewerRef} className="absolute z-0 h-full w-full" />
         <canvas
           ref={canvasRef}
-          className={`absolute left-0 top-0 z-10 ${
+          className={`absolute inset-0 z-10 ${
             isDrawingMode || isSelectingROI
               ? 'pointer-events-auto'
               : 'pointer-events-none'
@@ -698,8 +495,11 @@ const AnnotationViewer: React.FC<{
           onMouseUp={handleMouseUp}
           onMouseOut={handleMouseUp}
         />
+        <canvas
+          ref={roiCanvasRef}
+          className="pointer-events-none absolute inset-0 z-20"
+        />
       </div>
-
       <AnnotationControlPanel
         onToggleAnnotationMode={handleToggleAnnotationMode}
         onSetMove={handleSetMove}
@@ -708,8 +508,14 @@ const AnnotationViewer: React.FC<{
         onRedo={handleRedo}
         onReset={handleReset}
       />
-
-      <Button onClick={exportROIAsPNG}>export</Button>
+      <Button
+        onClick={() => {
+          if (!viewerInstance.current || !canvasRef.current || !roi) return;
+          exportROIAsPNG(viewerInstance.current, canvasRef.current, roi);
+        }}
+      >
+        Export
+      </Button>{' '}
     </div>
   );
 };
