@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import site.pathos.domain.roi.dto.RoiSaveRequestDto;
+import site.pathos.domain.roi.dto.request.RoiSaveRequestDto;
 import site.pathos.domain.roi.service.RoiService;
 
 import java.util.List;

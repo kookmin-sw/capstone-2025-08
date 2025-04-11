@@ -1,14 +1,13 @@
 package site.pathos.domain.roi.service;
 
 import lombok.RequiredArgsConstructor;
-import org.hibernate.validator.internal.constraintvalidators.bv.time.futureorpresent.FutureOrPresentValidatorForInstant;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.tissueAnnotation.service.TissueAnnotationService;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
-import site.pathos.domain.roi.dto.RoiSaveRequestDto;
+import site.pathos.domain.roi.dto.request.RoiSaveRequestDto;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
 
@@ -27,18 +26,13 @@ public class RoiService {
         AnnotationHistory history = annotationHistoryRepository.findById(annotationHistoryId)
                 .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
 
-        //TODO
-        //updated_at 갱신 로직
-
         for(RoiSaveRequestDto roiDto : rois){
             Roi roi = upsertRoi(history, roiDto);
 
-            // 2. ROI에 해당하는 이미지 리스트 추출
             List<MultipartFile> matchedImages = images.stream()
                     .filter(img -> roiDto.getImageNames().contains(img.getOriginalFilename()))
                     .toList();
 
-            // 3. 해당 ROI에 대한 TissueAnnotation 저장 및 S3 업로드
             tissueAnnotationService.uploadTissueAnnotations(
                     subProjectId,
                     annotationHistoryId,

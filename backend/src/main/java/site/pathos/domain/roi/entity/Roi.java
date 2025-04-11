@@ -5,7 +5,11 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "roi")
@@ -20,6 +24,9 @@ public class Roi {
     @ManyToOne
     @JoinColumn(name = "annotation_history_id", nullable = false)
     private AnnotationHistory annotationHistory;
+
+    @OneToMany(mappedBy = "roi", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<TissueAnnotation> tissueAnnotations = new ArrayList<>();
 
     @Column(name = "x", nullable = false)
     private int x;

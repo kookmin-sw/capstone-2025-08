@@ -1,4 +1,4 @@
-package site.pathos.domain.roi.dto;
+package site.pathos.domain.roi.dto.request;
 
 import lombok.Getter;
 import lombok.Setter;

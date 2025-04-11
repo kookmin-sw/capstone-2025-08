@@ -2,6 +2,7 @@ package site.pathos.global.aws.s3;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import site.pathos.global.aws.config.AwsProperty;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -20,51 +21,30 @@ public class AmazonS3Configuration {
     }
 
     @Bean
-    public StaticCredentialsProvider awsCredentialsProvider() {
-        AwsBasicCredentials creds = AwsBasicCredentials.create(
-                awsProperty.credentials().accessKey(),
-                awsProperty.credentials().secretKey()
-        );
-        return StaticCredentialsProvider.create(creds);
-    }
-
-    @Bean
-    public Region awsRegion() {
-        String regionStr = awsProperty.region();
-        return Region.regions().stream()
-                .filter(r -> r.id().equals(regionStr))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Invalid AWS region: " + regionStr));
-    }
-
-    @Bean
     public S3AsyncClient S3ClientAsync(
-            StaticCredentialsProvider awsCredentialsProvider,
-            Region awsRegion
+            StaticCredentialsProvider awsCredentialsProvider
     ) {
         return S3CrtAsyncClient.builder()
                 .credentialsProvider(awsCredentialsProvider)
-                .region(awsRegion)
+                .region(awsProperty.regionAsEnum())
                 .build();
     }
 
     @Bean
-    public S3Client s3Client(StaticCredentialsProvider credentialsProvider,
-                             Region region) {
+    public S3Client s3Client(StaticCredentialsProvider awsCredentialsProvider) {
         return S3Client.builder()
-                .region(region)
-                .credentialsProvider(credentialsProvider)
+                .region(awsProperty.regionAsEnum())
+                .credentialsProvider(awsCredentialsProvider)
                 .build();
     }
 
     @Bean
     public S3Presigner s3Presigner(
-            StaticCredentialsProvider awsCredentialsProvider,
-            Region awsRegion
+            StaticCredentialsProvider awsCredentialsProvider
     ) {
         return S3Presigner.builder()
                 .credentialsProvider(awsCredentialsProvider)
-                .region(awsRegion)
+                .region(awsProperty.regionAsEnum())
                 .build();
     }
 }
