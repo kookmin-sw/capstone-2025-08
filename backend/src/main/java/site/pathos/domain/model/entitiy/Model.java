@@ -28,7 +28,13 @@ public class Model {
     @Column(name = "model_version", nullable = false)
     private String modelVersion;
 
+    @Column(name = "model_path", nullable = false)
+    private String modelPath;
+
     @CreationTimestamp
     @Column(name = "trained_at", nullable = false)
     private LocalDateTime trainedAt;
+
+
+
 }

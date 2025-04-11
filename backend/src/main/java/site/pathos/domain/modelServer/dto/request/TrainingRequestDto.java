@@ -1,6 +1,4 @@
-package site.pathos.global.aws.sqs.dto.request;
-
-import site.pathos.domain.roi.dto.request.RoiPayload;
+package site.pathos.domain.modelServer.dto.request;
 
 import java.util.List;
 

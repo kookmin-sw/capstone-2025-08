@@ -1,6 +1,7 @@
-package site.pathos.domain.roi.dto.request;
+package site.pathos.domain.modelServer.dto.request;
 
 import site.pathos.domain.annotation.cellAnnotation.dto.CellDetail;
+import site.pathos.domain.roi.dto.request.RoiDetail;
 
 import java.util.List;
 

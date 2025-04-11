@@ -3,6 +3,7 @@ package site.pathos.domain.annotation.tissueAnnotation.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.annotation.tissueAnnotation.entity.AnnotationType;
 import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
 import site.pathos.domain.annotation.tissueAnnotation.repository.TissueAnnotationRepository;
 import site.pathos.domain.roi.entity.Roi;
@@ -10,12 +11,8 @@ import site.pathos.domain.roi.repository.RoiRepository;
 import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.util.ImageUtils;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +42,7 @@ public class TissueAnnotationService {
             TissueAnnotation ta = TissueAnnotation.builder()
                     .roi(roi)
                     .annotationImagePath(key)
+                    .annotationType(AnnotationType.TILE)
                     .build();
 
             tissueAnnotationRepository.save(ta);
@@ -72,6 +70,7 @@ public class TissueAnnotationService {
             TissueAnnotation mergedAnnotation = TissueAnnotation.builder()
                     .roi(roi)
                     .annotationImagePath(mergedKey)
+                    .annotationType(AnnotationType.MERGED)
                     .build();
 
             tissueAnnotationRepository.save(mergedAnnotation);
