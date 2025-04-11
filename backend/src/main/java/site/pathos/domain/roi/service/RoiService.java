@@ -26,18 +26,13 @@ public class RoiService {
         AnnotationHistory history = annotationHistoryRepository.findById(annotationHistoryId)
                 .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
 
-        //TODO
-        //updated_at 갱신 로직
-
         for(RoiSaveRequestDto roiDto : rois){
             Roi roi = upsertRoi(history, roiDto);
 
-            // 2. ROI에 해당하는 이미지 리스트 추출
             List<MultipartFile> matchedImages = images.stream()
                     .filter(img -> roiDto.getImageNames().contains(img.getOriginalFilename()))
                     .toList();
 
-            // 3. 해당 ROI에 대한 TissueAnnotation 저장 및 S3 업로드
             tissueAnnotationService.uploadTissueAnnotations(
                     subProjectId,
                     annotationHistoryId,
