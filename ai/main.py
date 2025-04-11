@@ -23,11 +23,11 @@ def hello_world():
     return {"message": "FastAPI is running!"}
 
 @app.post("/send")
-def send_message(request: Request):
+async def send_message(request: Request):
     settings = app.state.settings
 
     # 요청 바디(JSON) 그대로 받기
-    body = request.json()
+    body = await request.json()
 
     # boto3 클라이언트 생성
     sqs = boto3.client(
