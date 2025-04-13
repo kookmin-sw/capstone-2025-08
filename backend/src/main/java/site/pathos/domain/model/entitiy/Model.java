@@ -34,7 +34,4 @@ public class Model {
     @CreationTimestamp
     @Column(name = "trained_at", nullable = false)
     private LocalDateTime trainedAt;
-
-
-
 }

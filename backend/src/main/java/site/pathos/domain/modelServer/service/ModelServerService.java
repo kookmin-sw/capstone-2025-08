@@ -55,6 +55,7 @@ public class ModelServerService {
                 history.getSubProject().getId(),
                 history.getId(),
                 ModelRequestType.TRAINING_INFERENCE.name(),
+                history.getModelName(),
                 history.getModel().getModelPath(),
                 history.getSubProject().getSvsImageUrl(),
                 roiMessages

@@ -28,10 +28,20 @@ public class AnnotationHistory {
     @JoinColumn(name = "model_id", nullable = false)
     private Model model;
 
+    @Column(name = "model_name", nullable = false)
+    private String modelName;
+
     @CreationTimestamp
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    public void updateModelName(String newName) {
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Model name must not be empty");
+        }
+        this.modelName = newName;
+    }
 }
