@@ -2,6 +2,7 @@ package site.pathos.domain.model.entitiy;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -25,13 +26,17 @@ public class Model {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "model_version", nullable = false)
-    private String modelVersion;
-
     @Column(name = "model_path", nullable = false)
     private String modelPath;
 
     @CreationTimestamp
     @Column(name = "trained_at", nullable = false)
     private LocalDateTime trainedAt;
+
+    @Builder
+    public Model(AnnotationHistory annotationHistory, String name, String modelPath) {
+        this.annotationHistory = annotationHistory;
+        this.name = name;
+        this.modelPath = modelPath;
+    }
 }

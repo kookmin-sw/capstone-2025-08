@@ -9,6 +9,11 @@ import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
 import site.pathos.domain.annotation.tissueAnnotation.repository.TissueAnnotationRepository;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
+import site.pathos.domain.inferenceHistory.service.InferenceHistoryService;
+import site.pathos.domain.model.Repository.ModelRepository;
+import site.pathos.domain.model.entitiy.Model;
+import site.pathos.domain.model.service.ModelService;
+import site.pathos.domain.modelServer.dto.request.TrainingResultRequestDto;
 import site.pathos.domain.modelServer.entity.ModelRequestType;
 import site.pathos.domain.roi.dto.request.RoiDetail;
 import site.pathos.domain.modelServer.dto.request.RoiPayload;
@@ -24,7 +29,9 @@ public class ModelServerService {
     private final AnnotationHistoryRepository annotationHistoryRepository;
     private final TissueAnnotationRepository tissueAnnotationRepository;
 
+    private final ModelService modelService;
     private final SqsService sqsService;
+    private final InferenceHistoryService inferenceHistoryService;
 
     @Transactional
     public void requestTraining(Long annotationHistoryId) {
@@ -35,9 +42,10 @@ public class ModelServerService {
         TrainingRequestDto message = buildTrainingRequest(history);
 
         sqsService.sendTrainingRequest(message);
+        inferenceHistoryService.saveInferenceHistory(history);
     }
 
-    private  TrainingRequestDto buildTrainingRequest(AnnotationHistory history) {
+    private TrainingRequestDto buildTrainingRequest(AnnotationHistory history) {
         List<TissueAnnotation> mergedAnnotations = tissueAnnotationRepository.findMergedByAnnotationHistoryId(history.getId(), AnnotationType.MERGED);
 
         List<RoiPayload> roiMessages = mergedAnnotations.stream().map(ta -> {
@@ -60,5 +68,23 @@ public class ModelServerService {
                 history.getSubProject().getSvsImageUrl(),
                 roiMessages
         );
+    }
+
+    @Transactional
+    public void resultTraining(TrainingResultRequestDto resultRequestDto){
+        AnnotationHistory history = annotationHistoryRepository
+                .findWithSubProjectAndModelById(resultRequestDto.annotation_history_id())
+                .orElseThrow(() -> new RuntimeException("not found"));
+
+         modelService.saveModel(history, resultRequestDto.model_name(), resultRequestDto.model_path());
+
+        //TODO 모델서버에서 기능 추가시 수정 필요
+        inferenceHistoryService.updateInferenceHistory(resultRequestDto.annotation_history_id(),
+                0,
+                0,
+                0
+                );
+
+        //roi 새로 저장
     }
 }
