@@ -19,6 +19,7 @@ import site.pathos.domain.roi.dto.request.RoiDetail;
 import site.pathos.domain.modelServer.dto.request.RoiPayload;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.modelServer.dto.request.TrainingRequestDto;
+import site.pathos.domain.roi.service.RoiService;
 import site.pathos.global.aws.sqs.service.SqsService;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class ModelServerService {
     private final ModelService modelService;
     private final SqsService sqsService;
     private final InferenceHistoryService inferenceHistoryService;
+    private final RoiService roiService;
 
     @Transactional
     public void requestTraining(Long annotationHistoryId) {
@@ -76,7 +78,7 @@ public class ModelServerService {
                 .findWithSubProjectAndModelById(resultRequestDto.annotation_history_id())
                 .orElseThrow(() -> new RuntimeException("not found"));
 
-         modelService.saveModel(history, resultRequestDto.model_name(), resultRequestDto.model_path());
+        modelService.saveModel(history, resultRequestDto.model_name(), resultRequestDto.model_path());
 
         //TODO 모델서버에서 기능 추가시 수정 필요
         inferenceHistoryService.updateInferenceHistory(resultRequestDto.annotation_history_id(),
@@ -86,5 +88,6 @@ public class ModelServerService {
                 );
 
         //roi 새로 저장
+        roiService.saveResultRois(resultRequestDto.annotation_history_id(), resultRequestDto.roi());
     }
 }

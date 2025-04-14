@@ -22,7 +22,7 @@ public class ModelServerController {
 
     @PostMapping("/training/result")
     public ResponseEntity<Void> responseTraining(@RequestBody TrainingResultRequestDto resultRequestDto){
-
+        modelServerService.resultTraining(resultRequestDto);
         return ResponseEntity.ok().build();
     }
 }

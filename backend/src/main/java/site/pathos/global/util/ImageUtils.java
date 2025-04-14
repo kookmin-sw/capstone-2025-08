@@ -53,7 +53,6 @@ public class ImageUtils {
         else return 3 + (int) Math.ceil((dimension - 40000) / 10000.0);
     }
 
-    // 이미지 자르기 메서드
     public static List<BufferedImage> sliceImageByROI(BufferedImage image, int roiX, int roiY, int roiWidth, int roiHeight) {
         List<BufferedImage> tiles = new ArrayList<>();
 
