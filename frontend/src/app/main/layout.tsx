@@ -15,12 +15,12 @@ export default function MainLayout({
   // /main/projects/annotation/ 경로일 경우 사이드바를 숨김
   const hideSidebar = pathname.startsWith('/main/projects/annotation/');
 
-  return (
-    <div>
-      <SidebarProvider open={!hideSidebar}>
-        {!hideSidebar && <AppSidebar />}
-        <main>{children}</main>
-      </SidebarProvider>
-    </div>
+  return hideSidebar ? (
+    <main>{children}</main>
+  ) : (
+    <SidebarProvider open>
+      <AppSidebar />
+      <main>{children}</main>
+    </SidebarProvider>
   );
 }
