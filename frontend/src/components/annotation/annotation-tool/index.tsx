@@ -13,10 +13,10 @@ import { HexColorPicker } from 'react-colorful';
 interface AnnotationToolProps {
   modelType: string;
   isActive: boolean;
+  activeTool: 'circle' | 'polygon' | 'paintbrush' | 'eraser' | null;
+  onSelectTool: (tool: 'circle' | 'polygon' | 'paintbrush' | 'eraser') => void;
   penColor: string;
   penSize: number;
-  onSelectPen: () => void;
-  onToggleEraser: () => void;
   onChangePenColor: (color: string) => void;
   onChangePenSize: (size: number) => void;
 }
@@ -24,14 +24,13 @@ interface AnnotationToolProps {
 const AnnotationTool: React.FC<AnnotationToolProps> = ({
   modelType,
   isActive,
+  activeTool,
+  onSelectTool,
   penColor,
   penSize,
-  onSelectPen,
-  onToggleEraser,
   onChangePenColor,
   onChangePenSize,
 }) => {
-  const [activeTool, setActiveTool] = useState<string | null>('paintbrush');
   const [penSizeMenuOpen, setPenSizeMenuOpen] = useState(false);
   const [colorMenuOpen, setColorMenuOpen] = useState(false);
 
@@ -64,15 +63,6 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
 
   if (!isActive) return null;
 
-  const handleSelectTool = (tool: string) => {
-    setActiveTool(tool);
-    if (tool === 'eraser') {
-      onToggleEraser();
-    } else {
-      onSelectPen();
-    }
-  };
-
   const renderToolButtons = () => {
     switch (modelType) {
       case 'CELL':
@@ -80,7 +70,7 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
           <Button
             variant={'ghost'}
             size={'icon'}
-            onClick={() => handleSelectTool('circle')}
+            onClick={() => onSelectTool('circle')}
             className={activeTool === 'circle' ? 'bg-primary text-white' : ''}
           >
             <CircleDot />
@@ -93,7 +83,7 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
             <Button
               variant={'ghost'}
               size={'icon'}
-              onClick={() => handleSelectTool('circle')}
+              onClick={() => onSelectTool('circle')}
               className={activeTool === 'circle' ? 'bg-primary text-white' : ''}
             >
               <CircleDot />
@@ -101,9 +91,9 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
             <Button
               variant={'ghost'}
               size={'icon'}
-              onClick={() => handleSelectTool('waypoints')}
+              onClick={() => onSelectTool('polygon')}
               className={
-                activeTool === 'waypoints' ? 'bg-primary text-white' : ''
+                activeTool === 'polygon' ? 'bg-primary text-white' : ''
               }
             >
               <Waypoints />
@@ -111,7 +101,7 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
             <Button
               variant={'ghost'}
               size={'icon'}
-              onClick={() => handleSelectTool('paintbrush')}
+              onClick={() => onSelectTool('paintbrush')}
               className={
                 activeTool === 'paintbrush' ? 'bg-primary text-white' : ''
               }
@@ -121,7 +111,7 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
             <Button
               variant={'ghost'}
               size={'icon'}
-              onClick={() => handleSelectTool('eraser')}
+              onClick={() => onSelectTool('eraser')}
               className={activeTool === 'eraser' ? 'bg-primary text-white' : ''}
             >
               <Eraser />

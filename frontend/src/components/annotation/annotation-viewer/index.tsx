@@ -17,7 +17,7 @@ import {
   drawStroke,
   subtractStroke,
 } from '@/utils/canvas-drawing-utils';
-import { Point, Stroke, ROI, LoadedROI } from '@/types/annotation';
+import { Point, Stroke, ROI, LoadedROI, Polygon } from '@/types/annotation';
 import { Button } from '@/components/ui/button';
 import { SubProject } from '@/types/project-schema';
 import { dummyInferenceResult } from '@/data/dummy';
@@ -26,6 +26,8 @@ import AnnotationSubProjectSlider from '@/components/annotation/annotation-subpr
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
+
+type Tool = 'circle' | 'polygon' | 'paintbrush' | 'eraser' | null;
 
 const AnnotationViewer: React.FC<{
   subProject: SubProject;
@@ -48,6 +50,11 @@ const AnnotationViewer: React.FC<{
   const [penColor, setPenColor] = useState<string>('#FF0000');
   const [penSize, setPenSize] = useState<number>(10);
 
+  // Polygon 관련 상태
+  const polygonsRef = useRef<Polygon[]>([]);
+  const currentPolygonRef = useRef<Polygon | null>(null);
+  const [mousePosition, setMousePosition] = useState<Point | null>(null);
+
   // ROI 관련 상태
   const roiCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isSelectingROI, setIsSelectingROI] = useState<boolean>(false);
@@ -60,6 +67,24 @@ const AnnotationViewer: React.FC<{
   const [undoStack, setUndoStack] = useState<Stroke[][]>([]);
   const [redoStack, setRedoStack] = useState<Stroke[][]>([]);
   const isRedoingRef = useRef(false);
+
+  // 모델 타입별 디폴트 어노테이션 도구 (셀/멀티 -> circle, 티슈 -> ploygon)
+  const getDefaultToolByModel = (modelType: string): Tool => {
+    switch (modelType) {
+      case 'CELL':
+      case 'MULTI':
+        return 'circle';
+      case 'TISSUE':
+        return 'polygon';
+      default:
+        return null;
+    }
+  };
+
+  // 사용할 어노테이션 도구
+  const [activeTool, setActiveTool] = useState<Tool>(() =>
+    getDefaultToolByModel(modelType),
+  );
 
   /* ================================
       초기화 및 타일소스 로딩
@@ -173,8 +198,11 @@ const AnnotationViewer: React.FC<{
       loadedROIs,
       strokesRef.current,
       currentStrokeRef.current,
+      polygonsRef.current,
+      currentPolygonRef.current,
+      mousePosition,
     );
-  }, [viewerInstance, canvasRef, loadedROIs]);
+  }, [viewerInstance, canvasRef, loadedROIs, mousePosition]);
 
   const syncCanvas = useCallback(() => {
     if (!viewerInstance.current || !canvasRef.current) return;
@@ -257,7 +285,6 @@ const AnnotationViewer: React.FC<{
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-
     const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
       new OpenSeadragon.Point(x, y),
     );
@@ -265,21 +292,64 @@ const AnnotationViewer: React.FC<{
     if (isSelectingROI) {
       roiStartRef.current = viewportPoint;
       setROI({ x: viewportPoint.x, y: viewportPoint.y, width: 0, height: 0 });
-    } else if (isDrawingMode) {
-      const viewportPoint = viewerInstance.current.viewport.pointFromPixel(
-        new OpenSeadragon.Point(x, y),
-      );
+      redraw();
+      return;
+    }
 
+    if (isDrawingMode) {
       if (!isInsideAnyROI(viewportPoint)) return;
 
-      currentStrokeRef.current = {
-        points: [{ x: viewportPoint.x, y: viewportPoint.y }],
-        color: isEraserMode ? 'rgba(0,0,0,0)' : penColor,
-        size: penSize,
-        isEraser: isEraserMode,
-      };
+      switch (activeTool) {
+        case 'paintbrush':
+        case 'eraser':
+          currentStrokeRef.current = {
+            points: [{ x: viewportPoint.x, y: viewportPoint.y }],
+            color: activeTool === 'eraser' ? 'rgba(0,0,0,0)' : penColor,
+            size: penSize,
+            isEraser: activeTool === 'eraser',
+          };
+          redraw();
+          break;
+
+        case 'polygon':
+          if (!currentPolygonRef.current) {
+            currentPolygonRef.current = {
+              points: [],
+              closed: false,
+              color: penColor,
+            };
+          }
+          const points = currentPolygonRef.current.points;
+          if (points.length > 2) {
+            const first = points[0];
+            const firstPixel = viewerInstance.current.viewport.pixelFromPoint(
+              new OpenSeadragon.Point(first.x, first.y),
+            );
+            const mousePixel = viewerInstance.current.viewport.pixelFromPoint(
+              new OpenSeadragon.Point(viewportPoint.x, viewportPoint.y),
+            );
+            const dist = Math.hypot(
+              firstPixel.x - mousePixel.x,
+              firstPixel.y - mousePixel.y,
+            );
+            if (dist < 10) {
+              currentPolygonRef.current.points.push(first);
+              currentPolygonRef.current.closed = true;
+              polygonsRef.current.push(currentPolygonRef.current);
+              currentPolygonRef.current = null;
+              setMousePosition(null);
+              redraw();
+              return;
+            }
+          }
+          currentPolygonRef.current.points.push(viewportPoint);
+          redraw();
+          break;
+
+        default:
+          break;
+      }
     }
-    redraw();
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -399,9 +469,11 @@ const AnnotationViewer: React.FC<{
   /* ================================
      어노테이션 도구 및 핸들러
   ================================== */
-  const handleToggleEraser = () => setIsEraserMode((prev) => !prev);
-
-  const handleSelectPen = () => setIsEraserMode(false);
+  // 어노테이션 도구 선택 함수
+  const handleSelectTool = (tool: Tool) => {
+    setActiveTool(tool);
+    console.log('어노테이션 도구: ', activeTool);
+  };
 
   const handleToggleAnnotationMode = (): boolean => {
     if (!isDrawingMode && !roi && loadedROIs.length === 0) {
@@ -439,6 +511,8 @@ const AnnotationViewer: React.FC<{
     setRedoStack([]);
     strokesRef.current = [];
     currentStrokeRef.current = null;
+    polygonsRef.current = [];
+    currentPolygonRef.current = null;
     setROI(null);
     redraw();
   };
@@ -464,6 +538,19 @@ const AnnotationViewer: React.FC<{
     isRedoingRef.current = false;
   };
 
+  // ESC로 polygon 모드 취소
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        currentPolygonRef.current = null;
+        setMousePosition(null);
+        redraw();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [redraw]);
+
   /* ================================
      Render
   ================================== */
@@ -477,17 +564,17 @@ const AnnotationViewer: React.FC<{
             <AnnotationTool
               modelType={modelType}
               isActive={isDrawingMode}
+              activeTool={activeTool}
+              onSelectTool={handleSelectTool}
               penColor={penColor}
               penSize={penSize}
-              onToggleEraser={handleToggleEraser}
-              onSelectPen={handleSelectPen}
               onChangePenColor={setPenColor}
               onChangePenSize={setPenSize}
             />
           ) : (
             <div className="flex w-14 flex-col items-center justify-center" />
           )}
-          <div className="relative h-[550px] w-[900px] border bg-white">
+          <div className="relative h-[600px] w-[1000px] bg-white">
             <div ref={viewerRef} className="absolute z-0 h-full w-full" />
             <canvas
               ref={canvasRef}

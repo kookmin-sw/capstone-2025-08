@@ -1,7 +1,8 @@
 import OpenSeadragon from 'openseadragon';
 import React from 'react';
-import { Stroke, LoadedROI } from '@/types/annotation';
+import { Stroke, LoadedROI, Polygon, Point } from '@/types/annotation';
 import { drawStroke } from '@/utils/canvas-drawing-utils';
+import { drawPolygon } from '@/utils/canvas-ploygon-utils';
 
 /**
  * 뷰어와 캔버스 동기화
@@ -40,6 +41,9 @@ export const redrawCanvas = (
   loadedROIs: LoadedROI[],
   strokes: Stroke[],
   currentStroke: Stroke | null,
+  polygons: Polygon[],
+  currentPolygon: Polygon | null,
+  mousePosition?: Point | null,
 ) => {
   if (!canvasRef.current || !viewerInstance) return;
 
@@ -102,4 +106,30 @@ export const redrawCanvas = (
       drawStroke(stroke, viewerInstance, ctx);
       ctx.restore();
     });
+
+  // 완성된 폴리곤들 먼저 그리기
+  polygons.forEach((polygon) => {
+    if (polygon.closed) {
+      drawPolygon(
+        viewerInstance,
+        ctx,
+        polygon.points,
+        null,
+        polygon.color,
+        true,
+      );
+    }
+  });
+
+  // 지금 그리는 중인 미완성 폴리곤 그리기
+  if (currentPolygon) {
+    drawPolygon(
+      viewerInstance,
+      ctx,
+      currentPolygon.points,
+      mousePosition,
+      currentPolygon.color,
+      false,
+    );
+  }
 };
