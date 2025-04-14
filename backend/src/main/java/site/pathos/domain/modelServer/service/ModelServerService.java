@@ -78,7 +78,7 @@ public class ModelServerService {
                 .findWithSubProjectAndModelById(resultRequestDto.annotation_history_id())
                 .orElseThrow(() -> new RuntimeException("not found"));
 
-        modelService.saveModel(history, resultRequestDto.model_name(), resultRequestDto.model_path());
+        modelService.saveModel(history, history.getModelName(), resultRequestDto.model_path());
 
         //TODO 모델서버에서 기능 추가시 수정 필요
         inferenceHistoryService.updateInferenceHistory(resultRequestDto.annotation_history_id(),
