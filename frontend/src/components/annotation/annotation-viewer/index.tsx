@@ -574,7 +574,7 @@ const AnnotationViewer: React.FC<{
           ) : (
             <div className="flex w-14 flex-col items-center justify-center" />
           )}
-          <div className="relative h-[600px] w-[1000px] bg-white">
+          <div className="relative h-[550px] w-[900px] border bg-white">
             <div ref={viewerRef} className="absolute z-0 h-full w-full" />
             <canvas
               ref={canvasRef}
