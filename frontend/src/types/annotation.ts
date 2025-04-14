@@ -10,6 +10,12 @@ export interface Stroke {
   isEraser?: boolean;
 }
 
+export interface Polygon {
+  points: Point[];
+  closed: boolean;
+  color: string;
+}
+
 export interface ROI {
   x: number;
   y: number;
