@@ -22,11 +22,9 @@ jobs:
 
       - name: Setup application.yml
         run: |
-          cd ./backend/src/main/resources
+          mkdir -p ./backend/src/main/resources
           
-          touch ./application.yml
-          
-          echo "${{ secrets.APPLICATION_YML }}" >> ./application.yml
+          echo "${{ secrets.APPLICATION_YML }}" > ./backend/src/main/resources/application.yml
 
         shell: bash
 
