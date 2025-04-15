@@ -2,6 +2,7 @@ package site.pathos.domain.annotation.tissueAnnotation.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.tissueAnnotation.entity.AnnotationType;
 import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
@@ -78,5 +79,16 @@ public class TissueAnnotationService {
         } catch (Exception e) {
             throw new RuntimeException("병합 이미지 업로드 실패", e);
         }
+    }
+
+    @Transactional
+    public void saveResultAnnotation(Roi roi, String imagePath) {
+        TissueAnnotation annotation = TissueAnnotation.builder()
+                .roi(roi)
+                .annotationImagePath(imagePath)
+                .annotationType(AnnotationType.RESULT)
+                .build();
+
+        tissueAnnotationRepository.save(annotation);
     }
 }

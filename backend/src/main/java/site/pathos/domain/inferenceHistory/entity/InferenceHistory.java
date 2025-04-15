@@ -2,9 +2,11 @@ package site.pathos.domain.inferenceHistory.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 
 import java.time.LocalDateTime;
 
@@ -20,7 +22,7 @@ public class InferenceHistory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "annotation_history_id", nullable = false)
-    private InferenceHistory inferenceHistory;
+    private AnnotationHistory annotationHistory;
 
     @Column(name = "accuracy")
     private Float accuracy;
@@ -29,7 +31,7 @@ public class InferenceHistory {
     private Float loss;
 
     @Column(name = "loop_performance")
-    private Float loop_performance;
+    private Float loopPerformance;
 
     @CreationTimestamp
     @Column(name = "created_at")
@@ -37,4 +39,16 @@ public class InferenceHistory {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    @Builder
+    public InferenceHistory(AnnotationHistory annotationHistory){
+        this.annotationHistory = annotationHistory;
+    }
+
+    public void updateResult(float accuracy, float loss, float loopPerformance) {
+        this.accuracy = accuracy;
+        this.loss = loss;
+        this.loopPerformance = loopPerformance;
+        this.completedAt = LocalDateTime.now();
+    }
 }
