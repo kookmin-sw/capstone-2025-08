@@ -22,7 +22,7 @@ jobs:
 
       - name: Setup application.yml
         run: |
-          cd backend/src/main/resources
+          cd ./backend/src/main/resources
           
           touch ./application.yml
           
