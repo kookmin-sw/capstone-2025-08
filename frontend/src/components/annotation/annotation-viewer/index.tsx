@@ -46,7 +46,6 @@ const AnnotationViewer: React.FC<{
   const strokesRef = useRef<Stroke[]>([]);
   const currentStrokeRef = useRef<Stroke | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState<boolean>(false);
-  const [isEraserMode, setIsEraserMode] = useState<boolean>(false);
   const [penColor, setPenColor] = useState<string>('#FF0000');
   const [penSize, setPenSize] = useState<number>(10);
 
@@ -389,6 +388,9 @@ const AnnotationViewer: React.FC<{
       ctx.save();
       drawStroke(currentStrokeRef.current, viewerInstance.current, ctx);
       ctx.restore();
+    } else if (activeTool === 'polygon') {
+      setMousePosition(viewportPoint);
+      redraw();
     }
   };
 
