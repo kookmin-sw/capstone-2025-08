@@ -2,6 +2,7 @@ package site.pathos.domain.annotationHistory.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -37,6 +38,13 @@ public class AnnotationHistory {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    @Builder
+    public AnnotationHistory(SubProject subProject, Model model, String modelName) {
+        this.subProject = subProject;
+        this.model = model;
+        this.modelName = modelName;
+    }
 
     public void updateModelName(String newName) {
         if (newName == null || newName.trim().isEmpty()) {
