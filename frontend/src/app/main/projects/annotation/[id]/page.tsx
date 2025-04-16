@@ -51,7 +51,7 @@ export default function ProjectAnnotationPage() {
     return <p>이 프로젝트에는 서브프로젝트가 없습니다.</p>;
 
   return (
-    <div className="space-y-4 p-6">
+    <div>
       {/* 선택된 서브프로젝트가 있을 때만 뷰어 표시 */}
       {selected ? (
         <AnnotationViewer
@@ -62,20 +62,20 @@ export default function ProjectAnnotationPage() {
         <p>서브프로젝트를 선택하세요.</p>
       )}
 
-      {/* 서브프로젝트 선택 버튼 */}
-      <div className="mt-20 flex gap-2">
-        {subProjects.map((sp) => (
-          <button
-            key={sp.id}
-            className={`rounded border px-3 py-1 ${
-              selected?.id === sp.id ? 'bg-blue-600 text-white' : 'bg-white'
-            }`}
-            onClick={() => setSelected(sp)}
-          >
-            Sub #{sp.id}
-          </button>
-        ))}
-      </div>
+      {/*/!* 서브프로젝트 선택 버튼 *!/*/}
+      {/*<div className="mt-20 flex gap-2">*/}
+      {/*  {subProjects.map((sp) => (*/}
+      {/*    <button*/}
+      {/*      key={sp.id}*/}
+      {/*      className={`rounded border px-3 py-1 ${*/}
+      {/*        selected?.id === sp.id ? 'bg-blue-600 text-white' : 'bg-white'*/}
+      {/*      }`}*/}
+      {/*      onClick={() => setSelected(sp)}*/}
+      {/*    >*/}
+      {/*      Sub #{sp.id}*/}
+      {/*    </button>*/}
+      {/*  ))}*/}
+      {/*</div>*/}
     </div>
   );
 }

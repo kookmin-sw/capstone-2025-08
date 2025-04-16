@@ -21,6 +21,8 @@ import { Point, Stroke, ROI, LoadedROI, Polygon } from '@/types/annotation';
 import { Button } from '@/components/ui/button';
 import { SubProject } from '@/types/project-schema';
 import { dummyInferenceResult } from '@/data/dummy';
+import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
+import AnnotationSubProjectSlider from '@/components/annotation/annotation-subproject-slider';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
@@ -555,56 +557,64 @@ const AnnotationViewer: React.FC<{
      Render
   ================================== */
   return (
-    <div className="flex w-full flex-row items-center justify-between space-x-3 p-10">
-      {isDrawingMode ? (
-        <AnnotationTool
-          modelType={modelType}
-          isActive={isDrawingMode}
-          activeTool={activeTool}
-          onSelectTool={handleSelectTool}
-          penColor={penColor}
-          penSize={penSize}
-          onChangePenColor={setPenColor}
-          onChangePenSize={setPenSize}
-        />
-      ) : (
-        <div className="flex w-14 flex-col items-center justify-center" />
-      )}
-      <div className="relative h-[600px] w-[1000px] bg-white">
-        <div ref={viewerRef} className="absolute z-0 h-full w-full" />
-        <canvas
-          ref={canvasRef}
-          className={`absolute inset-0 z-10 ${
-            isDrawingMode || isSelectingROI
-              ? 'pointer-events-auto'
-              : 'pointer-events-none'
-          }`}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseOut={handleMouseUp}
-        />
-        <canvas
-          ref={roiCanvasRef}
-          className="pointer-events-none absolute inset-0 z-20"
-        />
+    <div className="flex h-screen w-full flex-row">
+      <AnnotationSidebar />
+
+      <div className="flex w-full flex-col">
+        <div className="my-10 flex w-full flex-row items-center justify-between space-x-3 px-10">
+          {isDrawingMode ? (
+            <AnnotationTool
+              modelType={modelType}
+              isActive={isDrawingMode}
+              activeTool={activeTool}
+              onSelectTool={handleSelectTool}
+              penColor={penColor}
+              penSize={penSize}
+              onChangePenColor={setPenColor}
+              onChangePenSize={setPenSize}
+            />
+          ) : (
+            <div className="flex w-14 flex-col items-center justify-center" />
+          )}
+          <div className="relative h-[550px] w-[900px] border bg-white">
+            <div ref={viewerRef} className="absolute z-0 h-full w-full" />
+            <canvas
+              ref={canvasRef}
+              className={`absolute inset-0 z-10 ${
+                isDrawingMode || isSelectingROI
+                  ? 'pointer-events-auto'
+                  : 'pointer-events-none'
+              }`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseOut={handleMouseUp}
+            />
+            <canvas
+              ref={roiCanvasRef}
+              className="pointer-events-none absolute inset-0 z-20"
+            />
+          </div>
+          <AnnotationControlPanel
+            onToggleAnnotationMode={handleToggleAnnotationMode}
+            onSetMove={handleSetMove}
+            onSelectROI={handleSelectROI}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onReset={handleReset}
+          />
+          {/*<Button*/}
+          {/*  onClick={() => {*/}
+          {/*    if (!viewerInstance.current || !canvasRef.current || !roi) return;*/}
+          {/*    exportROIAsPNG(viewerInstance.current, canvasRef.current, roi);*/}
+          {/*  }}*/}
+          {/*>*/}
+          {/*  Export*/}
+          {/*</Button>{' '}*/}
+        </div>
+
+        <AnnotationSubProjectSlider />
       </div>
-      <AnnotationControlPanel
-        onToggleAnnotationMode={handleToggleAnnotationMode}
-        onSetMove={handleSetMove}
-        onSelectROI={handleSelectROI}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onReset={handleReset}
-      />
-      <Button
-        onClick={() => {
-          if (!viewerInstance.current || !canvasRef.current || !roi) return;
-          exportROIAsPNG(viewerInstance.current, canvasRef.current, roi);
-        }}
-      >
-        Export
-      </Button>{' '}
     </div>
   );
 };

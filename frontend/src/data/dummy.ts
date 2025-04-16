@@ -10,6 +10,24 @@ import {
   CellAnnotation,
 } from '@/types/project-schema';
 
+// 어노테이션 히스토리 더미 데이터 (배열로 변경)
+export const dummyAnnotationHistory: AnnotationHistory[] = [
+  {
+    id: 88,
+    subProjectId: 42,
+    modelId: 5,
+    startedAt: '2025-03-31T12:30:00Z',
+    completeAt: '2025-04-01T03:00:00Z',
+  },
+  {
+    id: 89,
+    subProjectId: 42,
+    modelId: 5,
+    startedAt: '2025-04-01T13:00:00Z',
+    completeAt: '2025-04-01T14:00:00Z',
+  },
+];
+
 // 프로젝트 더미 데이터
 export const dummyProjects: Project[] = [
   {
@@ -21,6 +39,9 @@ export const dummyProjects: Project[] = [
     modelId: 5,
     createdAt: '2025-03-31T12:00:00Z',
     updatedAt: '2025-03-31T12:00:00Z',
+    history: dummyAnnotationHistory,
+    modelType: 'TISSUE' as ModelType,
+    modelName: 'Example Model',
   },
   {
     id: 2,
@@ -31,6 +52,9 @@ export const dummyProjects: Project[] = [
     modelId: 6,
     createdAt: '2025-04-01T12:00:00Z',
     updatedAt: '2025-04-01T12:00:00Z',
+    history: dummyAnnotationHistory,
+    modelType: 'MULTI' as ModelType,
+    modelName: 'Example Model2',
   },
 ];
 
@@ -47,15 +71,6 @@ export const dummySubProject: SubProject[] = [
     svsPath: '/svs_example.svs',
   },
 ];
-
-// 어노테이션 히스토리 더미 데이터
-export const dummyAnnotationHistory: AnnotationHistory = {
-  id: 88,
-  subProjectId: 42,
-  modelId: 5,
-  startedAt: '2025-03-31T12:30:00Z',
-  completeAt: '2025-04-01T03:00:00Z',
-};
 
 // 인퍼런스 히스토리 더미 데이터
 export const dummyInferenceHistory: InferenceHistory = {
