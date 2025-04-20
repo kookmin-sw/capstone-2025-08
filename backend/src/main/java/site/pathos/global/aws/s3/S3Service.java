@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.global.aws.config.AwsProperty;
-import site.pathos.global.util.ImageUtils;
+import site.pathos.global.util.image.ImageUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -13,8 +13,10 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
+import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 
 @Slf4j
@@ -71,5 +73,22 @@ public class S3Service {
                 .build();
 
         return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    public InputStream downloadFile(String key) {
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(awsProperty.s3().bucket())
+                .key(key)
+                .build();
+
+        return s3Client.getObject(getObjectRequest);
+    }
+
+    public BufferedImage downloadBufferedImage(String key) {
+        try (InputStream inputStream = downloadFile(key)) {
+            return ImageIO.read(inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException("S3 이미지 다운로드 실패: " + key, e);
+        }
     }
 }

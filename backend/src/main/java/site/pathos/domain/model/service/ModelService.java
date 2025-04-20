@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.model.Repository.ModelRepository;
-import site.pathos.domain.model.entitiy.Model;
+import site.pathos.domain.model.entity.Model;
 
 @Service
 @RequiredArgsConstructor
