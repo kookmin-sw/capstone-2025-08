@@ -1,4 +1,4 @@
-package site.pathos.global.util;
+package site.pathos.global.util.image;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -53,8 +53,8 @@ public class ImageUtils {
         else return 3 + (int) Math.ceil((dimension - 40000) / 10000.0);
     }
 
-    public static List<BufferedImage> sliceImageByROI(BufferedImage image, int roiX, int roiY, int roiWidth, int roiHeight) {
-        List<BufferedImage> tiles = new ArrayList<>();
+    public static List<ImageTile> sliceImageByROIWithPosition(BufferedImage image, int roiX, int roiY, int roiWidth, int roiHeight) {
+        List<ImageTile> tiles = new ArrayList<>();
 
         int cols = getDivisionCountDynamic(roiWidth);
         int rows = getDivisionCountDynamic(roiHeight);
@@ -75,7 +75,7 @@ public class ImageUtils {
                 int tileWidth = baseTileWidth + (col < widthRemainder ? 1 : 0);
 
                 BufferedImage tile = image.getSubimage(xOffset, yOffset, tileWidth, tileHeight);
-                tiles.add(tile);
+                tiles.add(new ImageTile(row, col, tile));
 
                 xOffset += tileWidth;
             }
