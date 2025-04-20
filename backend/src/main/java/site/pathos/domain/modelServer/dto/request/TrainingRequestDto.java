@@ -1,5 +1,7 @@
 package site.pathos.domain.modelServer.dto.request;
 
+import site.pathos.domain.roi.dto.request.RoiPayload;
+
 import java.util.List;
 
 public record TrainingRequestDto(
