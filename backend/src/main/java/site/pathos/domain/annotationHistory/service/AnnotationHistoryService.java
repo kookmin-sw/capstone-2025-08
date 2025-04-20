@@ -11,7 +11,6 @@ import site.pathos.domain.annotationHistory.dto.response.AnnotationHistoryRespon
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
 import site.pathos.domain.model.Repository.ModelRepository;
-import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.roi.dto.request.RoiDetail;
 import site.pathos.domain.roi.dto.request.RoiPayload;
 import site.pathos.domain.roi.entity.Roi;
@@ -27,7 +26,6 @@ public class AnnotationHistoryService {
     private final AnnotationHistoryRepository annotationHistoryRepository;
     private final RoiRepository roiRepository;
     private final CellAnnotationRepository cellAnnotationRepository;
-    private final ModelRepository modelRepository;
 
     private final S3Service s3Service;
 
@@ -46,9 +44,6 @@ public class AnnotationHistoryService {
 
         // ROI만 조회 (TissueAnnotation, Cell은 나중에 개별 조회)
         List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(history.getId());
-
-        Model model = modelRepository.findByAnnotationHistoryId(historyId)
-                .orElseThrow(() -> new RuntimeException("Model not found"));
 
         List<RoiPayload> roiPayloads = rois.stream()
                 .map(roi -> {
@@ -74,7 +69,6 @@ public class AnnotationHistoryService {
         return new AnnotationHistoryResponseDto(
                 history.getId(),
                 history.getModelName(),
-                model.getModelPath(),
                 roiPayloads
         );
     }

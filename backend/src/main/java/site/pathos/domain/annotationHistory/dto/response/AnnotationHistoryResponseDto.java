@@ -6,6 +6,5 @@ import java.util.List;
 public record AnnotationHistoryResponseDto(
         Long id,
         String modelName,
-        String modelPath,
         List<RoiPayload> roiPayloads
 ) { }
