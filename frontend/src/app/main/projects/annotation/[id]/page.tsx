@@ -1,12 +1,12 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   dummyProjects,
   dummySubProject,
-  dummyInferenceResult,
+  dummyInferenceResults,
 } from '@/data/dummy';
 import { Project, SubProject } from '@/types/project-schema';
 
@@ -15,8 +15,10 @@ const AnnotationViewer = dynamic(
   () => import('@/components/annotation/annotation-viewer'),
   { ssr: false },
 ) as unknown as React.FC<{
-  subProject: SubProject | null; // ← 선택되지 않았을 땐 null
-  inferenceResult: typeof dummyInferenceResult;
+  subProject: SubProject | null;
+  setSubProject: (sp: SubProject) => void;
+  subProjects: SubProject[];
+  inferenceResult: (typeof dummyInferenceResults)[number] | null;
 }>;
 
 export default function ProjectAnnotationPage() {
@@ -45,6 +47,15 @@ export default function ProjectAnnotationPage() {
     setReady(true);
   }, [id]);
 
+  const selectedInferenceResult = useMemo(() => {
+    if (!selected) return null;
+
+    return (
+      dummyInferenceResults.find((res) => res.subProjectId === selected.id) ??
+      null
+    );
+  }, [selected]);
+
   if (!ready) return <p>Loading…</p>;
   if (!project) return <p>잘못된 프로젝트 ID입니다.</p>;
   if (subProjects.length === 0)
@@ -56,26 +67,13 @@ export default function ProjectAnnotationPage() {
       {selected ? (
         <AnnotationViewer
           subProject={selected}
-          inferenceResult={dummyInferenceResult}
+          setSubProject={setSelected}
+          subProjects={subProjects}
+          inferenceResult={selectedInferenceResult}
         />
       ) : (
         <p>서브프로젝트를 선택하세요.</p>
       )}
-
-      {/*/!* 서브프로젝트 선택 버튼 *!/*/}
-      {/*<div className="mt-20 flex gap-2">*/}
-      {/*  {subProjects.map((sp) => (*/}
-      {/*    <button*/}
-      {/*      key={sp.id}*/}
-      {/*      className={`rounded border px-3 py-1 ${*/}
-      {/*        selected?.id === sp.id ? 'bg-blue-600 text-white' : 'bg-white'*/}
-      {/*      }`}*/}
-      {/*      onClick={() => setSelected(sp)}*/}
-      {/*    >*/}
-      {/*      Sub #{sp.id}*/}
-      {/*    </button>*/}
-      {/*  ))}*/}
-      {/*</div>*/}
     </div>
   );
 }
