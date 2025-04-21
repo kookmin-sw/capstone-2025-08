@@ -40,6 +40,8 @@ dependencies {
 	implementation 'software.amazon.awssdk:s3-transfer-manager:2.25.64'
 	implementation 'software.amazon.awssdk:auth-crt:2.25.64'
 	implementation 'software.amazon.awssdk:sqs:2.25.64'
+
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 }
 
 tasks.named('test') {
