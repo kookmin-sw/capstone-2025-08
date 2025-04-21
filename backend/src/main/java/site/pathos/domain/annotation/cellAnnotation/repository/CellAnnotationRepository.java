@@ -1,10 +1,9 @@
-package site.pathos.domain.annotation.cellAnnotation;
+package site.pathos.domain.annotation.cellAnnotation.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import site.pathos.domain.annotation.cellAnnotation.entity.CellAnnotation;
-import site.pathos.domain.roi.entity.Roi;
 
 import java.util.List;
 
