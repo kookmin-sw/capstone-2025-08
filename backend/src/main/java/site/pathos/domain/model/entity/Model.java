@@ -1,4 +1,4 @@
-package site.pathos.domain.model.entitiy;
+package site.pathos.domain.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

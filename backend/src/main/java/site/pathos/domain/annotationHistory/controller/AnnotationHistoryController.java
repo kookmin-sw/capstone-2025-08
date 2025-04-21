@@ -3,6 +3,7 @@ package site.pathos.domain.annotationHistory.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import site.pathos.domain.annotationHistory.dto.response.AnnotationHistoryResponseDto;
 import site.pathos.domain.annotationHistory.service.AnnotationHistoryService;
 
 @RestController
@@ -19,5 +20,12 @@ public class AnnotationHistoryController {
     ) {
         annotationHistoryService.updateModelName(annotationHistoryId, modelName);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AnnotationHistoryResponseDto> getAnnotationHistory(
+            @PathVariable("id") Long historyId) {
+        AnnotationHistoryResponseDto response = annotationHistoryService.getAnnotationHistory(historyId);
+        return ResponseEntity.ok(response);
     }
 }

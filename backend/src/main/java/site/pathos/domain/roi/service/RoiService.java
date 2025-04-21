@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.tissueAnnotation.service.TissueAnnotationService;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
-import site.pathos.domain.modelServer.dto.request.RoiPayload;
+import site.pathos.domain.roi.dto.request.RoiPayload;
 import site.pathos.domain.roi.dto.request.RoiSaveRequestDto;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
@@ -73,10 +73,17 @@ public class RoiService {
         AnnotationHistory history = annotationHistoryRepository.findById(annotationHistoryId)
                 .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
 
+        AnnotationHistory newHistory = AnnotationHistory.builder()
+                .subProject(history.getSubProject())
+                .model(history.getModel())
+                .modelName(history.getModelName())
+                .build();
+
+        annotationHistoryRepository.save(newHistory);
+
         for (RoiPayload payload : roiPayloads) {
-            // 1. ROI 저장
             Roi roi = Roi.builder()
-                    .annotationHistory(history)
+                    .annotationHistory(newHistory)
                     .x(payload.detail().x())
                     .y(payload.detail().y())
                     .width(payload.detail().width())
@@ -84,8 +91,9 @@ public class RoiService {
                     .build();
             Roi savedRoi = roiRepository.save(roi);
 
-            // 2. TissueAnnotation 저장
-            tissueAnnotationService.saveResultAnnotation(savedRoi, payload.tissue_path());
+            for (String path : payload.tissue_path()) {
+                tissueAnnotationService.saveResultAnnotation(savedRoi, path);
+            }
         }
     }
 }
