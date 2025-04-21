@@ -10,13 +10,11 @@ import site.pathos.domain.annotation.tissueAnnotation.repository.TissueAnnotatio
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
 import site.pathos.domain.inferenceHistory.service.InferenceHistoryService;
-import site.pathos.domain.model.Repository.ModelRepository;
-import site.pathos.domain.model.entitiy.Model;
 import site.pathos.domain.model.service.ModelService;
 import site.pathos.domain.modelServer.dto.request.TrainingResultRequestDto;
 import site.pathos.domain.modelServer.entity.ModelRequestType;
 import site.pathos.domain.roi.dto.request.RoiDetail;
-import site.pathos.domain.modelServer.dto.request.RoiPayload;
+import site.pathos.domain.roi.dto.request.RoiPayload;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.modelServer.dto.request.TrainingRequestDto;
 import site.pathos.domain.roi.service.RoiService;
@@ -48,18 +46,21 @@ public class ModelServerService {
     }
 
     private TrainingRequestDto buildTrainingRequest(AnnotationHistory history) {
-        List<TissueAnnotation> mergedAnnotations = tissueAnnotationRepository.findMergedByAnnotationHistoryId(history.getId(), AnnotationType.MERGED);
+        List<TissueAnnotation> mergedAnnotations = tissueAnnotationRepository.findMergedByAnnotationHistoryId(
+                history.getId(), AnnotationType.MERGED
+        );
 
         List<RoiPayload> roiMessages = mergedAnnotations.stream().map(ta -> {
             Roi roi = ta.getRoi();
             RoiDetail detail = new RoiDetail(roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight());
 
-            //TODO cell 관련 로직 추가 필요
+            // TODO: cell 관련 로직 추가 필요
             List<CellDetail> cellAnnotations = List.of();
 
-            return new RoiPayload(detail, ta.getAnnotationImagePath(), cellAnnotations);
-        }).toList();
+            List<String> imagePaths = List.of(ta.getAnnotationImagePath());
 
+            return new RoiPayload(detail, imagePaths, cellAnnotations);
+        }).toList();
 
         return new TrainingRequestDto(
                 history.getSubProject().getId(),

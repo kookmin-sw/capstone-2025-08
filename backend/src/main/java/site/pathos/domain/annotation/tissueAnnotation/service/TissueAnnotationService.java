@@ -10,7 +10,8 @@ import site.pathos.domain.annotation.tissueAnnotation.repository.TissueAnnotatio
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
 import site.pathos.global.aws.s3.S3Service;
-import site.pathos.global.util.ImageUtils;
+import site.pathos.global.util.image.ImageTile;
+import site.pathos.global.util.image.ImageUtils;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -83,12 +84,31 @@ public class TissueAnnotationService {
 
     @Transactional
     public void saveResultAnnotation(Roi roi, String imagePath) {
-        TissueAnnotation annotation = TissueAnnotation.builder()
-                .roi(roi)
-                .annotationImagePath(imagePath)
-                .annotationType(AnnotationType.RESULT)
-                .build();
+        BufferedImage resultImage = s3Service.downloadBufferedImage(imagePath);
 
-        tissueAnnotationRepository.save(annotation);
+        List<ImageTile> tiles = ImageUtils.sliceImageByROIWithPosition(
+                resultImage,
+                roi.getX(),
+                roi.getY(),
+                roi.getWidth(),
+                roi.getHeight()
+        );
+
+        for (ImageTile tile : tiles) {
+            String tileKey = "sub-project/" + roi.getAnnotationHistory().getSubProject().getId() +
+                    "/annotation-history/" + roi.getAnnotationHistory().getId() +
+                    "/roi-" + roi.getId() +
+                    "/result/" + tile.row() + "_" + tile.col() + ".png";
+
+            s3Service.uploadBufferedImage(tile.image(), tileKey);
+
+            TissueAnnotation tileAnnotation = TissueAnnotation.builder()
+                    .roi(roi)
+                    .annotationImagePath(tileKey)
+                    .annotationType(AnnotationType.RESULT_TILE)
+                    .build();
+
+            tissueAnnotationRepository.save(tileAnnotation);
+        }
     }
 }

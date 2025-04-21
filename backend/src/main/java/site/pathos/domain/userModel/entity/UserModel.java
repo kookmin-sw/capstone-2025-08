@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import site.pathos.domain.model.entitiy.Model;
+import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.user.entity.User;
 
 @Entity

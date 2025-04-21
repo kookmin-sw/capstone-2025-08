@@ -13,7 +13,7 @@ import site.pathos.domain.roi.service.RoiService;
 import java.util.List;
 
 @RestController
-@RequestMapping("rois")
+@RequestMapping("/api/rois")
 @RequiredArgsConstructor
 public class RoiController {
 
