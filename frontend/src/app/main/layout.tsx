@@ -20,7 +20,7 @@ export default function MainLayout({
   ) : (
     <SidebarProvider open>
       <AppSidebar />
-      <main>{children}</main>
+      <main className="w-screen px-16 py-12">{children}</main>
     </SidebarProvider>
   );
 }
