@@ -297,9 +297,22 @@ const AnnotationViewer: React.FC<{
   ============================================== */
   useEffect(() => {
     if (!viewerInstance.current || !subProject) return;
+
+    const viewer = viewerInstance.current;
+
+    // 기존 이미지 제거
+    viewer.world.removeAll();
+
+    // 줌/팬 초기화
+    viewer.viewport.zoomTo(1);
+    viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
+
+    // 새 타일 이미지 로딩
     OpenSeadragon.GeoTIFFTileSource.getAllTileSources(subProject.svsPath).then(
       ([tileSource]: [any]) => {
-        if (tileSource) viewerInstance.current?.addTiledImage({ tileSource });
+        if (tileSource) {
+          viewer.addTiledImage({ tileSource });
+        }
       },
     );
   }, [viewerInstance, subProject]);
@@ -601,10 +614,10 @@ const AnnotationViewer: React.FC<{
       렌더링
   ============================================== */
   return (
-    <div className="flex h-screen w-full flex-row">
+    <div className="flex h-screen w-screen overflow-hidden">
       <AnnotationSidebar />
 
-      <div className="flex w-full flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <div className="my-10 flex w-full flex-row items-center justify-between space-x-3 px-10">
           {isDrawingMode ? (
             <AnnotationTool
