@@ -21,7 +21,7 @@ export const dummyAnnotationHistory: AnnotationHistory[] = [
   },
   {
     id: 89,
-    subProjectId: 42,
+    subProjectId: 43,
     modelId: 5,
     startedAt: '2025-04-01T13:00:00Z',
     completeAt: '2025-04-01T14:00:00Z',
@@ -119,32 +119,34 @@ export const dummyCellAnnotation: CellAnnotation = {
 };
 
 // 모델 추론 결과 응답 더미 데이터
-export const dummyInferenceResult = {
-  inferenceId: 12,
-  annotationHistoryId: 88,
-  subProjectId: 42,
-  modelId: 5,
-  metrics: {
-    accuracy: 0.9375,
-    loss: 0.1642,
-    loopPerformance: 0.82,
-  },
-  completedAt: '2025-04-01T03:14:00Z',
-  results: [
-    {
-      roiId: 101,
-      x: 63465,
-      y: 11220,
-      width: 31248,
-      height: 27978,
-      maskUrl: [
-        '/0_0.png',
-        '/0_1.png',
-        '/0_2.png',
-        '/1_0.png',
-        '/1_1.png',
-        '/1_2.png',
-      ],
+export const dummyInferenceResults = [
+  {
+    inferenceId: 12,
+    annotationHistoryId: 88,
+    subProjectId: 42,
+    modelId: 5,
+    metrics: {
+      accuracy: 0.9375,
+      loss: 0.1642,
+      loopPerformance: 0.82,
     },
-  ],
-};
+    completedAt: '2025-04-01T03:14:00Z',
+    results: [
+      {
+        roiId: 101,
+        x: 63465,
+        y: 11220,
+        width: 31248,
+        height: 27978,
+        maskUrl: [
+          '/0_0.png',
+          '/0_1.png',
+          '/0_2.png',
+          '/1_0.png',
+          '/1_1.png',
+          '/1_2.png',
+        ],
+      },
+    ],
+  },
+];
