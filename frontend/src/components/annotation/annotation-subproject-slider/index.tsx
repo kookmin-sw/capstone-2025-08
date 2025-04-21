@@ -1,4 +1,10 @@
+'use client';
+
+import Image from 'next/image';
+import { useState } from 'react';
 import { SubProject } from '@/types/project-schema';
+import { Plus } from 'lucide-react';
+import ImageUploadModal from '@/components/projects/image-upload-modal';
 
 interface Props {
   subProjects: SubProject[];
@@ -11,21 +17,47 @@ export default function AnnotationSubProjectSlider({
   selected,
   onSelect,
 }: Props) {
+  const [showUploadModal, setShowUploadModal] = useState(false);
+
   return (
-    <div className="flex w-full space-x-4 overflow-x-auto bg-gray-100 px-6 py-4">
-      {subProjects.map((sp) => (
-        <div
-          key={sp.id}
-          onClick={() => onSelect(sp)}
-          className={`flex h-[80px] min-w-[120px] cursor-pointer items-center justify-center rounded-md border text-sm ${
-            selected?.id === sp.id
-              ? 'border-blue-800 bg-blue-600 text-white'
-              : 'bg-white text-gray-700'
-          }`}
-        >
-          Sub #{sp.id}
-        </div>
-      ))}
+    <div className="bg-muted flex overflow-x-auto border-b border-t">
+      {subProjects.map((sp) => {
+        const isSelected = selected?.id === sp.id;
+        return (
+          <div
+            key={sp.id}
+            onClick={() => onSelect(sp)}
+            className="relative h-[140px] w-[140px] min-w-[140px] cursor-pointer overflow-hidden border-r transition-all"
+          >
+            <Image
+              src={sp.thumbnail}
+              alt={`Thumbnail ${sp.id}`}
+              fill
+              sizes="140px"
+              className={`object-cover transition-opacity ${
+                isSelected ? '' : 'opacity-30'
+              }`}
+              priority={false}
+            />
+          </div>
+        );
+      })}
+
+      <div
+        onClick={() => setShowUploadModal(true)}
+        className="text-muted-foreground hover:text-foreground flex h-[140px] w-[140px] min-w-[140px] cursor-pointer items-center justify-center border-r"
+      >
+        <Plus />
+      </div>
+
+      <ImageUploadModal
+        open={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        mode="append"
+        onUpload={(files) => {
+          console.log('업로드된 파일:', files);
+        }}
+      />
     </div>
   );
 }
