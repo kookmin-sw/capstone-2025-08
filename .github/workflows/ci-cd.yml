@@ -2,9 +2,9 @@ name: CI/CD with Gradle and Docker
 
 on:
   push:
-    branches: [ "backend/main" ]
+    branches: [ "backend/app-develop" ]
   pull_request:
-    branches: [ "backend/main" ]
+    branches: [ "backend/app-develop" ]
 
 jobs:
   build-docker-image:
