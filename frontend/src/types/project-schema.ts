@@ -2,7 +2,6 @@ export interface Project {
   id: number;
   title: string;
   description: string;
-  thumbnail: string;
   userId: number;
   modelId: number;
   createdAt: string;
