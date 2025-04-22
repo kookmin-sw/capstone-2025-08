@@ -26,7 +26,7 @@ public class AnnotationHistory {
     private SubProject subProject;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_id", nullable = false)
+    @JoinColumn(name = "model_id")
     private Model model;
 
     @Column(name = "model_name", nullable = false)
