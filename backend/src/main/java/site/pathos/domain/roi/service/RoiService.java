@@ -69,18 +69,7 @@ public class RoiService {
     }
 
     @Transactional
-    public void saveResultRois(Long annotationHistoryId, List<RoiPayload> roiPayloads) {
-        AnnotationHistory history = annotationHistoryRepository.findById(annotationHistoryId)
-                .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
-
-        AnnotationHistory newHistory = AnnotationHistory.builder()
-                .subProject(history.getSubProject())
-                .model(history.getModel())
-                .modelName(history.getModelName())
-                .build();
-
-        annotationHistoryRepository.save(newHistory);
-
+    public void saveResultRois(AnnotationHistory newHistory, List<RoiPayload> roiPayloads) {
         for (RoiPayload payload : roiPayloads) {
             Roi roi = Roi.builder()
                     .annotationHistory(newHistory)
