@@ -1,12 +1,18 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+} from 'react';
 import OpenSeadragon from 'openseadragon';
 import { useOsdviewer } from '@/hooks/use-osdviewer';
 import AnnotationTool from '@/components/annotation/annotation-tool';
 import AnnotationControlPanel from '@/components/annotation/annotation-control-panel';
 import { syncCanvasWithOSD, redrawCanvas } from '@/utils/canvas-utils';
-import { processMaskTile, exportROIAsPNG } from '@/utils/canvas-image-utils';
+import { processMaskTile } from '@/utils/canvas-image-utils';
 import {
   getAllViewportROIs,
   isPointInsideROIs,
@@ -18,9 +24,8 @@ import {
   subtractStroke,
 } from '@/utils/canvas-drawing-utils';
 import { Point, Stroke, ROI, LoadedROI, Polygon } from '@/types/annotation';
-import { Button } from '@/components/ui/button';
 import { SubProject } from '@/types/project-schema';
-import { dummyInferenceResult } from '@/data/dummy';
+import { dummyInferenceResults } from '@/data/dummy';
 import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
 import AnnotationSubProjectSlider from '@/components/annotation/annotation-subproject-slider';
 
@@ -30,44 +35,108 @@ const BORDER_THICKNESS = 2;
 type Tool = 'circle' | 'polygon' | 'paintbrush' | 'eraser' | null;
 
 const AnnotationViewer: React.FC<{
-  subProject: SubProject;
-  inferenceResult: typeof dummyInferenceResult;
+  subProject: SubProject | null;
+  setSubProject: (sp: SubProject) => void;
+  subProjects: SubProject[];
+  inferenceResult: (typeof dummyInferenceResults)[number] | null;
   modelType?: string;
-}> = ({ subProject, inferenceResult, modelType = 'MULTI' }) => {
-  /* ================================
-     Ref 및 State 선언
-  ================================== */
-  // 뷰어 및 캔버스 참조
+}> = ({
+  subProject,
+  setSubProject,
+  subProjects,
+  inferenceResult,
+  modelType = 'MULTI',
+}) => {
+  /* =============================================
+      Ref 및 State 선언
+  ============================================== */
+  // OpenSeadragon 뷰어 및 캔버스 Ref
   const viewerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const roiCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const viewerInstance = useOsdviewer(viewerRef);
 
-  // 드로잉/어노테이션 관련
-  const strokesRef = useRef<Stroke[]>([]);
-  const currentStrokeRef = useRef<Stroke | null>(null);
-  const [isDrawingMode, setIsDrawingMode] = useState<boolean>(false);
-  const [penColor, setPenColor] = useState<string>('#FF0000');
-  const [penSize, setPenSize] = useState<number>(10);
-
-  // Polygon 관련 상태
-  const polygonsRef = useRef<Polygon[]>([]);
-  const currentPolygonRef = useRef<Polygon | null>(null);
-  const [mousePosition, setMousePosition] = useState<Point | null>(null);
-
-  // ROI 관련 상태
-  const roiCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [isSelectingROI, setIsSelectingROI] = useState<boolean>(false);
-  const [roi, setROI] = useState<ROI | null>(null);
-  const [userDefinedROIs, setUserDefinedROIs] = useState<ROI[]>([]);
-  const [loadedROIs, setLoadedROIs] = useState<LoadedROI[]>([]);
+  // ROI/드로잉 도중의 마우스 상태 및 임시 객체들 Ref
   const roiStartRef = useRef<{ x: number; y: number } | null>(null);
-
-  // Undo / Redo 스택
-  const [undoStack, setUndoStack] = useState<Stroke[][]>([]);
-  const [redoStack, setRedoStack] = useState<Stroke[][]>([]);
+  const currentStrokeRef = useRef<Stroke | null>(null);
+  const currentPolygonRef = useRef<Polygon | null>(null);
   const isRedoingRef = useRef(false);
 
-  // 모델 타입별 디폴트 어노테이션 도구 (셀/멀티 -> circle, 티슈 -> ploygon)
+  // 드로잉 도구 관련 상태
+  const [penColor, setPenColor] = useState('#FF0000');
+  const [penSize, setPenSize] = useState(10);
+  const [mousePosition, setMousePosition] = useState<Point | null>(null);
+
+  // 현재 선택 중인 ROI 및 모드 상태
+  const [roi, setROI] = useState<ROI | null>(null);
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [isSelectingROI, setIsSelectingROI] = useState(false);
+
+  // 모델 추론으로부터 로딩된 ROI
+  const [loadedROIs, setLoadedROIs] = useState<LoadedROI[]>([]);
+
+  // 서브프로젝트 단위로 관리되는 상태들 (key = subProject.id)
+  const [userDefinedROIsMap, setUserDefinedROIsMap] = useState<
+    Record<number, ROI[]>
+  >({});
+  const [strokesMap, setStrokesMap] = useState<Record<number, Stroke[]>>({});
+  const [polygonsMap, setPolygonsMap] = useState<Record<number, Polygon[]>>({});
+  const [undoMap, setUndoMap] = useState<Record<number, Stroke[][]>>({});
+  const [redoMap, setRedoMap] = useState<Record<number, Stroke[][]>>({});
+
+  // 현재 서브프로젝트 ID 기준 상태 접근
+  const subProjectId = subProject?.id ?? -1;
+
+  const userDefinedROIs = useMemo(
+    () => userDefinedROIsMap[subProjectId] || [],
+    [userDefinedROIsMap, subProjectId],
+  );
+  const strokes = useMemo(
+    () => strokesMap[subProjectId] || [],
+    [strokesMap, subProjectId],
+  );
+  const polygons = useMemo(
+    () => polygonsMap[subProjectId] || [],
+    [polygonsMap, subProjectId],
+  );
+  const undoStack = useMemo(
+    () => undoMap[subProjectId] || [],
+    [undoMap, subProjectId],
+  );
+  const redoStack = useMemo(
+    () => redoMap[subProjectId] || [],
+    [redoMap, subProjectId],
+  );
+
+  // 현재 서브프로젝트 ID 기준 상태 업데이트 함수들
+  const setUserDefinedROIs = (rois: ROI[]) => {
+    if (subProjectId == null) return;
+    setUserDefinedROIsMap((prev) => ({ ...prev, [subProjectId]: rois }));
+  };
+
+  const setStrokes = (s: Stroke[]) => {
+    if (subProjectId == null) return;
+    setStrokesMap((prev) => ({ ...prev, [subProjectId]: s }));
+  };
+
+  const setPolygons = (p: Polygon[]) => {
+    if (subProjectId == null) return;
+    setPolygonsMap((prev) => ({ ...prev, [subProjectId]: p }));
+  };
+
+  const setUndoStack = (s: Stroke[][]) => {
+    if (subProjectId == null) return;
+    setUndoMap((prev) => ({ ...prev, [subProjectId]: s }));
+  };
+
+  const setRedoStack = (s: Stroke[][]) => {
+    if (subProjectId == null) return;
+    setRedoMap((prev) => ({ ...prev, [subProjectId]: s }));
+  };
+
+  /* =============================================
+      모델 타입별 디폴트 어노테이션 도구
+  ============================================== */
   const getDefaultToolByModel = (modelType: string): Tool => {
     switch (modelType) {
       case 'CELL':
@@ -80,29 +149,42 @@ const AnnotationViewer: React.FC<{
     }
   };
 
-  // 사용할 어노테이션 도구
   const [activeTool, setActiveTool] = useState<Tool>(() =>
     getDefaultToolByModel(modelType),
   );
 
-  /* ================================
+  /* =============================================
       초기화 및 타일소스 로딩
-  ================================== */
+  ============================================== */
   useEffect(() => {
+    if (!inferenceResult) {
+      setLoadedROIs([]);
+      return;
+    }
     const load = async () => {
-      const roiPromises = inferenceResult.results.map(async (res) => {
-        const tiles = await Promise.all(
-          res.maskUrl.map((u) => processMaskTile(res, u)),
-        );
-        return {
-          bbox: { x: res.x, y: res.y, w: res.width, h: res.height },
-          tiles,
-        };
-      });
-      setLoadedROIs(await Promise.all(roiPromises));
+      const roiData = await Promise.all(
+        inferenceResult.results.map(async (res) => {
+          const tiles = await Promise.all(
+            res.maskUrl.map((u) => processMaskTile(res, u)),
+          );
+          return {
+            bbox: { x: res.x, y: res.y, w: res.width, h: res.height },
+            tiles,
+          };
+        }),
+      );
+      setLoadedROIs(roiData);
     };
     load();
   }, [inferenceResult]);
+
+  /* =============================================
+      subProject가 바뀌면 ROI 초기화
+  ============================================== */
+  useEffect(() => {
+    setLoadedROIs([]);
+    setROI(null);
+  }, [subProject]);
 
   /* =============================================
       ROI 캔버스 그리기
@@ -136,47 +218,29 @@ const AnnotationViewer: React.FC<{
   useEffect(() => {
     const viewer = viewerInstance.current;
     if (!viewer || !loadedROIs.length) return;
-
     const tiledImage = viewer.world.getItemAt(0);
+    const applyROI = (img: any) => {
+      const bbox = loadedROIs[0].bbox;
+      const tl = img.imageToViewportCoordinates(
+        new OpenSeadragon.Point(bbox.x, bbox.y),
+      );
+      const br = img.imageToViewportCoordinates(
+        new OpenSeadragon.Point(bbox.x + bbox.w, bbox.y + bbox.h),
+      );
+      setROI({ x: tl.x, y: tl.y, width: br.x - tl.x, height: br.y - tl.y });
+    };
     if (!tiledImage) {
       const retry = setTimeout(() => {
         const newTiledImage = viewer.world.getItemAt(0);
-        if (!newTiledImage?.imageToViewportCoordinates) return;
-
-        const bbox = loadedROIs[0].bbox;
-        const tlImg = new OpenSeadragon.Point(bbox.x, bbox.y);
-        const brImg = new OpenSeadragon.Point(bbox.x + bbox.w, bbox.y + bbox.h);
-        const tlVp = newTiledImage.imageToViewportCoordinates(tlImg);
-        const brVp = newTiledImage.imageToViewportCoordinates(brImg);
-        const viewportROI = {
-          x: tlVp.x,
-          y: tlVp.y,
-          width: brVp.x - tlVp.x,
-          height: brVp.y - tlVp.y,
-        };
-        setROI(viewportROI);
+        if (newTiledImage) applyROI(newTiledImage);
       }, 500);
-
       return () => clearTimeout(retry);
-    }
-
-    const bbox = loadedROIs[0].bbox;
-    const tlImg = new OpenSeadragon.Point(bbox.x, bbox.y);
-    const brImg = new OpenSeadragon.Point(bbox.x + bbox.w, bbox.y + bbox.h);
-    const tlVp = viewer.viewport.imageToViewportCoordinates(tlImg);
-    const brVp = viewer.viewport.imageToViewportCoordinates(brImg);
-    const viewportROI = {
-      x: tlVp.x,
-      y: tlVp.y,
-      width: brVp.x - tlVp.x,
-      height: brVp.y - tlVp.y,
-    };
-    setROI(viewportROI);
+    } else applyROI(tiledImage);
   }, [viewerInstance, loadedROIs]);
 
-  /* ================================
-     핸들러 및 헬퍼 함수
-  ================================== */
+  /* =============================================
+      ROI가 뷰어에 포함되어 있는지 확인
+  ============================================== */
   const isInsideAnyROI = (pt: Point): boolean => {
     if (!viewerInstance.current) return false;
     const allROIs = [
@@ -186,22 +250,22 @@ const AnnotationViewer: React.FC<{
     return isPointInsideROIs(pt, allROIs);
   };
 
-  /* ================================
-     캔버스 및 뷰어 동기화
-  ================================== */
+  /* =============================================
+      캔버스 및 뷰어 동기화
+  ============================================== */
   const redraw = useCallback(() => {
     if (!viewerInstance.current) return;
     redrawCanvas(
       viewerInstance.current,
       canvasRef,
       loadedROIs,
-      strokesRef.current,
+      strokes,
       currentStrokeRef.current,
-      polygonsRef.current,
+      polygons,
       currentPolygonRef.current,
       mousePosition,
     );
-  }, [viewerInstance, canvasRef, loadedROIs, mousePosition]);
+  }, [viewerInstance, canvasRef, loadedROIs, strokes, polygons, mousePosition]);
 
   const syncCanvas = useCallback(() => {
     if (!viewerInstance.current || !canvasRef.current) return;
@@ -211,74 +275,38 @@ const AnnotationViewer: React.FC<{
   useEffect(() => {
     const viewer = viewerInstance.current;
     if (!viewer) return;
-
     const updateHandler = () => {
-      syncCanvas(); // 드로잉 캔버스 위치/크기 맞추기
-      drawROIs(
-        // ROI 실선 다시 그리기
-        viewerInstance.current,
-        roiCanvasRef.current,
-        roi,
-        userDefinedROIs,
-        loadedROIs,
-        isSelectingROI,
-      );
+      syncCanvas();
+      redrawROICanvas();
     };
-
     viewer.addHandler('animation', updateHandler);
     viewer.addHandler('zoom', updateHandler);
     viewer.addHandler('pan', updateHandler);
     window.addEventListener('resize', updateHandler);
-
     updateHandler();
-
     return () => {
       viewer.removeHandler('animation', updateHandler);
       viewer.removeHandler('zoom', updateHandler);
       viewer.removeHandler('pan', updateHandler);
       window.removeEventListener('resize', updateHandler);
     };
-  }, [
-    viewerInstance,
-    syncCanvas,
-    roi,
-    userDefinedROIs,
-    loadedROIs,
-    isSelectingROI,
-  ]);
+  }, [viewerInstance, syncCanvas, redrawROICanvas]);
 
-  /* ===========================================
-   타일소스 로딩 useEffect – param 기반으로 수정
-  =========================================== */
+  /* =============================================
+      타일소스 로딩
+  ============================================== */
   useEffect(() => {
     if (!viewerInstance.current || !subProject) return;
-
-    const loadTileSource = async () => {
-      try {
-        const tiffTileSources =
-          await OpenSeadragon.GeoTIFFTileSource.getAllTileSources(
-            subProject.svsPath,
-          );
-
-        if (tiffTileSources.length > 0) {
-          viewerInstance.current.addTiledImage({
-            tileSource: tiffTileSources[0],
-          });
-          console.log('타일 소스 추가 완료');
-        } else {
-          console.warn('SVS 파일을 읽었지만 타일소스가 없습니다.');
-        }
-      } catch (error) {
-        console.error('타일 소스 로드 실패:', error);
-      }
-    };
-
-    loadTileSource();
+    OpenSeadragon.GeoTIFFTileSource.getAllTileSources(subProject.svsPath).then(
+      ([tileSource]: [any]) => {
+        if (tileSource) viewerInstance.current?.addTiledImage({ tileSource });
+      },
+    );
   }, [viewerInstance, subProject]);
 
-  /* ================================
-     마우스 이벤트 핸들러
-  ================================== */
+  /* =============================================
+      마우스 이벤트 핸들러
+  ============================================== */
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!canvasRef.current || !viewerInstance.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -334,7 +362,7 @@ const AnnotationViewer: React.FC<{
             if (dist < 10) {
               currentPolygonRef.current.points.push(first);
               currentPolygonRef.current.closed = true;
-              polygonsRef.current.push(currentPolygonRef.current);
+              polygons.push(currentPolygonRef.current);
               currentPolygonRef.current = null;
               setMousePosition(null);
               redraw();
@@ -395,10 +423,12 @@ const AnnotationViewer: React.FC<{
   };
 
   const handleMouseUp = () => {
-    if (!canvasRef.current || !viewerInstance.current) return;
+    if (!canvasRef.current || !viewerInstance.current || !subProjectId) return;
+
     const tiledImage = viewerInstance.current.world.getItemAt(0);
     if (!tiledImage) return;
 
+    // ROI 생성 중일 때
     if (isSelectingROI) {
       roiStartRef.current = null;
       setIsSelectingROI(false);
@@ -417,24 +447,25 @@ const AnnotationViewer: React.FC<{
           height: roi.height - 2 * borderOffset.y,
         };
 
-        setUserDefinedROIs((prev) => [...prev, adjustedROI]);
+        setUserDefinedROIs([...userDefinedROIs, adjustedROI]);
         setROI(null);
       }
 
       return;
     }
 
+    // 드로잉 모드일 때
     if (isDrawingMode && currentStrokeRef.current) {
       const isEraser = currentStrokeRef.current.isEraser;
-      const prevStrokes = deepCopyStrokes(strokesRef.current);
-      setUndoStack((prev) => [...prev, prevStrokes]);
+      const prevStrokes = deepCopyStrokes(strokes);
+      setUndoStack([...undoStack, prevStrokes]);
       setRedoStack([]);
 
       if (isEraser) {
         const eraserStroke = currentStrokeRef.current;
 
-        const pencilStrokes = strokesRef.current.filter((s) => !s.isEraser);
-        const oldEraserStrokes = strokesRef.current.filter((s) => s.isEraser);
+        const pencilStrokes = strokes.filter((s) => !s.isEraser);
+        const oldEraserStrokes = strokes.filter((s) => s.isEraser);
 
         const updatedStrokes: Stroke[] = [];
 
@@ -448,13 +479,15 @@ const AnnotationViewer: React.FC<{
           updatedStrokes.push(...segs);
         }
 
-        strokesRef.current = [
+        const newStrokes = [
           ...updatedStrokes,
           ...oldEraserStrokes,
           eraserStroke,
         ];
+
+        setStrokes(newStrokes);
       } else {
-        strokesRef.current.push(currentStrokeRef.current);
+        setStrokes([...strokes, currentStrokeRef.current]);
       }
 
       currentStrokeRef.current = null;
@@ -468,20 +501,25 @@ const AnnotationViewer: React.FC<{
     viewerInstance.current?.setMouseNavEnabled(true);
   };
 
-  /* ================================
-     어노테이션 도구 및 핸들러
-  ================================== */
-  // 어노테이션 도구 선택 함수
+  /* =============================================
+      어노테이션 도구 및 핸들러
+  ============================================== */
   const handleSelectTool = (tool: Tool) => {
     setActiveTool(tool);
     console.log('어노테이션 도구: ', activeTool);
   };
 
   const handleToggleAnnotationMode = (): boolean => {
-    if (!isDrawingMode && !roi && loadedROIs.length === 0) {
+    if (
+      !isDrawingMode &&
+      !roi &&
+      loadedROIs.length === 0 &&
+      userDefinedROIs.length === 0
+    ) {
       alert('먼저 ROI를 선택하세요.');
       return false;
     }
+
     if (!isDrawingMode) {
       setUndoStack([]);
       setRedoStack([]);
@@ -502,40 +540,46 @@ const AnnotationViewer: React.FC<{
   };
 
   const handleDeleteROI = () => {
-    setUndoStack((prev) => [...prev, deepCopyStrokes(strokesRef.current)]);
+    if (!subProjectId) return;
+
+    setUndoStack([...undoStack, deepCopyStrokes(strokes)]);
     setRedoStack([]);
     setROI(null);
     redraw();
   };
 
   const handleReset = () => {
-    setUndoStack((prev) => [...prev, deepCopyStrokes(strokesRef.current)]);
+    if (!subProjectId) return;
+
+    setUndoStack([...undoStack, deepCopyStrokes(strokes)]);
     setRedoStack([]);
-    strokesRef.current = [];
+    setStrokes([]);
     currentStrokeRef.current = null;
-    polygonsRef.current = [];
+    setPolygons([]);
     currentPolygonRef.current = null;
     setROI(null);
     redraw();
   };
 
   const handleUndo = () => {
+    if (!subProjectId) return;
     if (undoStack.length === 0) return;
+
     const lastState = undoStack[undoStack.length - 1];
-    setRedoStack((prev) => [...prev, deepCopyStrokes(strokesRef.current)]);
-    strokesRef.current = deepCopyStrokes(lastState);
-    setUndoStack((prev) => prev.slice(0, prev.length - 1));
+    setRedoStack([...redoStack, deepCopyStrokes(strokes)]);
+    setStrokes(deepCopyStrokes(lastState));
+    setUndoStack(undoStack.slice(0, undoStack.length - 1));
     redraw();
   };
 
   const handleRedo = () => {
-    if (isRedoingRef.current) return;
-    if (redoStack.length === 0) return;
+    if (!subProjectId || isRedoingRef.current || redoStack.length === 0) return;
+
     isRedoingRef.current = true;
     const nextState = redoStack[redoStack.length - 1];
-    setUndoStack((prev) => [...prev, deepCopyStrokes(strokesRef.current)]);
-    strokesRef.current = deepCopyStrokes(nextState);
-    setRedoStack((prev) => prev.slice(0, prev.length - 1));
+    setUndoStack([...undoStack, deepCopyStrokes(strokes)]);
+    setStrokes(deepCopyStrokes(nextState));
+    setRedoStack(redoStack.slice(0, redoStack.length - 1));
     redraw();
     isRedoingRef.current = false;
   };
@@ -553,9 +597,9 @@ const AnnotationViewer: React.FC<{
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [redraw]);
 
-  /* ================================
-     Render
-  ================================== */
+  /* =============================================
+      렌더링
+  ============================================== */
   return (
     <div className="flex h-screen w-full flex-row">
       <AnnotationSidebar />
@@ -603,17 +647,13 @@ const AnnotationViewer: React.FC<{
             onRedo={handleRedo}
             onReset={handleReset}
           />
-          {/*<Button*/}
-          {/*  onClick={() => {*/}
-          {/*    if (!viewerInstance.current || !canvasRef.current || !roi) return;*/}
-          {/*    exportROIAsPNG(viewerInstance.current, canvasRef.current, roi);*/}
-          {/*  }}*/}
-          {/*>*/}
-          {/*  Export*/}
-          {/*</Button>{' '}*/}
         </div>
 
-        <AnnotationSubProjectSlider />
+        <AnnotationSubProjectSlider
+          subProjects={subProjects}
+          selected={subProject}
+          onSelect={setSubProject}
+        />
       </div>
     </div>
   );
