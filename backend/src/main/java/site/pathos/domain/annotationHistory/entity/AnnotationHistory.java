@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import site.pathos.domain.model.entity.Model;
-import site.pathos.domain.subProject.SubProject;
+import site.pathos.domain.subProject.entity.SubProject;
 
 import java.time.LocalDateTime;
 
