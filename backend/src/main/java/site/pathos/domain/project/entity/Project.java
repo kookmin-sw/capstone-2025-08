@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import site.pathos.domain.model.entity.ModelType;
 import site.pathos.domain.user.entity.User;
 
 import java.time.LocalDate;
@@ -31,6 +32,9 @@ public class Project {
 
     @Column(name = "thumbnail_image_url", nullable = false)
     private String thumbnailImageUrl;
+
+    @Column(name = "model_type" , nullable = false)
+    private ModelType modelType;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
