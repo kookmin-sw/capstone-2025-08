@@ -26,6 +26,9 @@ public class Model {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "model_type", nullable = false)
+    private ModelType modelType;
+
     @Column(name = "model_path", nullable = false)
     private String modelPath;
 
