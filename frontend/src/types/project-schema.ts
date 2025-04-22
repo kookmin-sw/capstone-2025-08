@@ -16,6 +16,7 @@ export interface SubProject {
   id: number;
   projectId: string;
   svsPath: string;
+  thumbnail: string;
 }
 
 export interface AnnotationHistory {

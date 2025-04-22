@@ -64,11 +64,19 @@ export const dummySubProject: SubProject[] = [
     id: 42,
     projectId: '1',
     svsPath: '/svs_example.svs',
+    thumbnail: '/subproject-thumbnail.png',
   },
   {
     id: 43,
     projectId: '1',
     svsPath: '/svs_example.svs',
+    thumbnail: '/subproject-thumbnail.png',
+  },
+  {
+    id: 44,
+    projectId: '1',
+    svsPath: '/svs_example.svs',
+    thumbnail: '/subproject-thumbnail.png',
   },
 ];
 
