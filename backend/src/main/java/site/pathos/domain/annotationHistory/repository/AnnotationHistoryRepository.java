@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,4 +19,6 @@ public interface AnnotationHistoryRepository extends JpaRepository<AnnotationHis
         WHERE ah.id = :id
     """)
     Optional<AnnotationHistory> findWithSubProjectAndModelById(@Param("id") Long id);
+
+    List<AnnotationHistory> findAllBySubProjectId(Long subProjectId);
 }
