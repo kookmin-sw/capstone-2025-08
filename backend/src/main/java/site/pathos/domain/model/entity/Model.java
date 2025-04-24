@@ -26,6 +26,9 @@ public class Model {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "model_type", nullable = false)
+    private ModelType modelType;
+
     @Column(name = "model_path", nullable = false)
     private String modelPath;
 
@@ -34,9 +37,10 @@ public class Model {
     private LocalDateTime trainedAt;
 
     @Builder
-    public Model(AnnotationHistory annotationHistory, String name, String modelPath) {
+    public Model(AnnotationHistory annotationHistory, String name, ModelType modelType, String modelPath) {
         this.annotationHistory = annotationHistory;
         this.name = name;
+        this.modelType = modelType;
         this.modelPath = modelPath;
     }
 }

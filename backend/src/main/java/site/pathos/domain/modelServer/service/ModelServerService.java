@@ -10,6 +10,8 @@ import site.pathos.domain.annotation.tissueAnnotation.repository.TissueAnnotatio
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
 import site.pathos.domain.inferenceHistory.service.InferenceHistoryService;
+import site.pathos.domain.model.Repository.ModelRepository;
+import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.model.service.ModelService;
 import site.pathos.domain.modelServer.dto.request.TrainingResultRequestDto;
 import site.pathos.domain.modelServer.entity.ModelRequestType;
@@ -32,6 +34,7 @@ public class ModelServerService {
     private final SqsService sqsService;
     private final InferenceHistoryService inferenceHistoryService;
     private final RoiService roiService;
+    private final ModelRepository modelRepository;
 
     @Transactional
     public void requestTraining(Long annotationHistoryId) {
@@ -77,9 +80,21 @@ public class ModelServerService {
     public void resultTraining(TrainingResultRequestDto resultRequestDto){
         AnnotationHistory history = annotationHistoryRepository
                 .findWithSubProjectAndModelById(resultRequestDto.annotation_history_id())
-                .orElseThrow(() -> new RuntimeException("not found"));
+                .orElseThrow(() -> new RuntimeException("history not found"));
 
-        modelService.saveModel(history, history.getModelName(), resultRequestDto.model_path());
+        AnnotationHistory newHistory = AnnotationHistory.builder()
+                .subProject(history.getSubProject())
+                .model(history.getModel())
+                .modelName(history.getModelName())
+                .build();
+
+        annotationHistoryRepository.save(newHistory);
+
+        Model baseModel = modelRepository.findByAnnotationHistoryId(history.getId())
+                .orElseThrow(() -> new RuntimeException("base model not found"));
+
+        //기존 history 기반으로 model 정보 생성, 어느 history 를 통해 생성된 모델인지
+        modelService.saveModel(history, history.getModelName(), baseModel.getModelType() ,resultRequestDto.model_path());
 
         //TODO 모델서버에서 기능 추가시 수정 필요
         inferenceHistoryService.updateInferenceHistory(resultRequestDto.annotation_history_id(),
@@ -88,7 +103,7 @@ public class ModelServerService {
                 0
                 );
 
-        //roi 새로 저장
-        roiService.saveResultRois(resultRequestDto.annotation_history_id(), resultRequestDto.roi());
+        //새로운 annotation_history 에 roi 새로 저장
+        roiService.saveResultRois(newHistory, resultRequestDto.roi());
     }
 }

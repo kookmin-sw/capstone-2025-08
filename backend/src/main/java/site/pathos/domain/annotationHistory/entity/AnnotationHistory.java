@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import site.pathos.domain.model.entity.Model;
-import site.pathos.domain.subProject.SubProject;
+import site.pathos.domain.subProject.entity.SubProject;
 
 import java.time.LocalDateTime;
 
@@ -26,7 +26,7 @@ public class AnnotationHistory {
     private SubProject subProject;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_id", nullable = false)
+    @JoinColumn(name = "model_id")
     private Model model;
 
     @Column(name = "model_name", nullable = false)

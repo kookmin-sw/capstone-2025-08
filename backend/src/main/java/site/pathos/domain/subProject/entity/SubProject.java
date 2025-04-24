@@ -1,4 +1,4 @@
-package site.pathos.domain.subProject;
+package site.pathos.domain.subProject.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
