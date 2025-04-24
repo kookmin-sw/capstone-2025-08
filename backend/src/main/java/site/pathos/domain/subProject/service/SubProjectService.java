@@ -12,7 +12,9 @@ import site.pathos.domain.subProject.dto.response.SubProjectResponseDto;
 import site.pathos.domain.subProject.repository.SubProjectRepository;
 import site.pathos.domain.userModel.repository.UserModelRepository;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -23,13 +25,22 @@ public class SubProjectService {
     private final SubProjectRepository subProjectRepository;
 
     public SubProjectResponseDto getSubProject(Long subProjectId){
-        List<AnnotationHistory> histories = annotationHistoryRepository.findAllBySubProjectId(subProjectId);
-        List<AnnotationHistorySummaryDto> historyDtos = histories.stream()
-                .map(h -> new AnnotationHistorySummaryDto(
-                        h.getId(),
-                        h.getStartedAt(),
-                        h.getCompletedAt() // 필요시 포맷 적용
-                ))
+        List<AnnotationHistory> histories = annotationHistoryRepository
+                .findAllBySubProjectId(subProjectId)
+                .stream()
+                .sorted(Comparator.comparing(AnnotationHistory::getStartedAt)) // startedAt 기준 정렬
+                .toList();
+
+        List<AnnotationHistorySummaryDto> historyDtos = IntStream.range(0, histories.size())
+                .mapToObj(i -> {
+                    AnnotationHistory h = histories.get(i);
+                    return new AnnotationHistorySummaryDto(
+                            h.getId(),
+                            i+1,
+                            h.getStartedAt(),
+                            h.getCompletedAt()// 1번부터 시작
+                    );
+                })
                 .toList();
 
         //TODO 나중에 실제 userId로 변경 필요
