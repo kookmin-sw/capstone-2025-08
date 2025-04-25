@@ -9,6 +9,7 @@ import java.util.List;
 public record SubProjectResponseDto(
         Long subProjectId,
         List<AnnotationHistorySummaryDto> annotationHistories,
+        Long latestAnnotationHistoryId,
         List<ModelSummaryDto> availableModels,
         ModelType modelType
 ) {
