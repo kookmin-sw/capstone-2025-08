@@ -103,7 +103,7 @@ export default function ProjectCard({
                   },
                   {
                     icon: <Pencil className="h-4 w-4" />,
-                    label: 'Rename',
+                    label: 'Edit',
                   },
                   {
                     icon: <Share2 className="h-4 w-4" />,
