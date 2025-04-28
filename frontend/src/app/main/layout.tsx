@@ -12,8 +12,7 @@ export default function MainLayout({
 }) {
   const pathname = usePathname();
 
-  // /main/projects/annotation/ 경로일 경우 사이드바를 숨김
-  const hideSidebar = pathname.startsWith('/main/projects/annotation/');
+  const hideSidebar = pathname.startsWith('/main/projects/');
 
   return hideSidebar ? (
     <main>{children}</main>
