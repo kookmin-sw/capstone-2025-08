@@ -614,10 +614,10 @@ const AnnotationViewer: React.FC<{
       렌더링
   ============================================== */
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div className="flex h-full w-screen overflow-hidden">
       <AnnotationSidebar />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="relative flex h-full flex-1 flex-col overflow-hidden">
         <div className="my-10 flex w-full flex-row items-center justify-between space-x-3 px-10">
           {isDrawingMode ? (
             <AnnotationTool

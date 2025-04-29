@@ -1,3 +1,8 @@
 export default function AnnotationSidebar() {
-  return <div className="h-full min-w-[350px] bg-blue-500"> 사이드바 </div>;
+  return (
+    <div className="border-border flex h-full min-w-[350px] flex-col justify-between border-r-[1px] p-5">
+      <div>컴포넌트 1</div>
+      <div>컴포넌트 2</div>
+    </div>
+  );
 }

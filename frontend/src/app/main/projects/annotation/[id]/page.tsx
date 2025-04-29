@@ -62,7 +62,7 @@ export default function ProjectAnnotationPage() {
     return <p>이 프로젝트에는 서브프로젝트가 없습니다.</p>;
 
   return (
-    <div>
+    <div className="h-full">
       {/* 선택된 서브프로젝트가 있을 때만 뷰어 표시 */}
       {selected ? (
         <AnnotationViewer
