@@ -634,17 +634,23 @@ const AnnotationViewer: React.FC<{
       <AnnotationSidebar
         rois={imageAllROIs}
         onDeleteROI={(index) => {
-          // 삭제는 userDefinedROI에 대해서만 허용
           const inferredCount = getAllViewportROIs(
             viewerInstance.current,
             loadedROIs,
           ).length;
-          if (index < inferredCount) return; // 모델 ROI는 삭제 불가
 
-          const adjustedIndex = index - inferredCount;
-          const newROIs = [...userDefinedROIs];
-          newROIs.splice(adjustedIndex, 1);
-          setUserDefinedROIs(newROIs);
+          if (index < inferredCount) {
+            // 모델 ROI 삭제
+            const newLoadedROIs = [...loadedROIs];
+            newLoadedROIs.splice(index, 1);
+            setLoadedROIs(newLoadedROIs);
+          } else {
+            // 사용자 ROI 삭제
+            const adjustedIndex = index - inferredCount;
+            const newUserROIs = [...userDefinedROIs];
+            newUserROIs.splice(adjustedIndex, 1);
+            setUserDefinedROIs(newUserROIs);
+          }
         }}
         onEditROI={(index) => {
           console.log(index, '를 수정할게~');
