@@ -28,6 +28,7 @@ import { SubProject } from '@/types/project-schema';
 import { dummyInferenceResults } from '@/data/dummy';
 import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
 import AnnotationSubProjectSlider from '@/components/annotation/annotation-subproject-slider';
+import { convertViewportROIToImageROI } from '@/hooks/use-viewport-to-image';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
@@ -133,6 +134,21 @@ const AnnotationViewer: React.FC<{
     if (subProjectId == null) return;
     setRedoMap((prev) => ({ ...prev, [subProjectId]: s }));
   };
+
+  // 1. allROIs : 불러온 ROI + 사용자 정의 ROI (viewport 기준)
+  const allROIs = useMemo(() => {
+    if (!viewerInstance.current) return userDefinedROIs;
+    const inferredROIs = getAllViewportROIs(viewerInstance.current, loadedROIs);
+    return [...inferredROIs, ...userDefinedROIs];
+  }, [viewerInstance, loadedROIs, userDefinedROIs]);
+
+  // 2. imageAllROIs : viewport → image 변환
+  const imageAllROIs = useMemo(() => {
+    if (!viewerInstance.current) return allROIs;
+    return allROIs.map((roi) =>
+      convertViewportROIToImageROI(viewerInstance.current, roi),
+    );
+  }, [viewerInstance, allROIs]);
 
   /* =============================================
       모델 타입별 디폴트 어노테이션 도구
@@ -615,7 +631,25 @@ const AnnotationViewer: React.FC<{
   ============================================== */
   return (
     <div className="flex h-full w-screen overflow-hidden">
-      <AnnotationSidebar />
+      <AnnotationSidebar
+        rois={imageAllROIs}
+        onDeleteROI={(index) => {
+          // 삭제는 userDefinedROI에 대해서만 허용
+          const inferredCount = getAllViewportROIs(
+            viewerInstance.current,
+            loadedROIs,
+          ).length;
+          if (index < inferredCount) return; // 모델 ROI는 삭제 불가
+
+          const adjustedIndex = index - inferredCount;
+          const newROIs = [...userDefinedROIs];
+          newROIs.splice(adjustedIndex, 1);
+          setUserDefinedROIs(newROIs);
+        }}
+        onEditROI={(index) => {
+          console.log(index, '를 수정할게~');
+        }}
+      />
 
       <div className="relative flex h-full flex-1 flex-col overflow-hidden">
         <div className="my-10 flex w-full flex-row items-center justify-between space-x-3 px-10">
