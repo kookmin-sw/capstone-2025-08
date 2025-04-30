@@ -23,7 +23,8 @@ def process_message():
         if not is_processing:  # 현재 모델이 사용 중이 아닐 때만 실행
             response = sqs.receive_message(
                 QueueUrl=settings.AWS_SQS_URL,
-                MaxNumberOfMessages=1
+                MaxNumberOfMessages=1,
+                WaitTimeSeconds=20
             )
 
             if "Messages" in response:
@@ -38,7 +39,6 @@ def process_message():
 
                 # 모델 실행 (비동기 실행)
                 print("process function call")
-                time.sleep(5)
                 process(request_data_list)
 
                 with processing_lock:
