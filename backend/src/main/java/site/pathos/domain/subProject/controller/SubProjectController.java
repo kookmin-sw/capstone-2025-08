@@ -17,9 +17,9 @@ public class SubProjectController {
 
     private final SubProjectService subProjectService;
 
-    @GetMapping("/{id}")
+    @GetMapping("/{subProjectId}")
     public ResponseEntity<SubProjectResponseDto> getSubProject(
-            @PathVariable("id") Long subProjectId
+            @PathVariable("subProjectId") Long subProjectId
     ){
         SubProjectResponseDto response = subProjectService.getSubProject(subProjectId);
         return ResponseEntity.ok(response);

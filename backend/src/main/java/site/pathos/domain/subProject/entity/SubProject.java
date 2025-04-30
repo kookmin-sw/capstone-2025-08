@@ -22,4 +22,7 @@ public class SubProject {
 
     @Column(name = "svs_image_url")
     private String svsImageUrl;
+
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
 }

@@ -25,6 +25,7 @@ public class SubProjectService {
     private final SubProjectRepository subProjectRepository;
 
     public SubProjectResponseDto getSubProject(Long subProjectId){
+        //TODO 추후에 메서드 분리 필요
         List<AnnotationHistory> histories = annotationHistoryRepository
                 .findAllBySubProjectId(subProjectId)
                 .stream()
@@ -43,6 +44,11 @@ public class SubProjectService {
                 })
                 .toList();
 
+        Long latestAnnotationHistoryId = histories.isEmpty()
+                ? null
+                : histories.get(histories.size() - 1).getId();
+
+
         //TODO 나중에 실제 userId로 변경 필요
         Long userId =  1L;
 
@@ -59,6 +65,7 @@ public class SubProjectService {
         return new SubProjectResponseDto(
                 subProjectId,
                 historyDtos,
+                latestAnnotationHistoryId,
                 modelDtos,
                 project.getModelType()
         );

@@ -13,19 +13,19 @@ public class AnnotationHistoryController {
 
     private final AnnotationHistoryService annotationHistoryService;
 
-    @PatchMapping("/{id}/model-name")
+    @PatchMapping("/{annotationHistoryId}/model-name")
     public ResponseEntity<Void> updateModelName(
-            @PathVariable("id") Long annotationHistoryId,
+            @PathVariable("annotationHistoryId") Long annotationHistoryId,
             @RequestParam("name") String modelName
     ) {
         annotationHistoryService.updateModelName(annotationHistoryId, modelName);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{annotationHistoryId}")
     public ResponseEntity<AnnotationHistoryResponseDto> getAnnotationHistory(
-            @PathVariable("id") Long historyId) {
-        AnnotationHistoryResponseDto response = annotationHistoryService.getAnnotationHistory(historyId);
+            @PathVariable("annotationHistoryId") Long annotationHistoryId) {
+        AnnotationHistoryResponseDto response = annotationHistoryService.getAnnotationHistory(annotationHistoryId);
         return ResponseEntity.ok(response);
     }
 }
