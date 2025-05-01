@@ -6,8 +6,8 @@ import shutil
 import boto3
 from PIL import Image
 import subprocess
-import json
 import openslide
+import requests
 
 # 대용량 이미지 처리 가능하도록 설정
 Image.MAX_IMAGE_PIXELS = None  # DecompressionBombError 방지
@@ -60,7 +60,7 @@ def process(request_data_list):
     if request_data_list["type"] == "TRAINING_INFERENCE":
         print("학습")
         run_subprocess("train")
-        upload_model(s3, s3_bucket_name)
+        upload_model(s3, s3_bucket_name, request_data_list['model_name'])
 
     # 추론
     print("추론")
@@ -76,6 +76,9 @@ def process(request_data_list):
 
     # 로컬에 다운받고 사용했던 이미지와 모델 삭제
     delete_files()
+
+    # 응용 서버 호출
+    notify_application_server(request_data_list, settings)
 
 def ensure_dirs():
     # origin
@@ -232,14 +235,14 @@ def get_command(mode: str):
             "--lr", "0.01",
             "--crop_size", "513",
             "--batch_size", "8",
-            "--output_stride", "16"
+            "--output_stride", "16",
             "--cmap_file", os.path.join(MODEL_DIR, "cmap.json"),
-            "--num_classes" "2", # TODO 프론트가 주는 클래스 갯수, +1 (배경)
-            "--gpu_id", "0"
+            "--num_classes", "2", # TODO 프론트가 주는 클래스 갯수, +1 (배경)
+            "--gpu_id", "0",
         ]
     elif mode == "predict":
         checkpoint_dir = os.path.join(MODEL_DIR, "checkpoints")
-        latest_checkpoint = get_latest_checkpoint(checkpoint_dir)  # 최신 pth 파일 가져오기
+        latest_checkpoint = get_latest_best_checkpoint(checkpoint_dir)
         return [
             "python", os.path.join(BASE_DIR, "../model/predict.py"),
             "--input", os.path.join(TEST_DIR, "images"),
@@ -248,21 +251,20 @@ def get_command(mode: str):
             "--ckpt", latest_checkpoint,
             "--save_val_results_to", os.path.join(RESULT_DIR, "tile/"),
             "--cmap_file", os.path.join(MODEL_DIR, "cmap.json"),
-            "--num_classes" "2", # TODO 여기에 프론트가 주는 클래스 갯수, +1 (배경)
+            "--num_classes", "2", # TODO 여기에 프론트가 주는 클래스 갯수, +1 (배경)
         ]
     else:
         raise ValueError("Invalid mode: choose 'train' or 'predict'")
 
-def get_latest_checkpoint(checkpoint_dir):
-    """ 체크포인트 폴더에서 가장 최근의 .pth 파일을 찾는 함수 """
-    pth_files = glob.glob(os.path.join(checkpoint_dir, "*.pth"))  # 모든 .pth 파일 리스트 가져오기
+def get_latest_best_checkpoint(checkpoint_dir):
+    """ 'best_'로 시작하는 .pth 파일 중 가장 최근에 수정된 파일 반환 """
+    best_pth_files = glob.glob(os.path.join(checkpoint_dir, "best_*.pth"))
 
-    if not pth_files:
-        raise FileNotFoundError(f" 체크포인트 폴더({checkpoint_dir})에 .pth 파일이 없습니다!")
+    if not best_pth_files:
+        raise FileNotFoundError(f"체크포인트 폴더({checkpoint_dir})에 'best_'로 시작하는 .pth 파일이 없습니다!")
 
-    # 가장 최근 수정된 파일 찾기 (여러 개가 있을 경우)
-    latest_pth_file = max(pth_files, key=os.path.getmtime)
-    return latest_pth_file  # 가장 최신 파일 경로 반환
+    latest_best_pth = max(best_pth_files, key=os.path.getmtime)
+    return latest_best_pth
 
 def merge_images():
     input_folder = os.path.join(RESULT_DIR, "tile")
@@ -333,13 +335,12 @@ def upload_images(s3, s3_bucket_name, request_data_list):
                 )
                 s3.upload_file(file_path, s3_bucket_name, s3_key)
 
-def upload_model(s3, s3_bucket_name):
+def upload_model(s3, s3_bucket_name, model_name):
     checkpoint_dir = os.path.join(MODEL_DIR, "checkpoints")
-    file_path = get_latest_checkpoint(checkpoint_dir)  # 최신 pth 파일 가져오기
-    filename = os.path.basename(file_path)
+    file_path = get_latest_best_checkpoint(checkpoint_dir)  # 최신 pth 파일 가져오기
 
     if os.path.isfile(file_path):
-        s3_key = f"model/{filename}"
+        s3_key = f"model/{model_name}"
         s3.upload_file(file_path, s3_bucket_name, s3_key)
 
 def delete_files():
@@ -369,3 +370,29 @@ def delete_files():
             folder_path = os.path.join(folder, subfolder)
             for file in os.listdir(folder_path):
                 os.remove(os.path.join(folder_path, file))
+
+def notify_application_server(request_data_list, settings):
+    try:
+        application_server_url = f"{settings.APPLICATION_SERVER_URL.rstrip('/')}/api/model-server/training/result"
+
+        payload = {
+            "sub_project_id": request_data_list["sub_project_id"],
+            "annotation_history_id": request_data_list["annotation_history_id"],
+            "model_path": request_data_list["model_path"],
+            "roi": request_data_list["roi"]
+        }
+
+        headers = {
+            "Authorization": f"Bearer {settings.APPLICATION_SERVER_TOKEN}"
+        }
+
+        response = requests.post(application_server_url, json=payload, headers=headers, timeout=5)
+
+        if response.ok:
+            print("응용 서버에 학습 결과 전송 성공")
+        else:
+            print(f"응용 서버 응답 오류: {response.status_code}, {response.text}")
+
+    except Exception as e:
+        print(f" Spring API 호출 실패 (무시됨): {str(e)}")
+
