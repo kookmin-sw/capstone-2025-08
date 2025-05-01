@@ -13,9 +13,13 @@ __pycache__/
 venv/
 env/
 #.env
+.venv
 
 # VS Code
 .vscode/
 
 # Build files
 *.log
+
+model/.git
+model/.gitignore
