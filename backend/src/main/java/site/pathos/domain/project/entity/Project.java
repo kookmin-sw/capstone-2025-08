@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -45,4 +46,12 @@ public class Project {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Builder
+    public Project(User user, String title, String description, ModelType modelType) {
+        this.user = user;
+        this.title = title;
+        this.description = description;
+        this.modelType = modelType;
+    }
 }
