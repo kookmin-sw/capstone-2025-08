@@ -33,7 +33,7 @@ Arguments for processing tiles.
 
 usage:
     tile (--input_dir=<path>) (--output_dir=<path>) \
-         [--draw_dot] [--save_qupath] [--save_raw_map] [--mem_usage=<n>]
+         [--draw_dot] [--save_qupath] [--save_raw_map] [--mem_usage=<n>] [--img_ext=<ext>]
     
 options:
    --input_dir=<path>     Path to input data directory. Assumes the files are not nested within directory.
@@ -45,6 +45,8 @@ options:
    --draw_dot             To draw nuclei centroid on overlay. [default: False]
    --save_qupath          To optionally output QuPath v0.2.3 compatible format. [default: False]
    --save_raw_map         To save raw prediction or not. [default: False]
+   --img_ext=<ext>        File extension to load (e.g. .png, .jpg, .npy). [default: .npy]
+
 """
 
 wsi_cli = """
@@ -137,7 +139,8 @@ if __name__ == '__main__':
 
     # ***
     run_args = {
-        'batch_size' : int(args['batch_size']) * nr_gpus,
+        # Use at least 1 when no CUDA GPU is present
+        'batch_size' : int(args['batch_size']) * max(1, nr_gpus),
 
         'nr_inference_workers' : int(args['nr_inference_workers']),
         'nr_post_proc_workers' : int(args['nr_post_proc_workers']),
