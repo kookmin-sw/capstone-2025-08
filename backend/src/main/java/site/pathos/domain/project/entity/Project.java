@@ -53,5 +53,10 @@ public class Project {
         this.title = title;
         this.description = description;
         this.modelType = modelType;
+        setUpdatedAt();
+    }
+
+    public void setUpdatedAt() {
+        this.updatedAt = LocalDateTime.now();
     }
 }
