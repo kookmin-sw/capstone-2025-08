@@ -1,29 +1,35 @@
 package site.pathos.global.aws.s3;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.global.aws.config.AwsProperty;
 import site.pathos.global.util.image.ImageUtils;
+import software.amazon.awssdk.core.async.AsyncRequestBody;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.Duration;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class S3Service {
     private final S3Client s3Client;
+    private final S3AsyncClient s3AsyncClient;
     private final AwsProperty awsProperty;
     private final S3Presigner s3Presigner;
 
@@ -89,6 +95,39 @@ public class S3Service {
             return ImageIO.read(inputStream);
         } catch (IOException e) {
             throw new RuntimeException("S3 이미지 다운로드 실패: " + key, e);
+        }
+    }
+
+    @Async
+    public void uploadFileAsync(String key, MultipartFile file) {
+        try {
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(awsProperty.s3().bucket())
+                    .key(key)
+                    .contentType(file.getContentType())
+                    .build();
+
+            InputStream inputStream = file.getInputStream();
+            long contentLength = file.getSize();
+
+            ExecutorService executor = Executors.newSingleThreadExecutor();
+            s3AsyncClient.putObject(
+                    request,
+                    AsyncRequestBody.fromInputStream(inputStream, contentLength, executor)
+            ).orTimeout(60, TimeUnit.MINUTES).whenComplete((res, err) -> {
+                try {
+                    if (err != null) {
+                        log.error("S3 비동기 업로드 실패: {}", key, err);
+                    } else {
+                        log.info("S3 비동기 업로드 성공: {}", key);
+                    }
+                } finally {
+                    executor.shutdown();
+                }
+            });
+
+        } catch (IOException e) {
+            log.error("파일 읽기 실패 (S3 업로드 실패): {}", key, e);
         }
     }
 }
