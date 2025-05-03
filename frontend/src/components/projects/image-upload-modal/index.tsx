@@ -17,6 +17,9 @@ interface ImageUploadModalProps {
   onClose: () => void;
   mode: 'create' | 'append';
   onUpload?: (files: File[]) => void;
+  onPrevious?: () => void;
+  onCreateSubmit?: (files: File[]) => void;
+  onAppendSubmit?: (files: File[]) => void;
 }
 
 type FileStatus = 'uploading' | 'done' | 'error';
@@ -26,6 +29,9 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
   onClose,
   mode,
   onUpload,
+  onPrevious,
+  onCreateSubmit,
+  onAppendSubmit,
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [prevFiles, setPrevFiles] = useState<File[]>([]);
@@ -95,10 +101,12 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
     setFiles((prev) => prev.filter((f) => f.name !== fileName));
     setPrevFiles((prev) => prev.filter((f) => f.name !== fileName));
     setUploadProgress((prev) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [fileName]: _, ...rest } = prev;
       return rest;
     });
     setUploadStatus((prev) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [fileName]: _, ...rest } = prev;
       return rest;
     });
@@ -135,11 +143,21 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
     }
   }, [uploadStatus, files, onUpload]);
 
-  const handleApiRequest = () => {
+  const handleCreateSubmit = () => {
     const validFiles = files.filter(
       (file) => uploadStatus[file.name] === 'done',
     );
     if (onUpload) onUpload(validFiles);
+    if (onCreateSubmit) onCreateSubmit(validFiles);
+    onClose();
+  };
+
+  const handleAppendSubmit = () => {
+    const validFiles = files.filter(
+      (file) => uploadStatus[file.name] === 'done',
+    );
+    if (onUpload) onUpload(validFiles);
+    if (onAppendSubmit) onAppendSubmit(validFiles);
     onClose();
   };
 
@@ -154,10 +172,12 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
           <DialogTitle>Upload SVS File</DialogTitle>
         </DialogHeader>
 
-        <UploadDropzone onFilesSelected={handleFilesSelected} />
+        <div className="mt-2">
+          <UploadDropzone onFilesSelected={handleFilesSelected} />
+        </div>
 
         {files.length > 0 && (
-          <div className="mt-4">
+          <div>
             {uploadComplete ? (
               <p className="mb-2 font-medium">
                 Uploaded: {successfulCount} of {files.length} successful
@@ -229,18 +249,26 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
           </div>
         )}
 
-        {mode === 'create' ? (
-          <div className="mt-6 flex justify-between">
-            <Button variant="outline" onClick={onClose}>
+        <div className="mt-2 flex justify-end gap-2">
+          {mode === 'create' && (
+            <Button
+              variant="outline"
+              onClick={onPrevious}
+              className="min-w-[80px]"
+            >
               Previous
             </Button>
-            <Button onClick={handleApiRequest}>Next</Button>
-          </div>
-        ) : (
-          <div className="mt-6 flex justify-end">
-            <Button onClick={handleApiRequest}>Upload</Button>
-          </div>
-        )}
+          )}
+          <Button
+            onClick={
+              mode === 'create' ? handleCreateSubmit : handleAppendSubmit
+            }
+            className="min-w-[80px]"
+            disabled={!uploadComplete}
+          >
+            Upload
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
