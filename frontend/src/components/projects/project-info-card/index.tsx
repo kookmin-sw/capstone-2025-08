@@ -24,7 +24,7 @@ export default function ProjectInfoCard({
   rightElement?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-md border p-6 shadow-sm">
+    <div className="flex flex-col gap-2 rounded-md border p-6">
       <div className="flex flex-row items-start justify-between">
         <div className="flex flex-row items-center gap-2">
           <div
