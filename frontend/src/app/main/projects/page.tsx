@@ -15,25 +15,35 @@ import {
 } from '@/components/ui/pagination';
 import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
+import ProjectCreateModal from '@/components/projects/project-create-modal';
+import ImageUploadModal from '@/components/projects/image-upload-modal';
 
 const sortOptions = [
-  { value: 'created-desc', label: 'Created (Newest)' },
-  { value: 'created-asc', label: 'Created (Oldest)' },
-  { value: 'updated-desc', label: 'Edited (Newest)' },
-  { value: 'updated-asc', label: 'Edited (Oldest)' },
+  { value: 'created-desc', label: 'Created (desc)' },
+  { value: 'created-asc', label: 'Created (asc)' },
+  { value: 'updated-desc', label: 'Edited (desc)' },
+  { value: 'updated-asc', label: 'Edited (asc)' },
 ];
 
 export default function ProjectsPage() {
+  // TODO: 페이지네이션, 정렬 옵션, 검색 백엔드 연동 / 프로젝트 생성 (모달) Api 연동
+
   const [searchTerm, setSearchTerm] = useState('');
   const [sort, setSort] = useState('created-desc');
   const [recentKeywords, setRecentKeywords] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+
   const itemsPerPage = 9;
 
-  const handleSearch = () => {
-    if (searchTerm && !recentKeywords.includes(searchTerm)) {
-      setRecentKeywords((prev) => [...prev, searchTerm]);
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+
+    if (term && !recentKeywords.includes(term)) {
+      setRecentKeywords((prev) => [...prev, term]);
     }
+
     setCurrentPage(1); // 검색 시 첫 페이지로 이동
   };
 
@@ -72,6 +82,7 @@ export default function ProjectsPage() {
         title="Projects"
         icon={<Sparkles />}
         buttonName="New Project"
+        onButtonClick={() => setIsCreateOpen(true)}
       />
 
       <SearchBar
@@ -82,7 +93,6 @@ export default function ProjectsPage() {
           setCurrentPage(1); // 정렬 변경 시도 첫 페이지로
         }}
         searchTerm={searchTerm}
-        onSearchTermChange={setSearchTerm}
         onSearch={handleSearch}
         recentKeywords={recentKeywords}
         onRemoveKeyword={handleRemoveKeyword}
@@ -138,6 +148,28 @@ export default function ProjectsPage() {
           </PaginationContent>
         </Pagination>
       </div>
+
+      <ProjectCreateModal
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onNext={() => {
+          setIsCreateOpen(false);
+          setIsUploadOpen(true);
+        }}
+      />
+
+      <ImageUploadModal
+        open={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        mode="create"
+        onUpload={(files) => {
+          console.log('업로드된 파일 목록:', files);
+        }}
+        onPrevious={() => {
+          setIsUploadOpen(false);
+          setIsCreateOpen(true);
+        }}
+      />
     </div>
   );
 }
