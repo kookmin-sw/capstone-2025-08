@@ -11,6 +11,7 @@ export const drawROIs = (
   userDefinedROIs: ROI[],
   loadedROIs: LoadedROI[],
   isSelectingROI: boolean,
+  isEditingROI: boolean,
 ) => {
   if (!viewerInstance || !roiCanvas) return;
 
@@ -31,6 +32,35 @@ export const drawROIs = (
 
   const tiledImage = viewerInstance.world.getItemAt(0);
   if (!tiledImage) return;
+
+  // 핸들 사이즈
+  const HANDLE_SIZE = 8;
+
+  // 선택된 ROI에 모서리 핸들 그리기
+  const drawResizeHandles = (
+    ctx: CanvasRenderingContext2D,
+    p1: { x: number; y: number },
+    p2: { x: number; y: number },
+  ) => {
+    const handlePoints = [
+      { x: p1.x, y: p1.y }, // top-left
+      { x: p2.x, y: p1.y }, // top-right
+      { x: p2.x, y: p2.y }, // bottom-right
+      { x: p1.x, y: p2.y }, // bottom-left
+    ];
+
+    ctx.save();
+    ctx.fillStyle = '#007BFF';
+    handlePoints.forEach(({ x, y }) => {
+      ctx.fillRect(
+        x - HANDLE_SIZE / 2,
+        y - HANDLE_SIZE / 2,
+        HANDLE_SIZE,
+        HANDLE_SIZE,
+      );
+    });
+    ctx.restore();
+  };
 
   // 1. 모델 ROI
   loadedROIs.forEach(({ bbox }) => {
@@ -80,9 +110,17 @@ export const drawROIs = (
     ctx.save();
     ctx.strokeStyle = 'black';
     ctx.lineWidth = 2;
-    ctx.setLineDash(isSelectingROI ? [6, 6] : []);
+    if (isSelectingROI) {
+      ctx.setLineDash([6, 6]);
+    } else {
+      ctx.setLineDash([]);
+    }
     ctx.strokeRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
     ctx.restore();
+
+    if (isEditingROI) {
+      drawResizeHandles(ctx, p1, p2);
+    }
   }
 };
 
