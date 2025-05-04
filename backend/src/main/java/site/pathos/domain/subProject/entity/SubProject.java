@@ -2,6 +2,7 @@ package site.pathos.domain.subProject.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.pathos.domain.project.entity.Project;
@@ -25,4 +26,16 @@ public class SubProject {
 
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
+
+    @Builder
+    public SubProject(Project project) {
+        this.project = project;
+    }
+
+    public String initializeSvsImageUrl() {
+        if (this.id == null) {
+            throw new IllegalStateException("SubProject ID must be set before initializing svsImageUrl.");
+        }
+        return this.svsImageUrl = String.format("sub-project/%s/svs/original.svs", this.id);
+    }
 }
