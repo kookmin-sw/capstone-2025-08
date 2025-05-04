@@ -1,5 +1,6 @@
 package site.pathos.domain.project.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import site.pathos.domain.subProject.repository.SubProjectRepository;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.aws.s3.S3Service;
+import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 
 @Service
 @RequiredArgsConstructor
@@ -60,14 +62,14 @@ public class ProjectService {
                 .build();
         projectRepository.save(project);
 
+        List<S3UploadFileDto> uploadFiles = new ArrayList<>();
         for (MultipartFile file : files) {
             SubProject subProject = SubProject.builder()
                     .project(project)
                     .build();
             subProjectRepository.save(subProject);
-
             String svsKey = subProject.initializeSvsImageUrl();
-            s3Service.uploadFileAsync(svsKey, file);
+            uploadFiles.add(new S3UploadFileDto(svsKey, file));
 
             AnnotationHistory annotationHistory = AnnotationHistory.builder()
                     .subProject(subProject)
@@ -76,5 +78,6 @@ public class ProjectService {
                     .build();
             annotationHistoryRepository.save(annotationHistory);
         }
+        s3Service.uploadFilesAsync(uploadFiles);
     }
 }
