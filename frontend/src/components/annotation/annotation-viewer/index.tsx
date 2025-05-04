@@ -769,6 +769,23 @@ const AnnotationViewer: React.FC<{
     }
   };
 
+  const handleFocusROI = (index: number) => {
+    if (!viewerInstance.current) return;
+
+    const viewer = viewerInstance.current.viewport;
+    const tiledImage = viewerInstance.current.world.getItemAt(0);
+    if (!tiledImage) return;
+
+    const roi = imageAllROIs[index];
+    const imageCenter = new OpenSeadragon.Point(
+      roi.x + roi.width / 2,
+      roi.y + roi.height / 2,
+    );
+
+    const viewportPoint = tiledImage.imageToViewportCoordinates(imageCenter);
+    viewer.panTo(viewportPoint);
+  };
+
   const handleReset = () => {
     if (!subProjectId) return;
 
@@ -825,6 +842,7 @@ const AnnotationViewer: React.FC<{
     <div className="flex h-full w-screen overflow-hidden">
       <AnnotationSidebar
         rois={imageAllROIs}
+        onClickROI={handleFocusROI}
         onDeleteROI={handleDeleteROI}
         onEditROI={(index) => {
           // const inferredCount = getAllViewportROIs(
