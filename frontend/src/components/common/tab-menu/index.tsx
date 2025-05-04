@@ -1,18 +1,19 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TabsProps } from '@/types/tap-menu';
+import { TabItem } from '@/types/annotation-sidebar';
+
+export interface TabsProps {
+  tabs: TabItem[];
+  defaultValue?: string;
+}
 
 const tabTriggerClass =
   'h-full rounded-b-none rounded-t-sm px-4 py-2 text-sm data-[state=active]:bg-black data-[state=active]:text-white cursor-pointer';
 
-export default function TabMenu({
-  tabs,
-  defaultValue,
-  height = '60%',
-}: TabsProps) {
+export default function TabMenu({ tabs, defaultValue }: TabsProps) {
   return (
     <Tabs
       defaultValue={defaultValue || tabs[0]?.value}
-      className={`h-[${height}] gap-0`}
+      className="flex h-full gap-0"
     >
       <TabsList className="h-8 w-full bg-white p-0">
         {tabs.map((tab) => (
@@ -26,7 +27,7 @@ export default function TabMenu({
         ))}
       </TabsList>
 
-      <div className="bg-border border-accent-foreground h-full overflow-y-scroll border-t p-4">
+      <div className="bg-border border-accent-foreground h-full overflow-y-auto border-t p-4">
         {tabs.map((tab) => (
           <TabsContent key={tab.value} value={tab.value}>
             {tab.content}

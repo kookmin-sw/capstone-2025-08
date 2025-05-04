@@ -1,60 +1,70 @@
 import TabMenu from '@/components/common/tab-menu';
 import { ROI } from '@/types/annotation';
 import SidebarRoi from '@/components/annotation/annotation-sidebar/roi-list';
+import SidebarUncertainROI from '@/components/annotation/annotation-sidebar/uncertain-roi-list';
+import SidebarLabel from '@/components/annotation/annotation-sidebar/label-list';
+import { dummyUncertainROIs } from '@/data/dummy';
+import { Label } from '@/types/annotation-sidebar';
 
 interface AnnotationSidebarProps {
   rois: ROI[];
+  onClickROI: (index: number) => void;
   onEditROI: (index: number) => void;
   onDeleteROI: (index: number) => void;
+  labels: Label[];
+  onRenameLabel: (id: string, newName: string) => void;
+  onDeleteLabel: (id: string) => void;
+  onSelectLabelColor: (color: string) => void;
+  onReorderLabels: (labels: Label[]) => void;
 }
 
 export default function AnnotationSidebar({
   rois,
-  onEditROI,
+  onClickROI,
   onDeleteROI,
+  onEditROI,
+  labels,
+  onRenameLabel,
+  onDeleteLabel,
+  onSelectLabelColor,
+  onReorderLabels,
 }: AnnotationSidebarProps) {
   const TopTabs = [
     {
       value: 'label',
       label: 'Label',
-      content: 'gkdl',
+      content: (
+        <SidebarLabel
+          labels={labels}
+          onRename={onRenameLabel}
+          onDelete={onDeleteLabel}
+          onSelect={onSelectLabelColor}
+          onReorder={onReorderLabels}
+        />
+      ),
     },
     {
       value: 'rois',
       label: 'ROIs',
       content: (
-        <SidebarRoi rois={rois} onEdit={onEditROI} onDelete={onDeleteROI} />
+        <SidebarRoi
+          rois={rois}
+          onClick={onClickROI}
+          onDelete={onDeleteROI}
+          onEdit={onEditROI}
+        />
       ),
     },
     {
       value: 'uncertainRois',
       label: 'Uncertain ROIs',
-      content: '아직 준비 중입니다.',
-    },
-  ];
-
-  const BottomTabs = [
-    {
-      value: 'image',
-      label: 'Image',
-      content: '하이',
-    },
-    {
-      value: 'scan',
-      label: 'Scan',
-      content: 'zz',
-    },
-    {
-      value: 'acquisition',
-      label: 'Acquisition',
-      content: '아직 준비 중입니다.',
+      content: <SidebarUncertainROI uncertainROIs={dummyUncertainROIs} />,
     },
   ];
 
   return (
-    <div className="border-border flex h-full w-[30%] min-w-[300px] flex-col justify-between border-r-[1px] p-5">
+    <div className="border-border box-border flex h-full w-[30%] min-w-[300px] flex-col border-r-[1px] p-5">
       <TabMenu tabs={TopTabs} />
-      <TabMenu tabs={BottomTabs} height="30%" />
     </div>
   );
 }
