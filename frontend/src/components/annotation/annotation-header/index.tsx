@@ -34,8 +34,8 @@ export default function AnnotationHeader() {
     <div className="bg-primary fixed right-0 top-0 flex w-full flex-row items-center justify-between p-4 text-white">
       {/* 왼쪽: 뒤로가기 + 프로젝트 제목 */}
       <div className="flex flex-row items-center gap-4">
-        <button onClick={() => router.push('/main/projects')}>
-          <ArrowLeft className="text-white" />
+        <button onClick={() => router.back()}>
+          <ArrowLeft className="cursor-pointer text-white" />
         </button>
         <h3 className="text-lg font-semibold">
           {project ? project.title : 'Project Title'}

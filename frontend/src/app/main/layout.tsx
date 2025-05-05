@@ -12,15 +12,14 @@ export default function MainLayout({
 }) {
   const pathname = usePathname();
 
-  // /main/projects/annotation/ 경로일 경우 사이드바를 숨김
-  const hideSidebar = pathname.startsWith('/main/projects/annotation/');
+  const hideSidebar = pathname.startsWith('/main/projects/');
 
   return hideSidebar ? (
     <main>{children}</main>
   ) : (
     <SidebarProvider open>
       <AppSidebar />
-      <main>{children}</main>
+      <main className="w-screen px-16 py-12">{children}</main>
     </SidebarProvider>
   );
 }
