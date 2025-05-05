@@ -28,6 +28,8 @@ import { SubProject } from '@/types/project-schema';
 import { dummyInferenceResults } from '@/data/dummy';
 import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
 import AnnotationSubProjectSlider from '@/components/annotation/annotation-subproject-slider';
+import { convertViewportROIToImageROI } from '@/hooks/use-viewport-to-image';
+import { Label } from '@/types/annotation-sidebar';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
@@ -134,6 +136,95 @@ const AnnotationViewer: React.FC<{
     setRedoMap((prev) => ({ ...prev, [subProjectId]: s }));
   };
 
+  // 1. allROIs : 불러온 ROI + 사용자 정의 ROI (viewport 기준)
+  const allROIs = useMemo(() => {
+    if (!viewerInstance.current) return userDefinedROIs;
+    const inferredROIs = getAllViewportROIs(viewerInstance.current, loadedROIs);
+    return [...inferredROIs, ...userDefinedROIs];
+  }, [viewerInstance, loadedROIs, userDefinedROIs]);
+
+  // 2. imageAllROIs : viewport → image 변환
+  const imageAllROIs = useMemo(() => {
+    if (!viewerInstance.current) return allROIs;
+    return allROIs.map((roi) =>
+      convertViewportROIToImageROI(viewerInstance.current, roi),
+    );
+  }, [viewerInstance, allROIs]);
+
+  // 사용한 label
+  const [labels, setLabels] = useState<Label[]>([]);
+
+  // label 이름 수정
+  const handleRenameLabel = (id: string, newName: string) => {
+    setLabels((prev) =>
+      prev.map((label) =>
+        label.id === id ? { ...label, name: newName } : label,
+      ),
+    );
+  };
+
+  // label 이름 삭제
+  const handleDeleteLabel = (id: string) => {
+    setLabels((prev) => prev.filter((label) => label.id !== id));
+  };
+
+  // label 추가
+  const ensureLabelForCurrentColor = () => {
+    setLabels((prev) => {
+      const exists = prev.find((l) => l.color === penColor);
+      if (!exists) {
+        const newLabel: Label = {
+          id: crypto.randomUUID(),
+          name: `Label ${prev.length + 1}`,
+          color: penColor,
+          createdAt: Date.now(),
+          order: prev.length,
+        };
+        return [...prev, newLabel];
+      }
+      return prev;
+    });
+  };
+
+  // label의 순서 변경
+  const handleReorderLabels = (reordered: Label[]) => {
+    setLabels(reordered);
+  };
+
+  // roi 수정
+  const currentROIRef = useRef<ROI | null>(null);
+  const isResizingRef = useRef(false);
+  const resizingHandleRef = useRef<
+    'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null
+  >(null);
+  const [isEditingROI, setIsEditingROI] = useState(false);
+
+  const getResizeHandleUnderCursor = (
+    mouse: { x: number; y: number },
+    roi: ROI,
+    viewportPixelFromPoint: (pt: { x: number; y: number }) => {
+      x: number;
+      y: number;
+    },
+  ): 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null => {
+    const threshold = 10;
+
+    const corners = {
+      'top-left': { x: roi.x, y: roi.y },
+      'top-right': { x: roi.x + roi.width, y: roi.y },
+      'bottom-left': { x: roi.x, y: roi.y + roi.height },
+      'bottom-right': { x: roi.x + roi.width, y: roi.y + roi.height },
+    };
+
+    for (const [handle, pt] of Object.entries(corners)) {
+      const pixel = viewportPixelFromPoint(pt);
+      const dist = Math.hypot(pixel.x - mouse.x, pixel.y - mouse.y);
+      if (dist <= threshold) return handle as any;
+    }
+
+    return null;
+  };
+
   /* =============================================
       모델 타입별 디폴트 어노테이션 도구
   ============================================== */
@@ -198,6 +289,7 @@ const AnnotationViewer: React.FC<{
       userDefinedROIs,
       loadedROIs,
       isSelectingROI,
+      isEditingROI,
     );
   }, [
     viewerInstance,
@@ -206,11 +298,12 @@ const AnnotationViewer: React.FC<{
     userDefinedROIs,
     loadedROIs,
     isSelectingROI,
+    isEditingROI,
   ]);
 
   useEffect(() => {
     redrawROICanvas();
-  }, [roi, userDefinedROIs, isSelectingROI, redrawROICanvas]);
+  }, [roi, userDefinedROIs, isSelectingROI, isEditingROI, redrawROICanvas]);
 
   /* =============================================
       모델 ROI가 준비되면 첫 번째 ROI를 자동으로 선택
@@ -329,6 +422,22 @@ const AnnotationViewer: React.FC<{
       new OpenSeadragon.Point(x, y),
     );
 
+    if (roi && !isDrawingMode && !isSelectingROI) {
+      const mousePixel = { x, y };
+      const handle = getResizeHandleUnderCursor(mousePixel, roi, (pt) =>
+        viewerInstance.current!.viewport.pixelFromPoint(
+          new OpenSeadragon.Point(pt.x, pt.y),
+        ),
+      );
+      if (handle) {
+        isResizingRef.current = true;
+        resizingHandleRef.current = handle;
+        currentROIRef.current = { ...roi }; // 기준 ROI 보관
+        e.preventDefault();
+        return;
+      }
+    }
+
     if (isSelectingROI) {
       roiStartRef.current = viewportPoint;
       setROI({ x: viewportPoint.x, y: viewportPoint.y, width: 0, height: 0 });
@@ -348,10 +457,19 @@ const AnnotationViewer: React.FC<{
             size: penSize,
             isEraser: activeTool === 'eraser',
           };
+
+          // label 추가
+          if (!currentStrokeRef.current.isEraser) {
+            ensureLabelForCurrentColor();
+          }
+
           redraw();
           break;
 
         case 'polygon':
+          // label 추가
+          ensureLabelForCurrentColor();
+
           if (!currentPolygonRef.current) {
             currentPolygonRef.current = {
               points: [],
@@ -402,6 +520,39 @@ const AnnotationViewer: React.FC<{
       new OpenSeadragon.Point(x, y),
     );
 
+    if (
+      isResizingRef.current &&
+      resizingHandleRef.current &&
+      currentROIRef.current
+    ) {
+      const updatedROI = { ...currentROIRef.current };
+      switch (resizingHandleRef.current) {
+        case 'top-left':
+          updatedROI.width += updatedROI.x - viewportPoint.x;
+          updatedROI.height += updatedROI.y - viewportPoint.y;
+          updatedROI.x = viewportPoint.x;
+          updatedROI.y = viewportPoint.y;
+          break;
+        case 'top-right':
+          updatedROI.width = viewportPoint.x - updatedROI.x;
+          updatedROI.height += updatedROI.y - viewportPoint.y;
+          updatedROI.y = viewportPoint.y;
+          break;
+        case 'bottom-left':
+          updatedROI.width += updatedROI.x - viewportPoint.x;
+          updatedROI.x = viewportPoint.x;
+          updatedROI.height = viewportPoint.y - updatedROI.y;
+          break;
+        case 'bottom-right':
+          updatedROI.width = viewportPoint.x - updatedROI.x;
+          updatedROI.height = viewportPoint.y - updatedROI.y;
+          break;
+      }
+      setROI(updatedROI);
+      redrawROICanvas();
+      return;
+    }
+
     if (isSelectingROI && roiStartRef.current) {
       const start = roiStartRef.current;
       setROI({
@@ -440,6 +591,64 @@ const AnnotationViewer: React.FC<{
 
     const tiledImage = viewerInstance.current.world.getItemAt(0);
     if (!tiledImage) return;
+
+    // ROI 리사이징
+    if (isResizingRef.current && currentROIRef.current) {
+      const originalROI = currentROIRef.current;
+      const index = userDefinedROIs.findIndex(
+        (r) =>
+          r.x === originalROI.x &&
+          r.y === originalROI.y &&
+          r.width === originalROI.width &&
+          r.height === originalROI.height,
+      );
+      if (index !== -1 && roi) {
+        const updatedROIs = [...userDefinedROIs];
+        updatedROIs[index] = roi;
+        setUserDefinedROIs(updatedROIs);
+
+        // ROI 안쪽이 아닌 드로잉 제거 (전체 ROI 기준으로 유지)
+        const isStrokeInsideAnyROI = (stroke: Stroke, rois: ROI[]) => {
+          return rois.some((roi) =>
+            stroke.points.every(
+              (p) =>
+                p.x >= roi.x &&
+                p.x <= roi.x + roi.width &&
+                p.y >= roi.y &&
+                p.y <= roi.y + roi.height,
+            ),
+          );
+        };
+
+        const isPolygonInsideAnyROI = (polygon: Polygon, rois: ROI[]) => {
+          return rois.some((roi) =>
+            polygon.points.every(
+              (p) =>
+                p.x >= roi.x &&
+                p.x <= roi.x + roi.width &&
+                p.y >= roi.y &&
+                p.y <= roi.y + roi.height,
+            ),
+          );
+        };
+
+        const filteredStrokes = strokes.filter((stroke) =>
+          isStrokeInsideAnyROI(stroke, updatedROIs),
+        );
+        const filteredPolygons = polygons.filter((polygon) =>
+          isPolygonInsideAnyROI(polygon, updatedROIs),
+        );
+
+        setStrokes(filteredStrokes);
+        setPolygons(filteredPolygons);
+      }
+
+      isResizingRef.current = false;
+      resizingHandleRef.current = null;
+      currentROIRef.current = null;
+      setIsEditingROI(false);
+      return;
+    }
 
     // ROI 생성 중일 때
     if (isSelectingROI) {
@@ -511,6 +720,7 @@ const AnnotationViewer: React.FC<{
   const handleSetMove = () => {
     setIsDrawingMode(false);
     setIsSelectingROI(false);
+    setIsEditingROI(false);
     viewerInstance.current?.setMouseNavEnabled(true);
   };
 
@@ -538,6 +748,7 @@ const AnnotationViewer: React.FC<{
       setRedoStack([]);
       setIsDrawingMode(true);
       setIsSelectingROI(false);
+      setIsEditingROI(false);
       viewerInstance.current?.setMouseNavEnabled(false);
     } else {
       setIsDrawingMode(false);
@@ -548,17 +759,98 @@ const AnnotationViewer: React.FC<{
 
   const handleSelectROI = () => {
     setIsSelectingROI(true);
+    setIsEditingROI(false);
     setIsDrawingMode(false);
     viewerInstance.current?.setMouseNavEnabled(true);
   };
 
-  const handleDeleteROI = () => {
-    if (!subProjectId) return;
+  const handleDeleteROI = (index: number) => {
+    if (!subProjectId || !viewerInstance.current) return;
 
-    setUndoStack([...undoStack, deepCopyStrokes(strokes)]);
-    setRedoStack([]);
-    setROI(null);
-    redraw();
+    const inferredCount = getAllViewportROIs(
+      viewerInstance.current,
+      loadedROIs,
+    ).length;
+
+    if (index < inferredCount) {
+      // 모델 ROI 삭제
+      const newLoadedROIs = [...loadedROIs];
+      newLoadedROIs.splice(index, 1);
+      setLoadedROIs(newLoadedROIs);
+    } else {
+      const adjustedIndex = index - inferredCount;
+      const deletedROI = userDefinedROIs[adjustedIndex];
+      if (!deletedROI) return;
+
+      const { x, y, width, height } = deletedROI;
+      const xMin = x;
+      const xMax = x + width;
+      const yMin = y;
+      const yMax = y + height;
+
+      const filteredStrokes = strokes.filter((stroke) =>
+        stroke.points.every(
+          (p) => p.x < xMin || p.x > xMax || p.y < yMin || p.y > yMax,
+        ),
+      );
+
+      const filteredPolygons = polygons.filter((polygon) =>
+        polygon.points.every(
+          (p) => p.x < xMin || p.x > xMax || p.y < yMin || p.y > yMax,
+        ),
+      );
+
+      const updatedROIs = [...userDefinedROIs];
+      updatedROIs.splice(adjustedIndex, 1);
+
+      setUndoStack([...undoStack, deepCopyStrokes(strokes)]);
+      setRedoStack([]);
+      setUserDefinedROIs(updatedROIs);
+      setStrokes(filteredStrokes);
+      setPolygons(filteredPolygons);
+      setROI(null);
+      redraw();
+    }
+  };
+
+  const handleFocusROI = (index: number) => {
+    if (!viewerInstance.current) return;
+
+    const viewer = viewerInstance.current.viewport;
+    const tiledImage = viewerInstance.current.world.getItemAt(0);
+    if (!tiledImage) return;
+
+    const roi = imageAllROIs[index];
+    const imageCenter = new OpenSeadragon.Point(
+      roi.x + roi.width / 2,
+      roi.y + roi.height / 2,
+    );
+
+    const viewportPoint = tiledImage.imageToViewportCoordinates(imageCenter);
+    viewer.panTo(viewportPoint);
+  };
+
+  const handleEditROI = (index: number) => {
+    if (
+      isDrawingMode ||
+      currentStrokeRef.current ||
+      currentPolygonRef.current
+    ) {
+      alert('어노테이션 중에는 ROI를 수정할 수 없습니다.');
+      return;
+    }
+
+    const inferredCount = getAllViewportROIs(
+      viewerInstance.current,
+      loadedROIs,
+    ).length;
+
+    const adjustedIndex = index - inferredCount;
+    const selectedROI = userDefinedROIs[adjustedIndex];
+    if (selectedROI) {
+      setROI(selectedROI);
+      setIsEditingROI(true);
+    }
   };
 
   const handleReset = () => {
@@ -597,10 +889,18 @@ const AnnotationViewer: React.FC<{
     isRedoingRef.current = false;
   };
 
-  // ESC로 polygon 모드 취소
+  // ESC로 polygon 모드 취소 + ROI 리사이징 취소
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        if (isResizingRef.current && currentROIRef.current) {
+          setROI(currentROIRef.current); // 복원
+          currentROIRef.current = null;
+          isResizingRef.current = false;
+          resizingHandleRef.current = null;
+          redrawROICanvas();
+        }
+
         currentPolygonRef.current = null;
         setMousePosition(null);
         redraw();
@@ -614,10 +914,20 @@ const AnnotationViewer: React.FC<{
       렌더링
   ============================================== */
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
-      <AnnotationSidebar />
+    <div className="flex h-full w-screen overflow-hidden">
+      <AnnotationSidebar
+        rois={imageAllROIs}
+        onClickROI={handleFocusROI}
+        onDeleteROI={handleDeleteROI}
+        onEditROI={handleEditROI}
+        labels={labels}
+        onRenameLabel={handleRenameLabel}
+        onDeleteLabel={handleDeleteLabel}
+        onSelectLabelColor={(color) => setPenColor(color)}
+        onReorderLabels={handleReorderLabels}
+      />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="relative flex h-full flex-1 flex-col overflow-hidden">
         <div className="my-10 flex w-full flex-row items-center justify-between space-x-3 px-10">
           {isDrawingMode ? (
             <AnnotationTool
@@ -649,7 +959,13 @@ const AnnotationViewer: React.FC<{
             />
             <canvas
               ref={roiCanvasRef}
-              className="pointer-events-none absolute inset-0 z-20"
+              className={`absolute inset-0 z-20 ${
+                isEditingROI ? 'pointer-events-auto' : 'pointer-events-none'
+              }`}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseOut={handleMouseUp}
             />
           </div>
           <AnnotationControlPanel
