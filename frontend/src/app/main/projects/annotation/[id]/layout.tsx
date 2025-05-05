@@ -1,3 +1,4 @@
+import React from 'react';
 import AnnotationHeader from '@/components/annotation/annotation-header';
 
 export default function AnnotationLayout({

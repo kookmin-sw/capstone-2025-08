@@ -10,14 +10,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
 
 interface SearchBarProps {
   sort: string;
   sortOptions: { value: string; label: string }[];
   onSortChange: (value: string) => void;
   searchTerm: string;
-  onSearchTermChange: (term: string) => void;
-  onSearch: () => void;
+  onSearch: (term: string) => void;
   recentKeywords: string[];
   onRemoveKeyword: (keyword: string) => void;
 }
@@ -27,16 +27,21 @@ export default function SearchBar({
   sortOptions,
   onSortChange,
   searchTerm,
-  onSearchTermChange,
   onSearch,
   recentKeywords,
   onRemoveKeyword,
 }: SearchBarProps) {
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+
+  const handleSearch = () => {
+    onSearch(localSearchTerm);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Select value={sort} onValueChange={onSortChange}>
-          <SelectTrigger className="text-muted-foreground w-48">
+          <SelectTrigger className="w-48">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
           <SelectContent>
@@ -50,16 +55,14 @@ export default function SearchBar({
 
         <Input
           placeholder="Search Projects"
-          value={searchTerm}
-          onChange={(e) => onSearchTermChange(e.target.value)}
+          value={localSearchTerm}
+          onChange={(e) => setLocalSearchTerm(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              onSearch();
-            }
+            if (e.key === 'Enter') handleSearch();
           }}
         />
 
-        <Button className="w-32" onClick={onSearch}>
+        <Button className="w-32" onClick={handleSearch}>
           Search
         </Button>
       </div>
@@ -69,12 +72,12 @@ export default function SearchBar({
           <Badge
             key={keyword}
             variant="secondary"
-            className="flex items-center gap-1"
+            className="flex items-center gap-2.5"
           >
             {keyword}
             <button
               onClick={() => onRemoveKeyword(keyword)}
-              className="text-muted-foreground hover:text-foreground text-xs"
+              className="text-muted-foreground hover:text-foreground text-sm hover:cursor-pointer"
             >
               ×
             </button>
