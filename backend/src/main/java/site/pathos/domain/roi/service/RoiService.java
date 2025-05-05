@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.tissueAnnotation.service.TissueAnnotationService;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
-import site.pathos.domain.roi.dto.request.RoiPayload;
+import site.pathos.domain.roi.dto.request.RoiRequestPayload;
 import site.pathos.domain.roi.dto.request.RoiSaveRequestDto;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
@@ -69,8 +69,8 @@ public class RoiService {
     }
 
     @Transactional
-    public void saveResultRois(AnnotationHistory newHistory, List<RoiPayload> roiPayloads) {
-        for (RoiPayload payload : roiPayloads) {
+    public void saveResultRois(AnnotationHistory newHistory, List<RoiRequestPayload> roiPayloads) {
+        for (RoiRequestPayload payload : roiPayloads) {
             Roi roi = Roi.builder()
                     .annotationHistory(newHistory)
                     .x(payload.detail().x())

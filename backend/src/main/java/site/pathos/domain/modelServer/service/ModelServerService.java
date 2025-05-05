@@ -15,8 +15,8 @@ import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.model.service.ModelService;
 import site.pathos.domain.modelServer.dto.request.TrainingResultRequestDto;
 import site.pathos.domain.modelServer.entity.ModelRequestType;
-import site.pathos.domain.roi.dto.request.RoiDetail;
-import site.pathos.domain.roi.dto.request.RoiPayload;
+import site.pathos.domain.roi.dto.request.RoiRequestPayload;
+import site.pathos.domain.roi.dto.request.RoiRequestDto;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.modelServer.dto.request.TrainingRequestDto;
 import site.pathos.domain.roi.service.RoiService;
@@ -53,16 +53,16 @@ public class ModelServerService {
                 history.getId(), AnnotationType.MERGED
         );
 
-        List<RoiPayload> roiMessages = mergedAnnotations.stream().map(ta -> {
+        List<RoiRequestPayload> roiMessages = mergedAnnotations.stream().map(ta -> {
             Roi roi = ta.getRoi();
-            RoiDetail detail = new RoiDetail(roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight());
+            RoiRequestDto detail = new RoiRequestDto(roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight());
 
             // TODO: cell 관련 로직 추가 필요
             List<CellDetail> cellAnnotations = List.of();
 
             List<String> imagePaths = List.of(ta.getAnnotationImagePath());
 
-            return new RoiPayload(detail, imagePaths, cellAnnotations);
+            return new RoiRequestPayload(detail, imagePaths, cellAnnotations);
         }).toList();
 
         return new TrainingRequestDto(
