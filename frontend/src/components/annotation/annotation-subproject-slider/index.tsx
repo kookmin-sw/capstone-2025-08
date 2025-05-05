@@ -20,7 +20,7 @@ export default function AnnotationSubProjectSlider({
   const [showUploadModal, setShowUploadModal] = useState(false);
 
   return (
-    <div className="bg-muted flex overflow-x-auto border-b border-t">
+    <div className="bg-muted absolute bottom-0 flex overflow-x-auto border-b border-t">
       {subProjects.map((sp) => {
         const isSelected = selected?.id === sp.id;
         return (
