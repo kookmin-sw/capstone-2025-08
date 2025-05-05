@@ -7,7 +7,7 @@ export interface TabsProps {
 }
 
 const tabTriggerClass =
-  'h-full rounded-b-none rounded-t-sm px-4 py-2 text-sm data-[state=active]:bg-black data-[state=active]:text-white cursor-pointer';
+  'h-full rounded-b-none rounded-t-sm px-4 py-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white cursor-pointer';
 
 export default function TabMenu({ tabs, defaultValue }: TabsProps) {
   return (
