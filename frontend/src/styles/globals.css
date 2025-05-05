@@ -10,3 +10,46 @@
 .scroll-hide-track::-webkit-scrollbar-track {
     background: transparent;
 }
+
+@layer utilities {
+    .stroke-draw-loop {
+        stroke-dasharray: 4000;
+        stroke-dashoffset: 4000;
+
+        animation:
+                strokeDraw 4s ease-out forwards,
+                strokeFade 2s ease-out forwards 4s,
+                strokeLoop 6s linear infinite 4.5s;
+
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.35));
+        transform-origin: center;
+    }
+
+    @keyframes strokeDraw {
+        to {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    @keyframes strokeFade {
+        from {
+            opacity: 1;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.35));
+            transform: scale(1);
+        }
+        to {
+            opacity: 0.7;
+            filter: blur(1.2px);
+            transform: scale(0.995);
+        }
+    }
+
+    @keyframes strokeLoop {
+        0% {
+            stroke-dashoffset: 0;
+        }
+        100% {
+            stroke-dashoffset: -4000;
+        }
+    }
+}
