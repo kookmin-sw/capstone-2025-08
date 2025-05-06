@@ -1,6 +1,6 @@
 package site.pathos.domain.modelServer.dto.request;
 
-import site.pathos.domain.roi.dto.request.RoiPayload;
+import site.pathos.domain.roi.dto.request.RoiRequestPayload;
 
 import java.util.List;
 
@@ -11,5 +11,5 @@ public record TrainingRequestDto(
         String model_name,
         String model_path,
         String svs_path,
-        List<RoiPayload> roi
+        List<RoiRequestPayload> roi
 ) {}

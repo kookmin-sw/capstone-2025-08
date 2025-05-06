@@ -40,6 +40,9 @@ public class Roi {
     @Column(name = "height", nullable = false)
     private int height;
 
+    @Column(name = "faulty")
+    private Double faulty;
+
     @Builder
     public Roi(AnnotationHistory annotationHistory, int x, int y, int width, int height) {
         if (annotationHistory == null) throw new IllegalArgumentException("annotationHistory cannot be null");

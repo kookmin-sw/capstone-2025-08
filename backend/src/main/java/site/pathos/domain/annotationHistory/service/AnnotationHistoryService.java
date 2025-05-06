@@ -10,8 +10,11 @@ import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
 import site.pathos.domain.annotationHistory.dto.response.AnnotationHistoryResponseDto;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
-import site.pathos.domain.roi.dto.request.RoiDetail;
-import site.pathos.domain.roi.dto.request.RoiPayload;
+import site.pathos.domain.label.dto.LabelDto;
+import site.pathos.domain.label.entity.Label;
+import site.pathos.domain.label.repository.LabelRepository;
+import site.pathos.domain.roi.dto.response.RoiResponseDto;
+import site.pathos.domain.roi.dto.response.RoiResponsePayload;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
 import site.pathos.global.aws.s3.S3Service;
@@ -25,6 +28,7 @@ public class AnnotationHistoryService {
     private final AnnotationHistoryRepository annotationHistoryRepository;
     private final RoiRepository roiRepository;
     private final CellAnnotationRepository cellAnnotationRepository;
+    private final LabelRepository labelRepository;
 
     private final S3Service s3Service;
 
@@ -44,7 +48,7 @@ public class AnnotationHistoryService {
         // ROI만 조회 (TissueAnnotation, Cell은 나중에 개별 조회)
         List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(history.getId());
 
-        List<RoiPayload> roiPayloads = rois.stream()
+        List<RoiResponsePayload> roiPayloads = rois.stream()
                 .map(roi -> {
                     // CellAnnotation 가져오기
                     List<CellAnnotation> cellAnnotations = cellAnnotationRepository.findAllByRoiId(roi.getId());
@@ -53,7 +57,8 @@ public class AnnotationHistoryService {
                             .map(ca -> new CellDetail(ca.getX(), ca.getY()))
                             .toList();
 
-                    RoiDetail detail = new RoiDetail(roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight());
+                    RoiResponseDto detail = new RoiResponseDto(
+                            roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
 
                     // TissueAnnotation 중 클라이언트용(예: TILE or MERGED or RESULT_TILE 등)을 골라서 하나만 선택 (또는 여러 개면 리스트로)
                     List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
@@ -61,14 +66,21 @@ public class AnnotationHistoryService {
                             .map(s3Service::getPresignedUrl)
                             .toList();
 
-                    return new RoiPayload(detail, presignedTissuePaths, cellDetails);
+                    return new RoiResponsePayload(detail, presignedTissuePaths, cellDetails);
                 })
+                .toList();
+
+        List<Label> labels = labelRepository.findByAnnotationHistoryId(historyId);
+
+        List<LabelDto> labelDtos = labels.stream()
+                .map(Label::toLabelDto)
                 .toList();
 
         return new AnnotationHistoryResponseDto(
                 history.getId(),
                 history.getModelName(),
-                roiPayloads
+                roiPayloads,
+                labelDtos
         );
     }
 }

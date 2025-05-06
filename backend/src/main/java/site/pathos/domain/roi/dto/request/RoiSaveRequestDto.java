@@ -9,7 +9,7 @@ import java.util.List;
 @Setter
 public class RoiSaveRequestDto {
 
-    private Long roiId; // 기존 ROI면 존재, 없으면 null
+    private Long roiId;
     private Integer x;
     private Integer y;
     private Integer width;

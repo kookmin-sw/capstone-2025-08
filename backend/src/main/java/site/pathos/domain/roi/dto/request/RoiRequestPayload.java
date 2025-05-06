@@ -4,8 +4,8 @@ import site.pathos.domain.annotation.cellAnnotation.dto.CellDetail;
 
 import java.util.List;
 
-public record RoiPayload(
-        RoiDetail detail,
+public record RoiRequestPayload(
+        RoiRequestDto detail,
         List<String> tissue_path,
         List<CellDetail> cell
 ) {}
