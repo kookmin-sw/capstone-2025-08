@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HexColorPicker } from 'react-colorful';
+import { Slider } from '@/components/ui/slider';
 
 interface AnnotationToolProps {
   modelType: string;
@@ -164,33 +165,21 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
         <SlidersHorizontal />
       </Button>
 
-      {/* 펜 크기 Preset Dot */}
+      {/* 펜 크기 Slider */}
       {penSizeMenuOpen && (
         <div
           ref={sizeMenuRef}
           className="absolute bottom-0 left-full z-50 ml-2 flex flex-col items-center gap-3 rounded-lg bg-white p-4 shadow"
         >
-          {[10, 20, 30, 40, 50].map((size) => {
-            const isSelected = penSize === size;
-            return (
-              <button
-                key={size}
-                onClick={() => {
-                  onChangePenSize(size); // ✅ 상위에서 관리
-                  setPenSizeMenuOpen(false);
-                }}
-                className={`rounded-full transition-all duration-150 ${
-                  isSelected ? 'ring ring-black ring-offset-2' : ''
-                }`}
-                style={{
-                  width: size + 8,
-                  height: size + 8,
-                  backgroundColor: penColor,
-                  boxSizing: 'content-box',
-                }}
-              />
-            );
-          })}
+          <Slider
+            orientation="vertical"
+            min={5}
+            max={50}
+            step={1}
+            value={[penSize]}
+            onValueChange={([val]) => onChangePenSize(val)}
+            className="h-32 w-4"
+          />
         </div>
       )}
     </div>
