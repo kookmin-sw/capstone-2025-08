@@ -2,8 +2,14 @@ package site.pathos.domain.project.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.response.ProjectDetailDto;
@@ -15,6 +21,7 @@ import site.pathos.domain.project.service.ProjectService;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private static final String DEFAULT_GET_PROJECTS_SORT = "UPDATED_AT_DESC";
 
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectDetailDto> getProjectDetail(
@@ -24,7 +31,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> createProject(
             @RequestPart CreateProjectRequestDto requestDto,
             @RequestPart List<MultipartFile> files
