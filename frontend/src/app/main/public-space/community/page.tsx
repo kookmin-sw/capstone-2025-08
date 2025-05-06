@@ -1,57 +1,43 @@
 'use client';
 
 import { Plus, Award, Clock } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageTitle from '@/components/common/page-title';
 import SubTitle from '@/components/public-space/sub-title';
 import Podium from '@/components/public-space/best-project';
 import ProjectItem from '@/components/public-space/project-item';
 
-export const dummyProjects = [
-  {
-    id: 'project-001',
-    title: 'First project',
-    author: 'hyeonjin Hwang',
-    tags: ['Cell', 'DataSet', 'Comment'],
-    thumbnail: '/images/test-public-space-image.png', // 업로드한 이미지 경로로 수정
-    downloadCount: '13M',
-  },
-  {
-    id: 'project-002',
-    title: 'Tumor Annotation',
-    author: 'Jisoo Kim',
-    tags: ['Tumor', 'Pathology', 'Model'],
-    thumbnail: '/images/test-public-space-image.png',
-    downloadCount: '8.4M',
-  },
-  {
-    id: 'project-003',
-    title: 'Colon Tissue AI',
-    author: 'Minho Lee',
-    tags: ['Colon', 'AI Model', 'Dataset'],
-    thumbnail: '/images/test-public-space-image.png',
-    downloadCount: '5.2M',
-  },
-  {
-    id: 'project-004',
-    title: 'Lung Cell Detection',
-    author: 'Yuna Park',
-    tags: ['Lung', 'Detection', 'Inference'],
-    thumbnail: '/images/test-public-space-image.png',
-    downloadCount: '11M',
-  },
-  {
-    id: 'project-005',
-    title: 'Stain Normalization Study',
-    author: 'Taewoo Ryu',
-    tags: ['Stain', 'Normalization', 'Histopathology'],
-    thumbnail: '/images/test-public-space-image.png',
-    downloadCount: '9.7M',
-  },
-];
+const ITEMS_PER_PAGE = 12; // 3줄 x 4칸
+
+export const dummyProjects = Array.from({ length: 30 }, (_, i) => ({
+  id: `project-${i + 1}`,
+  title: `Project ${i + 1}`,
+  author: 'Hyeonjin Hwang',
+  tags: ['Cell', 'DataSet', 'Comment'],
+  thumbnail: '/images/test-public-space-image.png',
+  downloadCount: `${(Math.random() * 10 + 1).toFixed(1)}M`,
+}));
 
 export default function PublicSpaceCommunityPage() {
   const router = useRouter();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.ceil(dummyProjects.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentProjects = dummyProjects.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE,
+  );
 
   return (
     <div className="space-y-4">
@@ -64,18 +50,53 @@ export default function PublicSpaceCommunityPage() {
         showDivider={false}
       />
       <div>검색바</div>
+
       <div className="my-8 border-b" />
+
       <div className="space-y-3">
         <SubTitle title="Best Project" icon={<Award />} />
         {/*<Podium />*/}
       </div>
-      <div className="space-y-3">
+
+      <div className="space-y-4">
         <SubTitle title="Recent Projects" icon={<Clock />} />
         <div className="grid grid-cols-4 gap-6">
-          {dummyProjects.map((project) => (
+          {currentProjects.map((project) => (
             <ProjectItem key={project.id} project={project} />
           ))}
         </div>
+
+        <Pagination className="pt-5">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              />
+            </PaginationItem>
+
+            {Array.from({ length: totalPages }, (_, i) => (
+              <PaginationItem key={i + 1}>
+                <PaginationLink
+                  href="#"
+                  isActive={currentPage === i + 1}
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
+
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );
