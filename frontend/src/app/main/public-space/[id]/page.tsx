@@ -14,6 +14,7 @@ import ProjectCard from '@/components/public-space/project-card';
 import Description from '@/components/public-space/project-tap-menu/description';
 import Dataset from '@/components/public-space/project-tap-menu/dataset';
 import ProjectDownloadModal from '@/components/public-space/project-download-modal';
+import { Toaster } from 'sonner';
 
 export default function PublicSpaceDetailPage() {
   const router = useRouter();
@@ -48,6 +49,8 @@ export default function PublicSpaceDetailPage() {
         />
         <div className="bg-black/35 absolute inset-0" />
       </div>
+
+      <Toaster position="bottom-right" />
 
       <div className="space-y-10 px-16 py-9">
         <div className="space-y-3">

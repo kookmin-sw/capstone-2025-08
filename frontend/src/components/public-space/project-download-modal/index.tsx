@@ -9,6 +9,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface ProjectDownloadModalProps {
   open: boolean;
@@ -42,8 +43,8 @@ export default function ProjectDownloadModal({
           <Button
             type="submit"
             onClick={() => {
-              console.log('다운로드 성공');
               onClose();
+              toast('Model has been successfully downloaded!');
             }}
           >
             Download
