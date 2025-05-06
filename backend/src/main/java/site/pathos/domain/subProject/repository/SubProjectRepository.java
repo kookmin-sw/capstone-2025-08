@@ -16,4 +16,12 @@ public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
     @Query("SELECT new site.pathos.domain.subProject.dto.response.SubProjectSummaryDto(sp.id, sp.thumbnailUrl) " +
             "FROM SubProject sp WHERE sp.project.id = :projectId")
     List<SubProjectSummaryDto> findSubProjectIdAndThumbnailByProjectId(@Param("projectId") Long projectId);
+
+    @Query("""
+        SELECT sp FROM SubProject sp
+        LEFT JOIN FETCH sp.annotationHistories ah
+        LEFT JOIN FETCH ah.model
+        WHERE sp IN :subProjects
+    """)
+    List<SubProject> fetchWithAnnotationHistoriesAndModels(@Param("subProjects") List<SubProject> subProjects);
 }
