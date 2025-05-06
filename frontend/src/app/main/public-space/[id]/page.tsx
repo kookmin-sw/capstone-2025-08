@@ -4,6 +4,7 @@ import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { dummyProjectDetail } from '@/data/dummy';
 import Image from 'next/image';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageTitle from '@/components/common/page-title';
 import TabMenu from '@/components/common/tab-menu';
@@ -12,9 +13,11 @@ import Performance from '@/components/public-space/project-tap-menu/performance'
 import ProjectCard from '@/components/public-space/project-card';
 import Description from '@/components/public-space/project-tap-menu/description';
 import Dataset from '@/components/public-space/project-tap-menu/dataset';
+import ProjectDownloadModal from '@/components/public-space/project-download-modal';
 
 export default function PublicSpaceDetailPage() {
   const router = useRouter();
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   const tabs = [
     {
@@ -53,7 +56,7 @@ export default function PublicSpaceDetailPage() {
             icon={<Download />}
             buttonName="Download"
             buttonSize="129px"
-            onButtonClick={() => console.log('clicked')}
+            onButtonClick={() => setShowDownloadModal(true)}
             showDivider={false}
           />
           <div className="text-muted-foreground text-sm">
@@ -97,6 +100,14 @@ export default function PublicSpaceDetailPage() {
           </div>
         </div>
       </div>
+
+      {showDownloadModal && (
+        <ProjectDownloadModal
+          open={showDownloadModal}
+          onClose={() => setShowDownloadModal(false)}
+          title={dummyProjectDetail.title}
+        />
+      )}
     </div>
   );
 }
