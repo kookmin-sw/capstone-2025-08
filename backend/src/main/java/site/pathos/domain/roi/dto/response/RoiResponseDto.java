@@ -5,5 +5,6 @@ public record RoiResponseDto(
         int x,
         int y,
         int width,
-        int height
+        int height,
+        Double faulty
 ) {}
