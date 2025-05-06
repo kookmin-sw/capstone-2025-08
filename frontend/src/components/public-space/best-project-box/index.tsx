@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import WaveBackground from '@/components/public-space/best-project/wave-background';
+import WaveBackground from '@/components/public-space/best-project-box/wave-background';
 
 interface BestProjectProps {
   projects: {
@@ -13,7 +13,7 @@ interface BestProjectProps {
   }[];
 }
 
-export default function BestProject({ projects }: BestProjectProps) {
+export default function BestProjectBox({ projects }: BestProjectProps) {
   const order = [1, 0, 2]; // 2등, 1등, 3등 순서
 
   const iconPaths = [

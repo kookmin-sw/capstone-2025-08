@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Download } from 'lucide-react';
 import Image from 'next/image';
 
-interface ProjectItemProps {
+interface ProjectCardProps {
   project: {
     id: string;
     title: string;
@@ -16,7 +16,7 @@ interface ProjectItemProps {
   onClick?: () => void;
 }
 
-export default function ProjectItem({ project, onClick }: ProjectItemProps) {
+export default function ProjectCard({ project, onClick }: ProjectCardProps) {
   return (
     <div
       onClick={onClick}
