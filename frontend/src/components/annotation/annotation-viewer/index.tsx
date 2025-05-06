@@ -30,6 +30,7 @@ import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
 import AnnotationSubProjectSlider from '@/components/annotation/annotation-subproject-slider';
 import { convertViewportROIToImageROI } from '@/hooks/use-viewport-to-image';
 import { Label } from '@/types/annotation-sidebar';
+import { useAnnotationSharedStore } from '@/stores/annotation-shared';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
@@ -135,6 +136,29 @@ const AnnotationViewer: React.FC<{
     if (subProjectId == null) return;
     setRedoMap((prev) => ({ ...prev, [subProjectId]: s }));
   };
+
+  /* =============================================
+    Zustand Store 등록 및 상태 관리
+  ============================================== */
+  useEffect(() => {
+    if (viewerInstance.current) {
+      useAnnotationSharedStore.getState().setViewer(viewerInstance.current);
+    }
+  }, [viewerInstance]);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      useAnnotationSharedStore.getState().setCanvas(canvasRef.current);
+    }
+  }, [canvasRef]);
+
+  useEffect(() => {
+    useAnnotationSharedStore.getState().setLoadedROIs(loadedROIs);
+  }, [loadedROIs]);
+
+  useEffect(() => {
+    useAnnotationSharedStore.getState().setUserDefinedROIs(userDefinedROIs);
+  }, [userDefinedROIs]);
 
   // 1. allROIs : 불러온 ROI + 사용자 정의 ROI (viewport 기준)
   const allROIs = useMemo(() => {
@@ -243,6 +267,32 @@ const AnnotationViewer: React.FC<{
   const [activeTool, setActiveTool] = useState<Tool>(() =>
     getDefaultToolByModel(modelType),
   );
+
+  /* =============================================
+      펜 크기 변경 시 상태 업데이트
+  ============================================== */
+  const [showPreviewDot, setShowPreviewDot] = useState(false);
+  const previewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (activeTool !== 'paintbrush') return;
+
+    setShowPreviewDot(true);
+
+    if (previewTimeoutRef.current) {
+      clearTimeout(previewTimeoutRef.current);
+    }
+
+    previewTimeoutRef.current = setTimeout(() => {
+      setShowPreviewDot(false);
+    }, 3000);
+
+    return () => {
+      if (previewTimeoutRef.current) {
+        clearTimeout(previewTimeoutRef.current);
+      }
+    };
+  }, [penSize, activeTool]);
 
   /* =============================================
       초기화 및 타일소스 로딩
@@ -424,11 +474,13 @@ const AnnotationViewer: React.FC<{
 
     if (roi && !isDrawingMode && !isSelectingROI) {
       const mousePixel = { x, y };
+      const viewer = viewerInstance.current;
+      if (!viewer) return;
+
       const handle = getResizeHandleUnderCursor(mousePixel, roi, (pt) =>
-        viewerInstance.current!.viewport.pixelFromPoint(
-          new OpenSeadragon.Point(pt.x, pt.y),
-        ),
+        viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(pt.x, pt.y)),
       );
+
       if (handle) {
         isResizingRef.current = true;
         resizingHandleRef.current = handle;
@@ -908,6 +960,7 @@ const AnnotationViewer: React.FC<{
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [redraw]);
 
   /* =============================================
@@ -945,6 +998,16 @@ const AnnotationViewer: React.FC<{
           )}
           <div className="relative h-[550px] w-[900px] border bg-white">
             <div ref={viewerRef} className="absolute z-0 h-full w-full" />
+            {showPreviewDot && (
+              <div
+                className="pointer-events-none absolute left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50"
+                style={{
+                  width: penSize,
+                  height: penSize,
+                  backgroundColor: penColor,
+                }}
+              />
+            )}
             <canvas
               ref={canvasRef}
               className={`absolute inset-0 z-10 ${
@@ -952,6 +1015,9 @@ const AnnotationViewer: React.FC<{
                   ? 'pointer-events-auto'
                   : 'pointer-events-none'
               }`}
+              style={{
+                opacity: 0.3,
+              }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
