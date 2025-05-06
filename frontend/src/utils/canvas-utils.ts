@@ -81,7 +81,6 @@ export const redrawCanvas = (
       const p2 = viewerInstance.viewport.pixelFromPoint(brVp);
 
       ctx.save();
-      ctx.globalAlpha = 0.6;
       ctx.drawImage(img, p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
       ctx.restore();
     }),
