@@ -93,7 +93,7 @@ export function TopMenu() {
                   >
                     <SidebarMenuButton
                       className={`${
-                        '/' + pathname.split('/')[1] === item.url
+                        pathname.startsWith(item.url)
                           ? 'bg-sidebar-accent-foreground text-sidebar-accent font-medium'
                           : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                       }`}
