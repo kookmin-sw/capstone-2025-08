@@ -8,14 +8,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import site.pathos.domain.model.entity.ModelType;
+import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.user.entity.User;
 
 @Entity
@@ -30,6 +34,9 @@ public class Project {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
+    private List<SubProject> subProjects = new ArrayList<>();
 
     @Column(name = "title", nullable = false)
     private String title;

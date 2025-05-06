@@ -8,11 +8,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
+import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
 import site.pathos.domain.project.dto.response.ProjectDetailDto;
+import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.service.ProjectService;
 
 @RestController
@@ -38,5 +41,14 @@ public class ProjectController {
     ) {
         projectService.createProject(requestDto, files);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<GetProjectsResponseDto> getProjects(
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "sort", defaultValue = ProjectSortType.DEFAULT_SORT) ProjectSortType sort,
+            @RequestParam(name = "page", defaultValue = "1") int page
+    ) {
+        return ResponseEntity.ok(projectService.getProjects(search, sort, page));
     }
 }
