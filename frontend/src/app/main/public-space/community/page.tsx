@@ -18,7 +18,7 @@ import BestProjectBox from '../../../../components/public-space/best-project-box
 
 const ITEMS_PER_PAGE = 12; // 3줄 x 4칸
 
-export const dummyProjects = Array.from({ length: 30 }, (_, i) => ({
+const dummyProjects = Array.from({ length: 30 }, (_, i) => ({
   id: `${i + 1}`,
   title: `Project ${i + 1}`,
   author: 'Hyeonjin Hwang',
@@ -27,7 +27,7 @@ export const dummyProjects = Array.from({ length: 30 }, (_, i) => ({
   downloadCount: '10M',
 }));
 
-export const dummyBestProjects = Array.from({ length: 3 }, (_, i) => ({
+const dummyBestProjects = Array.from({ length: 3 }, (_, i) => ({
   id: `${i + 1}`,
   title: `Project ${i + 1}`,
   author: 'Hyeonjin',
