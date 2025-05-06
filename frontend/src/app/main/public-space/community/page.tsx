@@ -13,8 +13,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageTitle from '@/components/common/page-title';
 import SubTitle from '@/components/public-space/sub-title';
-import ProjectItem from '@/components/public-space/project-item';
-import BestProject from '@/components/public-space/best-project';
+import ProjectCard from '../../../../components/public-space/project-card';
+import BestProjectBox from '../../../../components/public-space/best-project-box';
 
 const ITEMS_PER_PAGE = 12; // 3줄 x 4칸
 
@@ -60,12 +60,12 @@ export default function PublicSpaceCommunityPage() {
       <div className="my-8 border-b" />
 
       <SubTitle title="Best Project" icon={<Award />} />
-      <BestProject projects={dummyBestProjects} />
+      <BestProjectBox projects={dummyBestProjects} />
 
       <SubTitle title="Recent Projects" icon={<Clock />} />
       <div className="grid grid-cols-4 gap-6">
         {currentProjects.map((project) => (
-          <ProjectItem
+          <ProjectCard
             key={project.id}
             project={project}
             onClick={() => router.push(`/main/public-space/${project.id}`)}
