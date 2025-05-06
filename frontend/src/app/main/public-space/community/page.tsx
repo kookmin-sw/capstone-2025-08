@@ -4,7 +4,6 @@ import { Plus, Award, Clock } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
-  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -14,8 +13,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import PageTitle from '@/components/common/page-title';
 import SubTitle from '@/components/public-space/sub-title';
-import Podium from '@/components/public-space/best-project';
 import ProjectItem from '@/components/public-space/project-item';
+import BestProject from '@/components/public-space/best-project';
+import SearchBar from '@/components/common/search-bar';
 
 const ITEMS_PER_PAGE = 12; // 3줄 x 4칸
 
@@ -26,6 +26,14 @@ export const dummyProjects = Array.from({ length: 30 }, (_, i) => ({
   tags: ['Cell', 'DataSet', 'Comment'],
   thumbnail: '/images/test-public-space-image.png',
   downloadCount: `${(Math.random() * 10 + 1).toFixed(1)}M`,
+}));
+
+export const dummyBestProjects = Array.from({ length: 3 }, (_, i) => ({
+  id: `project-${i + 1}`,
+  title: `Project ${i + 1}`,
+  author: 'Hyeonjin',
+  profileImage: '/images/test-profile-image.png',
+  downloadCount: `${(Math.random() * 10 + 1).toFixed(0)}M`,
 }));
 
 export default function PublicSpaceCommunityPage() {
@@ -49,55 +57,50 @@ export default function PublicSpaceCommunityPage() {
         onButtonClick={() => router.push('/main/public-space/upload')}
         showDivider={false}
       />
-      <div>검색바</div>
 
       <div className="my-8 border-b" />
 
-      <div className="space-y-3">
-        <SubTitle title="Best Project" icon={<Award />} />
-        {/*<Podium />*/}
+      <SubTitle title="Best Project" icon={<Award />} />
+      <BestProject projects={dummyBestProjects} />
+
+      <SubTitle title="Recent Projects" icon={<Clock />} />
+      <div className="grid grid-cols-4 gap-6">
+        {currentProjects.map((project) => (
+          <ProjectItem key={project.id} project={project} />
+        ))}
       </div>
 
-      <div className="space-y-4">
-        <SubTitle title="Recent Projects" icon={<Clock />} />
-        <div className="grid grid-cols-4 gap-6">
-          {currentProjects.map((project) => (
-            <ProjectItem key={project.id} project={project} />
+      <Pagination className="pt-5">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            />
+          </PaginationItem>
+
+          {Array.from({ length: totalPages }, (_, i) => (
+            <PaginationItem key={i + 1}>
+              <PaginationLink
+                href="#"
+                isActive={currentPage === i + 1}
+                onClick={() => setCurrentPage(i + 1)}
+              >
+                {i + 1}
+              </PaginationLink>
+            </PaginationItem>
           ))}
-        </div>
 
-        <Pagination className="pt-5">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              />
-            </PaginationItem>
-
-            {Array.from({ length: totalPages }, (_, i) => (
-              <PaginationItem key={i + 1}>
-                <PaginationLink
-                  href="#"
-                  isActive={currentPage === i + 1}
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   );
 }
