@@ -1,3 +1,5 @@
+'use client';
+
 import { Badge } from '@/components/ui/badge';
 import { Download } from 'lucide-react';
 import Image from 'next/image';
@@ -11,11 +13,15 @@ interface ProjectItemProps {
     thumbnail: string;
     downloadCount: string;
   };
+  onClick?: () => void;
 }
 
-export default function ProjectItem({ project }: ProjectItemProps) {
+export default function ProjectItem({ project, onClick }: ProjectItemProps) {
   return (
-    <div className="flex cursor-pointer flex-col gap-3 rounded-md border bg-white p-6 shadow-sm transition-shadow hover:shadow-md">
+    <div
+      onClick={onClick}
+      className="flex cursor-pointer flex-col gap-3 rounded-md border bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+    >
       <div className="relative h-[205px] w-full overflow-hidden rounded-md">
         <Image
           fill

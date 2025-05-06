@@ -15,25 +15,24 @@ import PageTitle from '@/components/common/page-title';
 import SubTitle from '@/components/public-space/sub-title';
 import ProjectItem from '@/components/public-space/project-item';
 import BestProject from '@/components/public-space/best-project';
-import SearchBar from '@/components/common/search-bar';
 
 const ITEMS_PER_PAGE = 12; // 3줄 x 4칸
 
 export const dummyProjects = Array.from({ length: 30 }, (_, i) => ({
-  id: `project-${i + 1}`,
+  id: `${i + 1}`,
   title: `Project ${i + 1}`,
   author: 'Hyeonjin Hwang',
   tags: ['Cell', 'DataSet', 'Comment'],
   thumbnail: '/images/test-public-space-image.png',
-  downloadCount: `${(Math.random() * 10 + 1).toFixed(1)}M`,
+  downloadCount: '10M',
 }));
 
 export const dummyBestProjects = Array.from({ length: 3 }, (_, i) => ({
-  id: `project-${i + 1}`,
+  id: `${i + 1}`,
   title: `Project ${i + 1}`,
   author: 'Hyeonjin',
   profileImage: '/images/test-profile-image.png',
-  downloadCount: `${(Math.random() * 10 + 1).toFixed(0)}M`,
+  downloadCount: '10M',
 }));
 
 export default function PublicSpaceCommunityPage() {
@@ -66,7 +65,11 @@ export default function PublicSpaceCommunityPage() {
       <SubTitle title="Recent Projects" icon={<Clock />} />
       <div className="grid grid-cols-4 gap-6">
         {currentProjects.map((project) => (
-          <ProjectItem key={project.id} project={project} />
+          <ProjectItem
+            key={project.id}
+            project={project}
+            onClick={() => router.push(`/main/public-space/${project.id}`)}
+          />
         ))}
       </div>
 
