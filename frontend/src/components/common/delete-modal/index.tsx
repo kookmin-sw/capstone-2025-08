@@ -13,7 +13,7 @@ interface DeleteModalProps {
   open: boolean;
   onClose: () => void;
   onDelete: () => void;
-  type?: 'shared project' | 'model';
+  type?: string;
 }
 
 export default function DeleteModal({
