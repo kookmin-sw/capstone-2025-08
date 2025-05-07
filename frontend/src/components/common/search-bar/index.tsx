@@ -13,13 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 
 interface SearchBarProps {
-  sort: string;
-  sortOptions: { value: string; label: string }[];
-  onSortChange: (value: string) => void;
+  sort?: string;
+  sortOptions?: { value: string; label: string }[];
+  onSortChange?: (value: string) => void;
   searchTerm: string;
   onSearch: (term: string) => void;
   recentKeywords: string[];
   onRemoveKeyword: (keyword: string) => void;
+  showSort?: boolean;
 }
 
 export default function SearchBar({
@@ -30,6 +31,7 @@ export default function SearchBar({
   onSearch,
   recentKeywords,
   onRemoveKeyword,
+  showSort = true,
 }: SearchBarProps) {
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
 
@@ -40,18 +42,20 @@ export default function SearchBar({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <Select value={sort} onValueChange={onSortChange}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            {sortOptions.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {showSort && (
+          <Select value={sort} onValueChange={onSortChange}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions?.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         <Input
           placeholder="Search Projects"

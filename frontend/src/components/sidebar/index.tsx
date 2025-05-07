@@ -29,7 +29,7 @@ export function AppSidebar() {
           alt="pathos logo"
           priority
           className="cursor-pointer"
-          onClick={() => router.push('/')} // pathos 로고 클릭 시 메인으로 이동
+          onClick={() => router.push('/main')} // pathos 로고 클릭 시 메인으로 이동
         />
       </SidebarHeader>
 
