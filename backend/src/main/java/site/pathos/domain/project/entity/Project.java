@@ -18,6 +18,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 import site.pathos.domain.model.entity.ModelType;
 import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.user.entity.User;
@@ -65,5 +66,10 @@ public class Project {
 
     public void setUpdatedAt() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public void updateDetail(String title, String description) {
+        this.title = title;
+        this.description = description;
     }
 }
