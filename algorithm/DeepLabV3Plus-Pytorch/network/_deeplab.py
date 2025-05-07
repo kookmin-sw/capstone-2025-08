@@ -5,7 +5,7 @@ from torch.nn import functional as F
 from .utils import _SimpleSegmentationModel
 
 
-__all__ = ["DeepLabV3"]
+__all__ = ["DeepLabV3", "DeepLabV3_LoRA"]
 
 
 class DeepLabV3(_SimpleSegmentationModel):
@@ -176,3 +176,58 @@ def convert_to_separable_conv(module):
     for name, child in module.named_children():
         new_module.add_module(name, convert_to_separable_conv(child))
     return new_module
+
+class LoRALinear(nn.Module):
+    def __init__(self, in_features, out_features, r=4, alpha=1):
+        super().__init__()
+        self.r = r if isinstance(r, int) else r[0]  # Ensure r is an integer
+        self.scaling = alpha / self.r
+        
+        self.A = nn.Linear(in_features, self.r, bias=False)
+        self.B = nn.Linear(self.r, out_features, bias=False)
+        nn.init.kaiming_normal_(self.A.weight)
+        nn.init.zeros_(self.B.weight)
+        
+    def forward(self, x):
+        return self.B(self.A(x)) * self.scaling
+
+class LoRAConv2d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, bias=True, r=4, alpha=1):
+        super().__init__()
+        self.r = r if isinstance(r, int) else r[0]  # Ensure r is an integer
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, dilation, bias=bias)
+        self.lora_A = nn.Conv2d(in_channels, self.r, kernel_size=1, bias=False)
+        self.lora_B = nn.Conv2d(self.r, out_channels, kernel_size=1, bias=False)
+        self.scaling = alpha / self.r
+        
+        nn.init.kaiming_normal_(self.lora_A.weight)
+        nn.init.zeros_(self.lora_B.weight)
+        
+    def forward(self, x):
+        return self.conv(x) + self.lora_B(self.lora_A(x)) * self.scaling
+
+class DeepLabV3_LoRA(_SimpleSegmentationModel):
+    pass
+
+class DeepLabHeadV3Plus_LoRA(nn.Module):
+    def __init__(self, in_channels, low_level_channels, num_classes, r=4, alpha=1, aspp_dilate=[12, 24, 36]):
+        super().__init__()
+        self.project = nn.Sequential(
+            LoRAConv2d(low_level_channels, 48, 1, bias=False, r=r, alpha=alpha),
+            nn.BatchNorm2d(48),
+            nn.ReLU(inplace=True),
+        )
+        self.aspp = ASPP(in_channels, aspp_dilate)
+        self.classifier = nn.Sequential(
+            LoRAConv2d(304, 256, 3, padding=1, bias=False, r=r, alpha=alpha),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True),
+            LoRAConv2d(256, num_classes, 1, r=r, alpha=alpha)
+        )
+
+    def forward(self, feature):
+        low_level_feature = self.project(feature['low_level'])
+        output_feature = self.aspp(feature['out'])
+        output_feature = F.interpolate(output_feature, size=low_level_feature.shape[2:], mode='bilinear', align_corners=False)
+        return self.classifier(torch.cat([low_level_feature, output_feature], dim=1))
+
