@@ -98,22 +98,30 @@ class TrainManager(Config):
         nr_procs = nr_procs if not self.debug else 0
 
         # ! Hard assumption on file type
-        file_list = []
+        # file_list = [] # Old logic: find individual .npy files
         if run_mode == "train":
-            data_dir_list = self.train_dir_list
+            data_dir_list = self.train_dir_list # Use directory paths from config directly
         else:
-            data_dir_list = self.valid_dir_list
-        for dir_path in data_dir_list:
-            file_list.extend(glob.glob("%s/*.npy" % dir_path))
-        file_list.sort()  # to always ensure same input ordering
+            data_dir_list = self.valid_dir_list # Use directory paths from config directly
+        # for dir_path in data_dir_list:
+        #     file_list.extend(glob.glob("%s/*.npy" % dir_path))
+        # file_list.sort()  # to always ensure same input ordering
 
-        assert len(file_list) > 0, (
-            "No .npy found for `%s`, please check `%s` in `config.py`"
-            % (run_mode, "%s_dir_list" % run_mode)
+        # assert len(file_list) > 0, ( # This assertion is now for directory list
+        #     "No directories found for `%s`, please check `%s` in `config.py`"
+        #     % (run_mode, "%s_dir_list" % run_mode)
+        # )
+        assert len(data_dir_list) > 0, (
+            f"No data directories specified for run_mode '{run_mode}'. "
+            f"Please check '{run_mode}_dir_list' in config.py."
         )
-        print("Dataset %s: %d" % (run_mode, len(file_list)))
+
+        # print("Dataset %s: %d" % (run_mode, len(file_list))) # Old print
+        print(f"Dataset {run_mode} using directories: {data_dir_list}")
+
         input_dataset = FileLoader(
-            file_list,
+            # file_list, # Old: pass list of .npy files
+            data_dir_list, # New: pass list of directories (e.g., ['.../fold1/images/'])
             mode=run_mode,
             with_type=self.type_classification,
             setup_augmentor=nr_procs == 0,
@@ -124,7 +132,7 @@ class TrainManager(Config):
         dataloader = DataLoader(
             input_dataset,
             num_workers=nr_procs,
-            batch_size=batch_size * self.nr_gpus,
+            batch_size=batch_size * max(1, self.nr_gpus),
             shuffle=run_mode == "train",
             drop_last=run_mode == "train",
             worker_init_fn=worker_init_fn,
@@ -216,7 +224,17 @@ class TrainManager(Config):
 
             # * extremely slow to pass this on DGX with 1 GPU, why (?)
             net_desc = DataParallel(net_desc)
-            net_desc = net_desc.to("cuda")
+
+            # Determine the appropriate device
+            if torch.backends.mps.is_available():
+                device = torch.device("mps")
+            elif torch.cuda.is_available():
+                device = torch.device("cuda")
+            else:
+                device = torch.device("cpu")
+            print(f"Using device: {device}")
+
+            net_desc = net_desc.to(device)
             # print(net_desc) # * dump network definition or not?
             optimizer, optimizer_args = net_info["optimizer"]
             optimizer = optimizer(net_desc.parameters(), **optimizer_args)
