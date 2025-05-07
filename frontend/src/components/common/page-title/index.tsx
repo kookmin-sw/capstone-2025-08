@@ -8,6 +8,7 @@ export default function PageTitle({
   buttonVariant = 'default',
   buttonSize = '32',
   onButtonClick,
+  showDivider = true,
 }: {
   title: string;
   icon?: ReactNode;
@@ -15,6 +16,7 @@ export default function PageTitle({
   buttonSize?: string;
   buttonVariant?: 'default' | 'outline';
   onButtonClick?: () => void;
+  showDivider?: boolean;
 }) {
   return (
     <>
@@ -31,7 +33,7 @@ export default function PageTitle({
           </Button>
         )}
       </div>
-      <div className="my-8 border-b" />
+      {showDivider && <div className="my-8 border-b" />}
     </>
   );
 }

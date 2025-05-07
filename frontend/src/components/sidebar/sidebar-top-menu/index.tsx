@@ -92,8 +92,8 @@ export function TopMenu() {
                     onClick={() => router.push(item.items[0].url)}
                   >
                     <SidebarMenuButton
-                      className={`${
-                        '/' + pathname.split('/')[1] === item.url
+                      className={`cursor-pointer ${
+                        pathname.startsWith(item.url)
                           ? 'bg-sidebar-accent-foreground text-sidebar-accent font-medium'
                           : 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                       }`}
