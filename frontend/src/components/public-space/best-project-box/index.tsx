@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import WaveBackground from '@/components/public-space/best-project-box/wave-background';
+import { useRouter } from 'next/navigation';
 
 interface BestProjectProps {
   projects: {
@@ -14,6 +15,7 @@ interface BestProjectProps {
 }
 
 export default function BestProjectBox({ projects }: BestProjectProps) {
+  const router = useRouter();
   const order = [1, 0, 2]; // 2등, 1등, 3등 순서
 
   const iconPaths = [
@@ -32,7 +34,11 @@ export default function BestProjectBox({ projects }: BestProjectProps) {
           const project = projects[rankIndex];
 
           return (
-            <div key={project.id} className="flex flex-col items-center gap-9">
+            <div
+              key={project.id}
+              onClick={() => router.push(`/main/public-space/${project.id}`)}
+              className="flex cursor-pointer flex-col items-center gap-9"
+            >
               {/* 프로필 이미지 */}
               <div className="relative h-36 w-36">
                 <Image
