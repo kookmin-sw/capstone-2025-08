@@ -195,4 +195,12 @@ public class ProjectService {
 
         project.updateDetail(requestDto.title(), requestDto.description());
     }
+
+    @Transactional
+    public void deleteProject(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("project not found"));
+
+        project.delete();
+    }
 }

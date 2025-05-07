@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -61,6 +62,14 @@ public class ProjectController {
             @RequestBody UpdateProjectRequestDto requestDto
     ) {
         projectService.updateProject(projectId, requestDto);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<Void> deleteProject(
+            @PathVariable Long projectId
+    ) {
+        projectService.deleteProject(projectId);
         return ResponseEntity.ok().build();
     }
 }
