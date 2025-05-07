@@ -307,7 +307,9 @@ function ProjectSidebar({
           />
           <DetailItem
             label="Model Name"
-            value={<Badge variant="secondary">{project.modelName}</Badge>}
+            value={
+              <Badge variant="secondary">{project.modelNameList[0]}</Badge>
+            }
           />
           <DetailItem
             label="Created At"

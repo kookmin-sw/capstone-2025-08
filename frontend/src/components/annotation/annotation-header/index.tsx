@@ -4,7 +4,6 @@ import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { dummyProjects } from '@/data/dummy';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -13,6 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { formatDateTime } from '@/lib/utils';
+import { exportROIAsPNG } from '@/utils/canvas-image-utils';
+import { useAnnotationSharedStore } from '@/stores/annotation-shared';
 
 export default function AnnotationHeader() {
   const router = useRouter();
@@ -29,6 +30,20 @@ export default function AnnotationHeader() {
       (a, b) =>
         new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
     )[0];
+
+  const handleSave = () => {
+    const { viewer, canvas, loadedROIs, userDefinedROIs } =
+      useAnnotationSharedStore.getState();
+
+    console.log({ viewer, canvas, loadedROIs, userDefinedROIs });
+
+    if (!viewer || !canvas || !loadedROIs || !userDefinedROIs) {
+      alert('내보낼 수 있는 ROI가 없습니다.');
+      return;
+    }
+
+    exportROIAsPNG(viewer, canvas, loadedROIs, userDefinedROIs);
+  };
 
   return (
     <div className="bg-primary fixed right-0 top-0 flex w-full flex-row items-center justify-between p-4 text-white">
@@ -89,13 +104,12 @@ export default function AnnotationHeader() {
               })}
           </SelectContent>
         </Select>
-
         {/* 모델 타입 */}
         <Select
           value={project?.modelType.toLowerCase()}
           onValueChange={() => {}}
         >
-          <SelectTrigger className="w-32">
+          <SelectTrigger className="w-36">
             <SelectValue placeholder="모델 타입 선택" />
           </SelectTrigger>
           <SelectContent>
@@ -104,19 +118,31 @@ export default function AnnotationHeader() {
             <SelectItem value="multi">Multi</SelectItem>
           </SelectContent>
         </Select>
-
         {/* 모델 이름 */}
-        <Input
-          className="w-32 text-lg font-medium"
-          value={project?.modelName ?? ''}
-          placeholder="모델 이름을 입력하세요"
-          readOnly
-        />
-
+        <Select
+          value={project?.modelNameList[0] ?? ''}
+          onValueChange={(value) => {
+            console.log('선택된 모델 이름:', value);
+          }}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="모델 이름 선택" />
+          </SelectTrigger>
+          <SelectContent>
+            {project?.modelNameList?.map((name: string) => (
+              <SelectItem key={name} value={name}>
+                {name}
+              </SelectItem>
+            ))}
+            <SelectItem value="none">선택없음</SelectItem>
+          </SelectContent>
+        </Select>
         {/* 버튼 */}
         <Button variant="secondary">Train</Button>
         <Button variant="secondary">Run</Button>
-        <Button variant="secondary">Save</Button>
+        <Button variant="secondary" onClick={handleSave}>
+          Save
+        </Button>
       </div>
     </div>
   );

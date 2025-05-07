@@ -93,7 +93,7 @@ export default function ProjectCard({
               variant="secondary"
               className="inline-block max-w-[12ch] overflow-hidden truncate whitespace-nowrap"
             >
-              {project.modelName}
+              {project.modelNameList[0]}
             </Badge>
           </div>
 

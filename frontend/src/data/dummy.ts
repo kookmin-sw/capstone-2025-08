@@ -41,7 +41,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-01T12:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'TISSUE',
-    modelName: 'Model A',
+    modelNameList: ['PathOs-v1', 'PathOs-v2', 'CustomModel-A'],
   },
   {
     id: 2,
@@ -53,7 +53,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-02T13:30:00Z',
     history: dummyAnnotationHistory,
     modelType: 'MULTI',
-    modelName: 'Model B',
+    modelNameList: [],
   },
   {
     id: 3,
@@ -65,7 +65,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-03T15:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'CELL',
-    modelName: 'Model C',
+    modelNameList: [],
   },
   {
     id: 4,
@@ -77,7 +77,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-04T12:45:00Z',
     history: dummyAnnotationHistory,
     modelType: 'TISSUE',
-    modelName: 'Model D',
+    modelNameList: [],
   },
   {
     id: 5,
@@ -89,7 +89,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-05T17:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'CELL',
-    modelName: 'Model E',
+    modelNameList: [],
   },
   {
     id: 6,
@@ -101,7 +101,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-06T11:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'MULTI',
-    modelName: 'Model F',
+    modelNameList: [],
   },
   {
     id: 7,
@@ -113,7 +113,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-07T16:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'TISSUE',
-    modelName: 'Model G',
+    modelNameList: [],
   },
   {
     id: 8,
@@ -125,7 +125,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-08T13:15:00Z',
     history: dummyAnnotationHistory,
     modelType: 'CELL',
-    modelName: 'Model H',
+    modelNameList: [],
   },
   {
     id: 9,
@@ -137,7 +137,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-09T11:30:00Z',
     history: dummyAnnotationHistory,
     modelType: 'TISSUE',
-    modelName: 'Model I',
+    modelNameList: [],
   },
   {
     id: 10,
@@ -149,7 +149,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-10T14:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'MULTI',
-    modelName: 'Model J',
+    modelNameList: [],
   },
   {
     id: 11,
@@ -161,7 +161,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-11T15:30:00Z',
     history: dummyAnnotationHistory,
     modelType: 'TISSUE',
-    modelName: 'Model K',
+    modelNameList: [],
   },
   {
     id: 12,
@@ -173,7 +173,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-12T16:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'CELL',
-    modelName: 'Model L',
+    modelNameList: [],
   },
   {
     id: 13,
@@ -185,7 +185,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-13T17:30:00Z',
     history: dummyAnnotationHistory,
     modelType: 'MULTI',
-    modelName: 'Model M',
+    modelNameList: [],
   },
   {
     id: 14,
@@ -197,7 +197,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-14T12:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'CELL',
-    modelName: 'Model N',
+    modelNameList: [],
   },
   {
     id: 15,
@@ -209,7 +209,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-15T13:30:00Z',
     history: dummyAnnotationHistory,
     modelType: 'TISSUE',
-    modelName: 'Model O',
+    modelNameList: [],
   },
   {
     id: 16,
@@ -221,7 +221,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-16T11:30:00Z',
     history: dummyAnnotationHistory,
     modelType: 'CELL',
-    modelName: 'Model P',
+    modelNameList: [],
   },
   {
     id: 17,
@@ -233,7 +233,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-17T12:30:00Z',
     history: dummyAnnotationHistory,
     modelType: 'MULTI',
-    modelName: 'Model Q',
+    modelNameList: [],
   },
   {
     id: 18,
@@ -245,7 +245,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-18T15:30:00Z',
     history: dummyAnnotationHistory,
     modelType: 'TISSUE',
-    modelName: 'Model R',
+    modelNameList: [],
   },
   {
     id: 19,
@@ -257,7 +257,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-19T12:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'CELL',
-    modelName: 'Model S',
+    modelNameList: [],
   },
   {
     id: 20,
@@ -269,7 +269,7 @@ export const dummyProjects: Project[] = [
     updatedAt: '2025-03-20T17:00:00Z',
     history: dummyAnnotationHistory,
     modelType: 'MULTI',
-    modelName: 'Model T',
+    modelNameList: [],
   },
 ];
 

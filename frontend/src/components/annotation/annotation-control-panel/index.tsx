@@ -3,7 +3,6 @@ import {
   Move,
   PenTool,
   SquareDashedMousePointer,
-  MessageSquare,
   Undo2,
   Redo2,
   Trash2,
@@ -29,7 +28,7 @@ const AnnotationControlPanel: React.FC<ControlPanelProps> = ({
 }) => {
   // 기본 활성 도구는 "move"로 설정
   const [activeTool, setActiveTool] = useState<
-    'move' | 'annotation' | 'roiSelect' | 'message' | null
+    'move' | 'annotation' | 'roiSelect' | null
   >('move');
 
   // Annotation 버튼 클릭 시 onToggleDrawingMode 호출 후
@@ -76,15 +75,6 @@ const AnnotationControlPanel: React.FC<ControlPanelProps> = ({
         className={activeTool === 'roiSelect' ? 'bg-primary text-white' : ''}
       >
         <SquareDashedMousePointer />
-      </Button>
-
-      <Button
-        variant={'ghost'}
-        size={'icon'}
-        onClick={() => handleToolClick('message')}
-        className={activeTool === 'message' ? 'bg-primary text-white' : ''}
-      >
-        <MessageSquare />
       </Button>
 
       {/* 단발성 액션은 toggle state 없이 바로 실행 */}

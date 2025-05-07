@@ -8,7 +8,7 @@ export interface Project {
   updatedAt: string;
   history: AnnotationHistory[];
   modelType: ModelType;
-  modelName: string;
+  modelNameList: string[];
 }
 
 export interface SubProject {

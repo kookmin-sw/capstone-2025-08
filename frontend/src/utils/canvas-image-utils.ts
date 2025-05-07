@@ -1,5 +1,5 @@
-import { ROI, MaskTile } from '@/types/annotation';
-import OpenSeadragon from 'openseadragon';
+import { ROI, LoadedROI, MaskTile } from '@/types/annotation';
+import { getAllViewportROIs } from '@/utils/canvas-roi-utils';
 
 /**
  * 타일 이미지의 URL을 받아서 해당 타일을 처리하여 MaskTile 객체를 반환하는 함수
@@ -9,6 +9,11 @@ export const processMaskTile = async (
   url: string,
 ): Promise<MaskTile> =>
   new Promise((res, rej) => {
+    if (typeof window === 'undefined') {
+      rej(new Error('processMaskTile must be run in a browser environment.'));
+      return;
+    }
+
     const img = new Image();
     img.src = url;
 
@@ -41,8 +46,14 @@ export const processMaskTile = async (
       const d = ctx.getImageData(0, 0, off.width, off.height);
 
       for (let i = 0; i < d.data.length; i += 4) {
-        if (d.data[i] < 20 && d.data[i + 1] < 20 && d.data[i + 2] < 20) {
+        const r = d.data[i];
+        const g = d.data[i + 1];
+        const b = d.data[i + 2];
+
+        if (r < 20 && g < 20 && b < 20) {
           d.data[i + 3] = 0;
+        } else {
+          d.data[i + 3] = 255;
         }
       }
 
@@ -78,111 +89,139 @@ const getDivisionCountDynamic = (dimension: number): number => {
 /**
  * 어노테이션을 PNG로 내보내는 함수
  */
-export const exportROIAsPNG = (
+export const exportROIAsPNG = async (
   viewer: any,
   canvas: HTMLCanvasElement,
-  roi: ROI,
+  loadedROIs: LoadedROI[],
+  userDefinedROIs: ROI[],
   borderThickness = 2,
 ) => {
-  if (!roi || !canvas || !viewer) return;
+  if (typeof window === 'undefined') return;
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const OpenSeadragon = require('openseadragon');
+  if (!viewer || !canvas) return;
+
   const tiledImage = viewer.world.getItemAt(0);
   if (!tiledImage) return;
 
-  const topLeftCanvas = viewer.viewport.pixelFromPoint(
-    new OpenSeadragon.Point(roi.x, roi.y),
-  );
-  const bottomRightCanvas = viewer.viewport.pixelFromPoint(
-    new OpenSeadragon.Point(roi.x + roi.width, roi.y + roi.height),
-  );
+  const allROIs: ROI[] = [
+    ...getAllViewportROIs(viewer, loadedROIs),
+    ...userDefinedROIs,
+  ];
 
-  const canvasROI = {
-    x: topLeftCanvas.x,
-    y: topLeftCanvas.y,
-    width: bottomRightCanvas.x - topLeftCanvas.x,
-    height: bottomRightCanvas.y - topLeftCanvas.y,
-  };
+  for (let i = 0; i < allROIs.length; i++) {
+    const roi = allROIs[i];
 
-  const adjustedROI = {
-    x: canvasROI.x + borderThickness,
-    y: canvasROI.y + borderThickness,
-    width: canvasROI.width - 2 * borderThickness,
-    height: canvasROI.height - 2 * borderThickness,
-  };
+    const topLeftCanvas = viewer.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(roi.x, roi.y),
+    );
+    const bottomRightCanvas = viewer.viewport.pixelFromPoint(
+      new OpenSeadragon.Point(roi.x + roi.width, roi.y + roi.height),
+    );
 
-  const topLeftViewport = viewer.viewport.pointFromPixel(
-    new OpenSeadragon.Point(adjustedROI.x, adjustedROI.y),
-  );
-  const bottomRightViewport = viewer.viewport.pointFromPixel(
-    new OpenSeadragon.Point(
-      adjustedROI.x + adjustedROI.width,
-      adjustedROI.y + adjustedROI.height,
-    ),
-  );
+    const canvasROI = {
+      x: topLeftCanvas.x,
+      y: topLeftCanvas.y,
+      width: bottomRightCanvas.x - topLeftCanvas.x,
+      height: bottomRightCanvas.y - topLeftCanvas.y,
+    };
 
-  const topLeftImage = tiledImage.viewportToImageCoordinates(topLeftViewport);
-  const bottomRightImage =
-    tiledImage.viewportToImageCoordinates(bottomRightViewport);
+    const adjustedROI = {
+      x: canvasROI.x + borderThickness,
+      y: canvasROI.y + borderThickness,
+      width: canvasROI.width - 2 * borderThickness,
+      height: canvasROI.height - 2 * borderThickness,
+    };
 
-  const imageROI = {
-    x: Math.round(topLeftImage.x),
-    y: Math.round(bottomRightImage.y),
-    width: Math.round(bottomRightImage.x - topLeftImage.x),
-    height: Math.round(bottomRightImage.y - topLeftImage.y),
-  };
+    const topLeftViewport = viewer.viewport.pointFromPixel(
+      new OpenSeadragon.Point(adjustedROI.x, adjustedROI.y),
+    );
+    const bottomRightViewport = viewer.viewport.pointFromPixel(
+      new OpenSeadragon.Point(
+        adjustedROI.x + adjustedROI.width,
+        adjustedROI.y + adjustedROI.height,
+      ),
+    );
 
-  console.log('Export ROI (이미지 좌표):', imageROI);
+    const topLeftImage = tiledImage.viewportToImageCoordinates(topLeftViewport);
+    const bottomRightImage =
+      tiledImage.viewportToImageCoordinates(bottomRightViewport);
 
-  const totalExportWidth = imageROI.width;
-  const totalExportHeight = imageROI.height;
+    const imageROI = {
+      x: Math.round(topLeftImage.x),
+      y: Math.round(bottomRightImage.y),
+      width: Math.round(bottomRightImage.x - topLeftImage.x),
+      height: Math.round(bottomRightImage.y - topLeftImage.y),
+    };
 
-  const cols = getDivisionCountDynamic(totalExportWidth);
-  const rows = getDivisionCountDynamic(totalExportHeight);
+    const totalExportWidth = imageROI.width;
+    const totalExportHeight = imageROI.height;
+    const cols = getDivisionCountDynamic(totalExportWidth);
+    const rows = getDivisionCountDynamic(totalExportHeight);
 
-  const ratio = window.devicePixelRatio || 1;
+    const ratio = window.devicePixelRatio || 1;
 
-  const sourceROI_X = adjustedROI.x * ratio;
-  const sourceROI_Y = adjustedROI.y * ratio;
-  const sourceROI_W = adjustedROI.width * ratio;
-  const sourceROI_H = adjustedROI.height * ratio;
+    const sourceROI_X = adjustedROI.x * ratio;
+    const sourceROI_Y = adjustedROI.y * ratio;
+    const sourceROI_W = adjustedROI.width * ratio;
+    const sourceROI_H = adjustedROI.height * ratio;
 
-  const tileTargetWidth = totalExportWidth / cols;
-  const tileTargetHeight = totalExportHeight / rows;
+    const tileTargetWidth = totalExportWidth / cols;
+    const tileTargetHeight = totalExportHeight / rows;
+    const sourceTileWidth = sourceROI_W / cols;
+    const sourceTileHeight = sourceROI_H / rows;
 
-  const sourceTileWidth = sourceROI_W / cols;
-  const sourceTileHeight = sourceROI_H / rows;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const sourceX = sourceROI_X + c * sourceTileWidth;
+        const sourceY = sourceROI_Y + r * sourceTileHeight;
 
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const sourceX = sourceROI_X + c * sourceTileWidth;
-      const sourceY = sourceROI_Y + r * sourceTileHeight;
+        const offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = Math.round(tileTargetWidth);
+        offscreenCanvas.height = Math.round(tileTargetHeight);
+        const offCtx = offscreenCanvas.getContext('2d');
+        if (!offCtx) continue;
 
-      const offscreenCanvas = document.createElement('canvas');
-      offscreenCanvas.width = Math.round(tileTargetWidth);
-      offscreenCanvas.height = Math.round(tileTargetHeight);
-      const offCtx = offscreenCanvas.getContext('2d');
-      if (!offCtx) continue;
+        offCtx.drawImage(
+          canvas,
+          sourceX,
+          sourceY,
+          sourceTileWidth,
+          sourceTileHeight,
+          0,
+          0,
+          offscreenCanvas.width,
+          offscreenCanvas.height,
+        );
 
-      offCtx.drawImage(
-        canvas,
-        sourceX,
-        sourceY,
-        sourceTileWidth,
-        sourceTileHeight,
-        0,
-        0,
-        offscreenCanvas.width,
-        offscreenCanvas.height,
-      );
+        const imageData = offCtx.getImageData(
+          0,
+          0,
+          offscreenCanvas.width,
+          offscreenCanvas.height,
+        );
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] > 0 && data[i + 3] < 255) {
+            data[i + 3] = 255;
+          }
+        }
+        offCtx.putImageData(imageData, 0, 0);
 
-      offscreenCanvas.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${r}_${c}.png`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }, 'image/png');
+        await new Promise<void>((resolve) => {
+          offscreenCanvas.toBlob((blob) => {
+            if (!blob) return resolve();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${i}_${r}_${c}.png`; // TODO: (현진) 실제 백엔드 연결 시 r_c 로 변경
+            a.click();
+            URL.revokeObjectURL(url);
+            setTimeout(resolve, 200);
+          }, 'image/png');
+        });
+      }
     }
   }
 };

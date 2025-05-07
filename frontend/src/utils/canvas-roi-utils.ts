@@ -1,4 +1,3 @@
-import OpenSeadragon from 'openseadragon';
 import { ROI, LoadedROI } from '@/types/annotation';
 
 /**
@@ -13,6 +12,11 @@ export const drawROIs = (
   isSelectingROI: boolean,
   isEditingROI: boolean,
 ) => {
+  if (typeof window === 'undefined') return;
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const OpenSeadragon = require('openseadragon');
+
   if (!viewerInstance || !roiCanvas) return;
 
   const ctx = roiCanvas.getContext('2d');
@@ -131,6 +135,11 @@ export const getAllViewportROIs = (
   viewer: any,
   loadedROIs: LoadedROI[],
 ): ROI[] => {
+  if (typeof window === 'undefined') return [];
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const OpenSeadragon = require('openseadragon');
+
   const tiledImage = viewer.world.getItemAt(0);
   if (!tiledImage) return [];
 
