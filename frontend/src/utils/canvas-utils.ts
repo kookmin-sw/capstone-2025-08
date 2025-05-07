@@ -2,7 +2,7 @@ import OpenSeadragon from 'openseadragon';
 import React from 'react';
 import { Stroke, LoadedROI, Polygon, Point } from '@/types/annotation';
 import { drawStroke } from '@/utils/canvas-drawing-utils';
-import { drawPolygon } from '@/utils/canvas-ploygon-utils';
+import { drawCellPolygons, drawPolygon } from '@/utils/canvas-ploygon-utils';
 
 /**
  * 뷰어와 캔버스 동기화
@@ -106,7 +106,7 @@ export const redrawCanvas = (
       ctx.restore();
     });
 
-  // 완성된 폴리곤들 먼저 그리기
+  /* ========= 4. 완성된 폴리곤들 먼저 ========= */
   polygons.forEach((polygon) => {
     if (polygon.closed) {
       drawPolygon(
@@ -120,7 +120,7 @@ export const redrawCanvas = (
     }
   });
 
-  // 지금 그리는 중인 미완성 폴리곤 그리기
+  /* ========= 5. 지금 그리는 중인 일반 폴리곤 ========= */
   if (currentPolygon) {
     drawPolygon(
       viewerInstance,
@@ -131,4 +131,32 @@ export const redrawCanvas = (
       false,
     );
   }
+};
+
+/**
+ * 캔버스 다시 그리기 (Cell 전용)
+ */
+export const redrawCellCanvas = (
+  viewer: OpenSeadragon.Viewer,
+  canvas: HTMLCanvasElement,
+  cellPolygons: Polygon[],
+  current: Polygon | null,
+  mouse: Point | null,
+  isInsideAnyROI: (point: Point) => boolean,
+) => {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const ratio = window.devicePixelRatio || 1;
+  const rect = viewer.container.getBoundingClientRect();
+  canvas.width = rect.width * ratio;
+  canvas.height = rect.height * ratio;
+  canvas.style.width = `${rect.width}px`;
+  canvas.style.height = `${rect.height}px`;
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(ratio, ratio);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawCellPolygons(viewer, ctx, cellPolygons, current, mouse, isInsideAnyROI);
 };
