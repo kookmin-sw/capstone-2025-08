@@ -1,3 +1,7 @@
+"""
+python predict.py --input new_images__4x --dataset cityscapes --cmap_file cmap.json --num_classes  --model deeplabv3plus_resnet101 --ckpt best_deeplabv3plus_resnet101_cityscapes_os16_2025-04-05-14-26-55.pth --save_val_results_to episteminc/new/prediction
+"""
+
 from torch.utils.data import dataset
 from tqdm import tqdm
 import network
@@ -8,7 +12,7 @@ import argparse
 import numpy as np
 
 from torch.utils import data
-from datasets import VOCSegmentation, Cityscapes, cityscapes
+from datasets import VOCSegmentation, Cityscapes, cityscapes, WarWick
 from torchvision import transforms as T
 from metrics import StreamSegMetrics
 
@@ -26,9 +30,12 @@ def get_argparser():
     # Datset Options
     parser.add_argument("--input", type=str, required=True,
                         help="path to a single image or image directory")
-    parser.add_argument("--dataset", type=str, default='voc',
-                        choices=['voc', 'cityscapes'], help='Name of training set')
-
+    parser.add_argument("--dataset", type=str, default='warwick',
+                        choices=['voc', 'cityscapes', 'warwick'], help='Name of training set')
+    parser.add_argument("--cmap_file", type=str, default='cmap.json',
+                        help="file root of color map")
+    parser.add_argument("--num_classes", type=int, default=2,
+                        help="number of classes")
     # Deeplab Options
     available_models = sorted(name for name in network.modeling.__dict__ if name.islower() and \
                               not (name.startswith("__") or name.startswith('_')) and callable(
@@ -60,12 +67,6 @@ def get_argparser():
 
 def main():
     opts = get_argparser().parse_args()
-    if opts.dataset.lower() == 'voc':
-        opts.num_classes = 21
-        decode_fn = VOCSegmentation.decode_target
-    elif opts.dataset.lower() == 'cityscapes':
-        opts.num_classes = 19
-        decode_fn = Cityscapes.decode_target
 
     os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_id
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -74,7 +75,7 @@ def main():
     # Setup dataloader
     image_files = []
     if os.path.isdir(opts.input):
-        for ext in ['png', 'jpeg', 'jpg', 'JPEG']:
+        for ext in ['png', 'jpeg', 'jpg', 'JPEG', 'bmp']:
             files = glob(os.path.join(opts.input, '**/*.%s'%(ext)), recursive=True)
             if len(files)>0:
                 image_files.extend(files)
@@ -116,6 +117,8 @@ def main():
                 T.Normalize(mean=[0.485, 0.456, 0.406],
                                 std=[0.229, 0.224, 0.225]),
             ])
+    dataclass = Cityscapes(root=opts.input, cmap_file=opts.cmap_file,
+                           split='test', transform=transform)
     if opts.save_val_results_to is not None:
         os.makedirs(opts.save_val_results_to, exist_ok=True)
     with torch.no_grad():
@@ -124,11 +127,10 @@ def main():
             ext = os.path.basename(img_path).split('.')[-1]
             img_name = os.path.basename(img_path)[:-len(ext)-1]
             img = Image.open(img_path).convert('RGB')
-            img = transform(img).unsqueeze(0) # To tensor of NCHW
-            img = img.to(device)
+            img = transform(img).unsqueeze(0).to(device)  # 1CHW 형태로 변환 후 device로 이동
             
             pred = model(img).max(1)[1].cpu().numpy()[0] # HW
-            colorized_preds = decode_fn(pred).astype('uint8')
+            colorized_preds = dataclass.decode_target(pred).astype('uint8')
             colorized_preds = Image.fromarray(colorized_preds)
             if opts.save_val_results_to:
                 colorized_preds.save(os.path.join(opts.save_val_results_to, img_name+'.png'))

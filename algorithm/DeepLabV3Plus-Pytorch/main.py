@@ -5,9 +5,12 @@ import os
 import random
 import argparse
 import numpy as np
+from datetime import datetime
+from collections import Counter
+
 
 from torch.utils import data
-from datasets import VOCSegmentation, Cityscapes
+from datasets import VOCSegmentation, Cityscapes, WarWick
 from utils import ext_transforms as et
 from metrics import StreamSegMetrics
 
@@ -19,6 +22,9 @@ from PIL import Image
 import matplotlib
 import matplotlib.pyplot as plt
 
+"""
+python main.py --data_root dataset_sample/ --dataset cityscapes --cmap_file cmap.json --num_classes "여기에 클래스 갯수 넣어야해" --model deeplabv3plus_resnet101 --test_only --total_itrs 1000 --val_interval 100 --enable_vis --vis_port 1313 --gpu_id mps --crop_val --lr 0.01 --crop_size 513 --batch_size 8 --output_stride 16
+"""
 
 def get_argparser():
     parser = argparse.ArgumentParser()
@@ -26,8 +32,10 @@ def get_argparser():
     # Datset Options
     parser.add_argument("--data_root", type=str, default='./datasets/data',
                         help="path to Dataset")
-    parser.add_argument("--dataset", type=str, default='voc',
-                        choices=['voc', 'cityscapes'], help='Name of dataset')
+    parser.add_argument("--dataset", type=str, default='cityscapes',
+                        choices=['voc', 'cityscapes', 'warwick'], help='Name of dataset')
+    parser.add_argument("--cmap_file", type=str, default='cmap.json',
+                        help="file root of color map")
     parser.add_argument("--num_classes", type=int, default=None,
                         help="num classes (default: None)")
 
@@ -44,7 +52,7 @@ def get_argparser():
 
     # Train Options
     parser.add_argument("--test_only", action='store_true', default=False)
-    parser.add_argument("--save_val_results", action='store_true', default=False,
+    parser.add_argument("--save_val_results", action='store_true', default=True,
                         help="save segmentation results to \"./results\"")
     parser.add_argument("--total_itrs", type=int, default=30e3,
                         help="epoch number (default: 30k)")
@@ -73,10 +81,10 @@ def get_argparser():
                         help='weight decay (default: 1e-4)')
     parser.add_argument("--random_seed", type=int, default=1,
                         help="random seed (default: 1)")
-    parser.add_argument("--print_interval", type=int, default=10,
+    parser.add_argument("--print_interval", type=int, default=1,
                         help="print interval of loss (default: 10)")
-    parser.add_argument("--val_interval", type=int, default=100,
-                        help="epoch interval for eval (default: 100)")
+    parser.add_argument("--val_interval", type=int, default=5,
+                        help="epoch interval for eval (default: 50)")
     parser.add_argument("--download", action='store_true', default=False,
                         help="download datasets")
 
@@ -91,7 +99,7 @@ def get_argparser():
                         help='port for visdom')
     parser.add_argument("--vis_env", type=str, default='main',
                         help='env for visdom')
-    parser.add_argument("--vis_num_samples", type=int, default=8,
+    parser.add_argument("--vis_num_samples", type=int, default=3,
                         help='number of samples for visualization (default: 8)')
     return parser
 
@@ -130,36 +138,70 @@ def get_dataset(opts):
 
     if opts.dataset == 'cityscapes':
         train_transform = et.ExtCompose([
-            # et.ExtResize( 512 ),
-            et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size)),
-            et.ExtColorJitter(brightness=0.5, contrast=0.5, saturation=0.5),
+            # et.ExtResize(size=opts.crop_size),
+            et.ExtRandomScale((0.5, 2.0)),
+            et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size), pad_if_needed=True),
             et.ExtRandomHorizontalFlip(),
             et.ExtToTensor(),
             et.ExtNormalize(mean=[0.485, 0.456, 0.406],
                             std=[0.229, 0.224, 0.225]),
         ])
+        if opts.crop_val:
+            val_transform = et.ExtCompose([
+                et.ExtResize(opts.crop_size),
+                et.ExtCenterCrop(opts.crop_size),
+                et.ExtToTensor(),
+                et.ExtNormalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225]),
+            ])
+        else:
+            val_transform = et.ExtCompose([
+                et.ExtToTensor(),
+                et.ExtNormalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225]),
+            ])
 
-        val_transform = et.ExtCompose([
-            # et.ExtResize( 512 ),
+        train_dst = Cityscapes(root=opts.data_root, cmap_file=opts.cmap_file,
+                               split='train', transform=train_transform)
+        val_dst = Cityscapes(root=opts.data_root, cmap_file=opts.cmap_file,
+                             split='val', transform=val_transform)
+    
+    if opts.dataset == 'warwick':
+        train_transform = et.ExtCompose([
+            # et.ExtResize(size=opts.crop_size),
+            et.ExtRandomScale((0.5, 2.0)),
+            et.ExtRandomCrop(size=(opts.crop_size, opts.crop_size), pad_if_needed=True),
+            et.ExtRandomHorizontalFlip(),
             et.ExtToTensor(),
             et.ExtNormalize(mean=[0.485, 0.456, 0.406],
                             std=[0.229, 0.224, 0.225]),
         ])
+        if opts.crop_val:
+            val_transform = et.ExtCompose([
+                et.ExtResize(opts.crop_size),
+                et.ExtCenterCrop(opts.crop_size),
+                et.ExtToTensor(),
+                et.ExtNormalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225]),
+            ])
+        else:
+            val_transform = et.ExtCompose([
+                et.ExtToTensor(),
+                et.ExtNormalize(mean=[0.485, 0.456, 0.406],
+                                std=[0.229, 0.224, 0.225]),
+            ])
+        train_dst = WarWick(root=opts.data_root, split='train', transform=train_transform)
+        val_dst = WarWick(root=opts.data_root, split='val', transform=val_transform)
 
-        train_dst = Cityscapes(root=opts.data_root,
-                               split='train', transform=train_transform)
-        val_dst = Cityscapes(root=opts.data_root,
-                             split='val', transform=val_transform)
     return train_dst, val_dst
-
 
 def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
     """Do validation and return specified samples"""
     metrics.reset()
     ret_samples = []
     if opts.save_val_results:
-        if not os.path.exists('results'):
-            os.mkdir('results')
+        # if not os.path.exists('results'):
+        #     os.mkdir('results')
         denorm = utils.Denormalize(mean=[0.485, 0.456, 0.406],
                                    std=[0.229, 0.224, 0.225])
         img_id = 0
@@ -189,9 +231,9 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
                     target = loader.dataset.decode_target(target).astype(np.uint8)
                     pred = loader.dataset.decode_target(pred).astype(np.uint8)
 
-                    Image.fromarray(image).save('results/%d_image.png' % img_id)
-                    Image.fromarray(target).save('results/%d_target.png' % img_id)
-                    Image.fromarray(pred).save('results/%d_pred.png' % img_id)
+                    # Image.fromarray(image).save('results/%d_image.png' % img_id)
+                    # Image.fromarray(target).save('results/%d_target.png' % img_id)
+                    # Image.fromarray(pred).save('results/%d_pred.png' % img_id)
 
                     fig = plt.figure()
                     plt.imshow(image)
@@ -200,7 +242,7 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
                     ax = plt.gca()
                     ax.xaxis.set_major_locator(matplotlib.ticker.NullLocator())
                     ax.yaxis.set_major_locator(matplotlib.ticker.NullLocator())
-                    plt.savefig('results/%d_overlay.png' % img_id, bbox_inches='tight', pad_inches=0)
+                    # plt.savefig('results/%d_overlay.png' % img_id, bbox_inches='tight', pad_inches=0)
                     plt.close()
                     img_id += 1
 
@@ -210,10 +252,9 @@ def validate(opts, model, loader, device, metrics, ret_samples_ids=None):
 
 def main():
     opts = get_argparser().parse_args()
-    if opts.dataset.lower() == 'voc':
-        opts.num_classes = 21
-    elif opts.dataset.lower() == 'cityscapes':
-        opts.num_classes = 19
+
+    now = datetime.now()
+    formatted_time = now.strftime("%Y-%m-%d-%H-%M-%S")
 
     # Setup visualization
     vis = Visualizer(port=opts.vis_port,
@@ -222,7 +263,7 @@ def main():
         vis.vis_table("Options", vars(opts))
 
     os.environ['CUDA_VISIBLE_DEVICES'] = opts.gpu_id
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
     print("Device: %s" % device)
 
     # Setup random seed
@@ -243,8 +284,28 @@ def main():
     print("Dataset: %s, Train set: %d, Val set: %d" %
           (opts.dataset, len(train_dst), len(val_dst)))
 
+    class_counts = Counter()
+    background_class = 0  # or whatever index represents background
+
+    for i in tqdm(range(len(train_dst)), desc="Counting pixels"):
+        _, target = train_dst[i]
+        mask = np.array(target)
+        unique, counts = np.unique(mask, return_counts=True)
+        for cls, cnt in zip(unique, counts):
+            class_counts[cls] += cnt
+
+    total_pixels = sum(class_counts.values())
+    class_weights = []
+    for cls_id in range(opts.num_classes):
+        cls_count = class_counts.get(cls_id, 1)  # avoid div by zero
+        weight = total_pixels / (opts.num_classes * cls_count)
+        class_weights.append(weight)
+
+    class_weights = torch.tensor(class_weights, dtype=torch.float32).to(device)
+    print(f"Class weights: {class_weights}")
+
     # Set up model (all models are 'constructed at network.modeling)
-    model = network.modeling.__dict__[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride)
+    model = network.modeling.__dict__[opts.model](num_classes=opts.num_classes, output_stride=opts.output_stride, pretrained_backbone=True)
     if opts.separable_conv and 'plus' in opts.model:
         network.convert_to_separable_conv(model.classifier)
     utils.set_bn_momentum(model.backbone, momentum=0.01)
@@ -267,9 +328,9 @@ def main():
     # Set up criterion
     # criterion = utils.get_loss(opts.loss_type)
     if opts.loss_type == 'focal_loss':
-        criterion = utils.FocalLoss(ignore_index=255, size_average=True)
+        criterion = utils.FocalLoss(size_average=True)
     elif opts.loss_type == 'cross_entropy':
-        criterion = nn.CrossEntropyLoss(ignore_index=255, reduction='mean')
+        criterion = nn.CrossEntropyLoss(weight=class_weights, reduction='mean')
 
     def save_ckpt(path):
         """ save current model
@@ -348,8 +409,8 @@ def main():
                 interval_loss = 0.0
 
             if (cur_itrs) % opts.val_interval == 0:
-                save_ckpt('checkpoints/latest_%s_%s_os%d.pth' %
-                          (opts.model, opts.dataset, opts.output_stride))
+                save_ckpt('checkpoints/latest_%s_%s_os%d_%s.pth' %
+                          (opts.model, opts.dataset, opts.output_stride, formatted_time))
                 print("validation...")
                 model.eval()
                 val_score, ret_samples = validate(
@@ -358,8 +419,8 @@ def main():
                 print(metrics.to_str(val_score))
                 if val_score['Mean IoU'] > best_score:  # save best model
                     best_score = val_score['Mean IoU']
-                    save_ckpt('checkpoints/best_%s_%s_os%d.pth' %
-                              (opts.model, opts.dataset, opts.output_stride))
+                    save_ckpt('checkpoints/best_%s_%s_os%d_%s.pth' %
+                              (opts.model, opts.dataset, opts.output_stride, formatted_time))
 
                 if vis is not None:  # visualize validation score and samples
                     vis.vis_scalar("[Val] Overall Acc", cur_itrs, val_score['Overall Acc'])
