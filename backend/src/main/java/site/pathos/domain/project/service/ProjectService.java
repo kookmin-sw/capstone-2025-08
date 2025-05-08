@@ -17,6 +17,7 @@ import site.pathos.domain.annotationHistory.repository.AnnotationHistoryReposito
 import site.pathos.domain.model.Repository.ModelRepository;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
+import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto.GetProjectsResponseModelsDto;
 import site.pathos.domain.project.dto.response.ProjectDetailDto;
@@ -194,5 +195,21 @@ public class ProjectService {
                 .toList();
 
         subProjectRepository.fetchWithAnnotationHistoriesAndModels(subProjects);
+    }
+
+    @Transactional
+    public void updateProject(Long projectId, UpdateProjectRequestDto requestDto) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("project not found"));
+
+        project.updateDetail(requestDto.title(), requestDto.description());
+    }
+
+    @Transactional
+    public void deleteProject(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("project not found"));
+
+        project.delete();
     }
 }
