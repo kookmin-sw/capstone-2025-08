@@ -60,8 +60,8 @@
     </tr>
     <tr align="center">
         <td>Backend</td>
-        <td>AI</td>
-        <td>AI</td>
+        <td>AI / Algorithm</td>
+        <td>AI / Algorithm</td>
     </tr>
 </table>
 
@@ -96,7 +96,7 @@
 | 역할                 | 종류                                                                                                                                                                                                                                                        |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Programming Language  | <img src="https://img.shields.io/badge/Python-3776AB.svg?&style=for-the-badge&logo=python&logoColor=white"/>                                                                                                                                       |
-| Deep Learning Framework | <img src="https://img.shields.io/badge/PyTorch-EE4C2C.svg?&style=for-the-badge&logo=pytorch&logoColor=white"/> <img src="https://img.shields.io/badge/YOLO-FFCC00.svg?&style=for-the-badge&logo=YOLO&logoColor=black"/>                                                                |
+| Deep Learning Framework | <img src="https://img.shields.io/badge/PyTorch-EE4C2C.svg?&style=for-the-badge&logo=pytorch&logoColor=white"/>                                                                |
 | NLP / ML Model Hub    | <img src="https://img.shields.io/badge/Hugging Face-FF6B00.svg?&style=for-the-badge&logo=huggingface&logoColor=white"/>                                                                                                                            |
 | Numerical Computing   | <img src="https://img.shields.io/badge/NumPy-013243.svg?&style=for-the-badge&logo=numpy&logoColor=white"/>                                                                                                                                         |
 | Data Analysis         | <img src="https://img.shields.io/badge/Pandas-150458.svg?&style=for-the-badge&logo=pandas&logoColor=white"/>                                                                                                                                       |
