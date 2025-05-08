@@ -14,12 +14,16 @@ export default function MainLayout({
 
   const hideSidebar = pathname.startsWith('/main/projects/');
 
+  const iconSidebar = !/^\/main\/public-space\/\d+$/.test(pathname);
+
   return hideSidebar ? (
     <main>{children}</main>
   ) : (
-    <SidebarProvider open>
+    <SidebarProvider open={iconSidebar}>
       <AppSidebar />
-      <main className="w-screen px-16 py-12">{children}</main>
+      <main className={`w-screen ${iconSidebar ? 'px-16 py-12' : ''}`}>
+        {children}
+      </main>
     </SidebarProvider>
   );
 }

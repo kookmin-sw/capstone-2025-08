@@ -587,3 +587,77 @@ export const dummyUncertainROIs: UncertainROI[] = [
   //   UncertainRate: 27,
   // },
 ];
+
+export const dummyProjectDetail = {
+  id: 'project-001',
+  title: 'First project',
+  author: 'Hyeonjin Hwang',
+  profileImage: '/images/test-profile-image.png',
+  tags: ['Cell', 'Tissue', 'Model', 'SVS', 'Dataset'],
+  date: '2025.03.10',
+  downloadCount: '13M',
+  coverImage: '/images/test-public-space-image.png',
+  description: 'This model was annotated using Hwang Ri-gon.',
+  images: [
+    {
+      url: '/images/test-public-space-image.png',
+      caption: 'This is the result of annotation using Hwang Ri-gon.',
+    },
+    {
+      url: '/images/test-public-space-image.png',
+      caption: '',
+    },
+  ],
+  comments: [
+    {
+      id: 'comment-001',
+      user: {
+        name: 'Yeonjin Wang',
+        avatar: '/images/test-profile-image.png',
+        role: 'user',
+      },
+      content:
+        'Wow, this is the model I really needed, thank you. However, I found one error.',
+      date: '2025.03.10 02:51',
+      replies: [
+        {
+          id: 'reply-001',
+          user: {
+            name: 'Hyeonjin Hwang',
+            avatar: '/images/test-profile-image.png',
+            role: 'author',
+          },
+          content:
+            'Thank you for your good feedback. We will fix it as soon as possible.',
+          date: '2025.03.10 03:21',
+        },
+      ],
+    },
+  ],
+  similarProjects: [
+    {
+      id: 'project-002',
+      title: 'Second project',
+      author: 'Hyeonjin Hwang',
+      tags: ['Cell', 'Model', 'SVS', 'Dataset'],
+      thumbnail: '/images/test-public-space-image.png',
+      downloadCount: '13M',
+    },
+    {
+      id: 'project-003',
+      title: 'Third project',
+      author: 'Hyeonjin Hwang',
+      tags: ['Tissue', 'Model', 'SVS'],
+      thumbnail: '/images/test-public-space-image.png',
+      downloadCount: '13M',
+    },
+    {
+      id: 'project-004',
+      title: 'Third project',
+      author: 'Hyeonjin Hwang',
+      tags: ['Tissue', 'Model'],
+      thumbnail: '/images/test-public-space-image.png',
+      downloadCount: '13M',
+    },
+  ],
+};
