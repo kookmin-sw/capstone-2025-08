@@ -1,0 +1,91 @@
+package site.pathos.global.aws.ec2;
+
+import io.netty.handler.codec.base64.Base64Encoder;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import site.pathos.domain.subProject.dto.request.SubProjectTilingRequestDto;
+import site.pathos.global.aws.config.AwsProperty;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.*;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class Ec2Service {
+
+    private final Ec2Client ec2Client;
+    private final AwsProperty awsProperty;
+
+    @Async("tileExecutor")
+    public void asyncLaunchTilingInstance(SubProjectTilingRequestDto tilingRequestDto) {
+        String userDataScript = generateUserDataScript(tilingRequestDto.s3Path(), tilingRequestDto.subProjectId());
+
+        RunInstancesRequest request = RunInstancesRequest.builder()
+                .imageId("ami-05a7f3469a7653972")
+                .instanceType(InstanceType.C6_I_XLARGE)
+                .minCount(1)
+                .maxCount(1)
+                .userData(Base64.getEncoder().encodeToString(userDataScript.getBytes(StandardCharsets.UTF_8)))
+                .blockDeviceMappings(getBlockDeviceMapping())
+                .tagSpecifications(getTags(tilingRequestDto.subProjectId()))
+                .build();
+
+        ec2Client.runInstances(request);
+        log.info("EC2 인스턴스 실행 완료 - SubProject {}", tilingRequestDto.subProjectId());
+    }
+
+    private String generateUserDataScript(String s3Path, Long subProjectId) {
+        String bucket = awsProperty.s3().bucket();
+
+        return """
+        #!/bin/bash
+        sudo apt update -y
+        sudo apt install -y awscli libvips-tools
+
+        mkdir -p /tmp/tiling
+        cd /tmp/tiling
+
+        aws s3 cp %s
+
+        vips dzsave input.svs output_slide \\
+            --tile-size=512 \\
+            --overlap=1 \\
+            --suffix .jpg[Q=85] \\
+            --depth onepixel
+
+        aws s3 cp output_slide.dzi s3://%s/sub-project/%d/tiles/output_slide.dzi
+        aws s3 cp output_slide_files/ s3://%s/sub-project/%d/tiles/output_slide_files/ --recursive
+
+        shutdown -h now
+        """.formatted(
+                s3Path,
+                bucket, subProjectId,
+                bucket, subProjectId
+        );
+    }
+
+    private List<TagSpecification> getTags(Long subProjectId) {
+        return List.of(TagSpecification.builder()
+                .resourceType(ResourceType.INSTANCE)
+                .tags(Tag.builder().key("Name").value("Tiling-" + subProjectId).build())
+                .build());
+    }
+
+    private List<BlockDeviceMapping> getBlockDeviceMapping() {
+        return List.of(BlockDeviceMapping.builder()
+                .deviceName("/dev/xvda")
+                .ebs(EbsBlockDevice.builder()
+                        .volumeSize(32)
+                        .volumeType(VolumeType.GP3)
+                        .deleteOnTermination(true)
+                        .build())
+                .build());
+    }
+}
