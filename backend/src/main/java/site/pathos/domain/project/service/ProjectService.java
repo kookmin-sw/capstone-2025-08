@@ -24,12 +24,14 @@ import site.pathos.domain.project.dto.response.ProjectDetailDto;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.repository.ProjectRepository;
+import site.pathos.domain.subProject.dto.request.SubProjectTilingRequestDto;
 import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.subProject.repository.SubProjectRepository;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.domain.userModel.repository.UserModelRepository;
+import site.pathos.global.aws.ec2.Ec2Service;
 import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 import site.pathos.global.common.PaginationResponse;
@@ -46,6 +48,8 @@ public class ProjectService {
     private final ModelRepository modelRepository;
     private final UserModelRepository userModelRepository;
     private static final int PROJECTS_PAGE_SIZE = 9;
+
+    private final Ec2Service ec2Service;
 
     public ProjectDetailDto getProjectDetail(Long projectId){
         List<SubProjectSummaryDto> subProjects = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
@@ -82,7 +86,9 @@ public class ProjectService {
                     .build();
             subProjectRepository.save(subProject);
             String svsKey = subProject.initializeSvsImageUrl();
-            uploadFiles.add(new S3UploadFileDto(svsKey, file));
+            subProject.initializeThumbnailImageUrl();
+            subProject.initializeTileImageUrl();
+            uploadFiles.add(new S3UploadFileDto(subProject.getId(), svsKey, file));
 
             AnnotationHistory annotationHistory = AnnotationHistory.builder()
                     .subProject(subProject)
@@ -91,7 +97,12 @@ public class ProjectService {
                     .build();
             annotationHistoryRepository.save(annotationHistory);
         }
-        s3Service.uploadFilesAsync(uploadFiles);
+
+        s3Service.uploadFilesAsync(uploadFiles, uploadImages -> {
+            for (SubProjectTilingRequestDto image : uploadImages) {
+                ec2Service.asyncLaunchTilingInstance(image);
+            }
+        });
     }
 
     @Transactional(readOnly = true)
