@@ -10,12 +10,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.project.entity.Project;
 
@@ -23,6 +27,7 @@ import site.pathos.domain.project.entity.Project;
 @Table(name = "sub_project")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("is_deleted = false")
 public class SubProject {
 
     @Id
@@ -42,6 +47,19 @@ public class SubProject {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Builder
     public SubProject(Project project) {
         this.project = project;
@@ -52,5 +70,9 @@ public class SubProject {
             throw new IllegalStateException("SubProject ID must be set before initializing svsImageUrl.");
         }
         return this.svsImageUrl = String.format("sub-project/%s/svs/original.svs", this.id);
+    }
+
+    public String getFileName() {
+        return Paths.get(svsImageUrl).getFileName().toString();
     }
 }

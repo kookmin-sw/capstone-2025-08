@@ -3,25 +3,31 @@ package site.pathos.domain.project.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
 import site.pathos.domain.model.Repository.ModelRepository;
 import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.project.dto.GetProjectDetailResponseDto;
+import site.pathos.domain.project.dto.GetProjectDetailResponseDto.AnalyticsDto;
+import site.pathos.domain.project.dto.GetProjectDetailResponseDto.LabelDto;
+import site.pathos.domain.project.dto.GetProjectDetailResponseDto.ModelProcessDto;
+import site.pathos.domain.project.dto.GetProjectDetailResponseDto.SlideDto;
+import site.pathos.domain.project.dto.GetProjectDetailResponseDto.SlideSummaryDto;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto.GetProjectsResponseModelsDto;
-import site.pathos.domain.project.dto.response.ProjectDetailDto;
+import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
 import site.pathos.domain.project.entity.Project;
+import site.pathos.domain.project.enums.ModelProcessStatusType;
 import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
@@ -47,13 +53,13 @@ public class ProjectService {
     private final UserModelRepository userModelRepository;
     private static final int PROJECTS_PAGE_SIZE = 9;
 
-    public ProjectDetailDto getProjectDetail(Long projectId){
+    public GetSubProjectResponseDto getSubProject(Long projectId){
+        Long userId = 1L;   // TODO
+        Project project = getProject(projectId, userId);
+
         List<SubProjectSummaryDto> subProjects = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
 
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found: id = " + projectId));
-
-        return new ProjectDetailDto(
+        return new GetSubProjectResponseDto(
                 projectId,
                 project.getTitle(),
                 subProjects
@@ -190,17 +196,131 @@ public class ProjectService {
 
     @Transactional
     public void updateProject(Long projectId, UpdateProjectRequestDto requestDto) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("project not found"));
+        Long userId = 1L;   // TODO
+        Project project = getProject(projectId, userId);
 
         project.updateDetail(requestDto.title(), requestDto.description());
     }
 
     @Transactional
     public void deleteProject(Long projectId) {
+        Long userId = 1L;   // TODO
+        Project project = getProject(projectId, userId);
+
+        project.delete();
+    }
+
+    @Transactional(readOnly = true)
+    public GetProjectDetailResponseDto getProjectDetail(Long projectId) {
+        Long userId = 1L;   // TODO
+        Project project = getProject(projectId, userId);
+
+        List<SubProject> subProjects = getSubProjects(project);
+        Model recentModel = getRecentModel(subProjects);
+        String createdAt = DateTimeUtils.dateTimeToStringFormat(project.getCreatedAt());
+        String updatedAt = DateTimeUtils.dateTimeToStringFormat(project.getUpdatedAt());
+        SlideSummaryDto slideSummaryDto = getSlideSummaryDto(subProjects);
+        ModelProcessDto modelProcessDto = getModelProcessDto();
+        List<LabelDto> labels = getLabelDtos(subProjects);
+        List<SlideDto> slides = getSlideDtos(subProjects);
+        AnalyticsDto analytics = getAnalyticsDto();
+
+        return new GetProjectDetailResponseDto(
+                projectId,
+                project.getTitle(),
+                project.getDescription(),
+                recentModel.getModelType(),
+                recentModel.getName(),
+                createdAt,
+                updatedAt,
+                slideSummaryDto,
+                modelProcessDto,
+                labels,
+                slides,
+                analytics
+        );
+    }
+
+    private Project getProject(Long projectId, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("user not found"));
+
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("project not found"));
 
-        project.delete();
+        if (!project.getUser().equals(user)) {
+            throw new IllegalStateException("You do not have permission to access this project");
+        }
+
+        return project;
+    }
+
+    private List<SubProject> getSubProjects(Project project) {
+        List<SubProject> subProjects = subProjectRepository.findSubProjectsByProject(project);
+        List<AnnotationHistory> annotationHistories = subProjects.stream()
+                .flatMap(sp -> sp.getAnnotationHistories().stream())
+                .toList();
+        if (!annotationHistories.isEmpty()) {
+            annotationHistoryRepository.fetchAnnotationHistoriesAndLabels(annotationHistories);
+        }
+        return subProjects;
+    }
+
+    private Model getRecentModel(List<SubProject> subProjects) {
+        SubProject recentSubProject = subProjects.get(subProjects.size() - 1);
+        AnnotationHistory recentAnnotationHistory = recentSubProject.getAnnotationHistories()
+                .get(recentSubProject.getAnnotationHistories().size() - 1);
+        return recentAnnotationHistory.getModel();
+    }
+
+    private List<LabelDto> getLabelDtos(List<SubProject> subProjects) {
+        return subProjects.stream()
+                .flatMap(sub -> sub.getAnnotationHistories().stream())
+                .flatMap(history -> history.getLabels().stream())
+                .distinct()
+                .map(label -> new LabelDto(label.getName(), label.getColor()))
+                .toList();
+    }
+
+    private SlideSummaryDto getSlideSummaryDto(List<SubProject> subProjects) {
+        // TODO 이미지 업로드 진행률 필요
+        return new SlideSummaryDto(
+                subProjects.size(),
+                0,
+                ""
+        );
+    }
+
+    private ModelProcessDto getModelProcessDto() {
+        // TODO: 모델 학습 및 추론 진행률 필요
+        return new ModelProcessDto(
+                ModelProcessStatusType.PROGRESS.getName(),
+                0,
+                0,
+                0,
+                ""
+        );
+    }
+
+    private List<SlideDto> getSlideDtos(List<SubProject> subProjects) {
+        return subProjects.stream()
+                .map(subProject -> new SlideDto(
+                        subProject.getId(),
+                        Objects.requireNonNullElse(subProject.getThumbnailUrl(), ""),
+                        subProject.getFileName(),
+                        "", // TODO 파일 사이즈
+                        DateTimeUtils.dateTimeToDateFormat(subProject.getCreatedAt())  // TODO 파일 업로드 시간
+                ))
+                .toList();
+    }
+
+    private AnalyticsDto getAnalyticsDto() {
+        // TODO 모델 학습 지표 필요
+        return new AnalyticsDto(
+                List.of(),
+                List.of(),
+                List.of(),
+                0
+        );
     }
 }

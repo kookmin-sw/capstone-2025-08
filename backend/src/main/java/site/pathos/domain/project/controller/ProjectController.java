@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.project.dto.GetProjectDetailResponseDto;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
@@ -72,5 +73,14 @@ public class ProjectController {
     ) {
         projectService.deleteProject(projectId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{projectId}")
+    public ResponseEntity<GetProjectDetailResponseDto> getProjectDetail(
+            @PathVariable Long projectId
+    ) {
+        return ResponseEntity.ok(
+                projectService.getProjectDetail(projectId)
+        );
     }
 }

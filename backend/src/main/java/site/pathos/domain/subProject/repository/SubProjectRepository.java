@@ -1,13 +1,12 @@
 package site.pathos.domain.subProject.repository;
 
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.subProject.entity.SubProject;
-
-import java.util.List;
 
 public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
     @Query("SELECT s.project FROM SubProject s WHERE s.id = :subProjectId")
@@ -24,4 +23,11 @@ public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
         WHERE sp IN :subProjects
     """)
     List<SubProject> fetchWithAnnotationHistoriesAndModels(@Param("subProjects") List<SubProject> subProjects);
+
+    @Query("""
+            SELECT DISTINCT sp FROM SubProject sp
+            LEFT JOIN FETCH sp.annotationHistories ah
+            WHERE sp.project = :project and sp.isDeleted = false
+        """)
+    List<SubProject> findSubProjectsByProject(Project project);
 }
