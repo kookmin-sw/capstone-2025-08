@@ -27,18 +27,40 @@ public class Ec2Service {
     public void asyncLaunchTilingInstance(SubProjectTilingRequestDto tilingRequestDto) {
         String userDataScript = generateUserDataScript(tilingRequestDto.s3Path(), tilingRequestDto.subProjectId());
 
+        InstanceMarketOptionsRequest marketOptions = InstanceMarketOptionsRequest.builder()
+                .marketType(MarketType.SPOT)
+                .spotOptions(SpotMarketOptions.builder()
+                        .spotInstanceType(SpotInstanceType.ONE_TIME)
+                        .build())
+                .build();
+
+        IamInstanceProfileSpecification profileSpecification = IamInstanceProfileSpecification.builder()
+                .name("PathosTilingImage")
+                .build();
+
         RunInstancesRequest request = RunInstancesRequest.builder()
                 .imageId("ami-05a7f3469a7653972")
                 .instanceType(InstanceType.C6_I_XLARGE)
+                .instanceMarketOptions(marketOptions)
                 .minCount(1)
                 .maxCount(1)
+                .iamInstanceProfile(profileSpecification)
                 .userData(Base64.getEncoder().encodeToString(userDataScript.getBytes(StandardCharsets.UTF_8)))
                 .blockDeviceMappings(getBlockDeviceMapping())
                 .tagSpecifications(getTags(tilingRequestDto.subProjectId()))
                 .build();
 
-        ec2Client.runInstances(request);
-        log.info("EC2 인스턴스 실행 완료 - SubProject {}", tilingRequestDto.subProjectId());
+        try {
+            ec2Client.runInstances(request);
+            log.info("EC2 인스턴스 실행 완료 - SubProject {}", tilingRequestDto.subProjectId());
+        } catch (Ec2Exception e) {
+            log.error("EC2 실행 실패 (AWS 오류) - SubProject {} - {}",
+                    tilingRequestDto.subProjectId(), e.awsErrorDetails().errorMessage(), e);
+
+        } catch (Exception e) {
+            log.error("EC2 실행 실패 (예상치 못한 오류) - SubProject {}",
+                    tilingRequestDto.subProjectId(), e);
+        }
     }
 
     private String generateUserDataScript(String s3Path, Long subProjectId) {
@@ -52,9 +74,9 @@ public class Ec2Service {
         mkdir -p /tmp/tiling
         cd /tmp/tiling
 
-        aws s3 cp %s
+        aws s3 cp %s original.svs
 
-        vips dzsave input.svs output_slide \\
+        vips dzsave original.svs output_slide \\
             --tile-size=512 \\
             --overlap=1 \\
             --suffix .jpg[Q=85] \\
