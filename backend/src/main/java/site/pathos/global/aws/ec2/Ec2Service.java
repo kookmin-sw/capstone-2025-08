@@ -1,8 +1,6 @@
 package site.pathos.global.aws.ec2;
 
-import io.netty.handler.codec.base64.Base64Encoder;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -87,7 +85,7 @@ public class Ec2Service {
         aws s3 cp output_slide.dzi s3://%s/sub-project/%d/tiles/output_slide.dzi
         aws s3 cp output_slide_files/ s3://%s/sub-project/%d/tiles/output_slide_files/ --recursive
         aws s3 cp thumbnail.jpg s3://%s/sub-project/%d/thumbnail/thumbnail.jpg
-                
+        
         shutdown -h now
         """.formatted(
                 s3Path,

@@ -86,6 +86,8 @@ public class ProjectService {
                     .build();
             subProjectRepository.save(subProject);
             String svsKey = subProject.initializeSvsImageUrl();
+            subProject.initializeThumbnailImageUrl();
+            subProject.initializeTileImageUrl();
             uploadFiles.add(new S3UploadFileDto(subProject.getId(), svsKey, file));
 
             AnnotationHistory annotationHistory = AnnotationHistory.builder()
