@@ -18,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
-import site.pathos.domain.project.dto.response.ProjectDetailDto;
+import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
 import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.service.ProjectService;
 
@@ -28,13 +28,12 @@ import site.pathos.domain.project.service.ProjectService;
 public class ProjectController {
 
     private final ProjectService projectService;
-    private static final String DEFAULT_GET_PROJECTS_SORT = "UPDATED_AT_DESC";
 
-    @GetMapping("/{projectId}")
-    public ResponseEntity<ProjectDetailDto> getProjectDetail(
+    @GetMapping("/annotation/{projectId}")
+    public ResponseEntity<GetSubProjectResponseDto> getSubProject(
             @PathVariable Long projectId
     ) {
-        ProjectDetailDto response = projectService.getProjectDetail(projectId);
+        GetSubProjectResponseDto response = projectService.getSubProject(projectId);
         return ResponseEntity.ok(response);
     }
 
@@ -50,10 +49,12 @@ public class ProjectController {
     @GetMapping
     public ResponseEntity<GetProjectsResponseDto> getProjects(
             @RequestParam(name = "search", required = false) String search,
-            @RequestParam(name = "sort", defaultValue = ProjectSortType.DEFAULT_SORT) ProjectSortType sort,
+            @RequestParam(name = "sort", defaultValue = ProjectSortType.DEFAULT_SORT) String sort,
             @RequestParam(name = "page", defaultValue = "1") int page
     ) {
-        return ResponseEntity.ok(projectService.getProjects(search, sort, page));
+        return ResponseEntity.ok(
+                projectService.getProjects(search, ProjectSortType.getByDisplayName(sort), page)
+        );
     }
 
     @PatchMapping("/{projectId}")
