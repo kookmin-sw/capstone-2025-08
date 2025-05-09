@@ -15,14 +15,14 @@ import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
 import site.pathos.domain.model.Repository.ModelRepository;
 import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
+import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.AnalyticsDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.LabelDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.ModelProcessDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.SlideDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.SlideSummaryDto;
-import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
-import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto.GetProjectsResponseModelsDto;
 import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
@@ -39,6 +39,8 @@ import site.pathos.domain.userModel.repository.UserModelRepository;
 import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 import site.pathos.global.common.PaginationResponse;
+import site.pathos.global.error.BusinessException;
+import site.pathos.global.error.ErrorCode;
 import site.pathos.global.util.datetime.DateTimeUtils;
 
 @Service
@@ -53,6 +55,7 @@ public class ProjectService {
     private final UserModelRepository userModelRepository;
     private static final int PROJECTS_PAGE_SIZE = 9;
 
+    @Transactional(readOnly = true)
     public GetSubProjectResponseDto getSubProject(Long projectId){
         Long userId = 1L;   // TODO
         Project project = getProject(projectId, userId);
@@ -69,9 +72,9 @@ public class ProjectService {
     @Transactional
     public void createProject(CreateProjectRequestDto requestDto, List<MultipartFile> files) {
         User user = userRepository.findById(1L) //TODO
-                .orElseThrow(() -> new IllegalArgumentException("user not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         Model model = modelRepository.findById(requestDto.modelId())
-                .orElseThrow(() -> new IllegalArgumentException("model not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
 
         Project project = Project.builder()
                 .user(user)
@@ -242,14 +245,11 @@ public class ProjectService {
     }
 
     private Project getProject(Long projectId, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("user not found"));
-
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("project not found"));
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
-        if (!project.getUser().equals(user)) {
-            throw new IllegalStateException("You do not have permission to access this project");
+        if (!project.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_PROJECT_ACCESS);
         }
 
         return project;
