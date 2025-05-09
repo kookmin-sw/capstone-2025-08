@@ -21,19 +21,19 @@ public class TissueAnnotation {
     private Roi roi;
 
     @Column(name = "annotation_image_url", nullable = false)
-    private String annotationImagePath;
+    private String annotationImageUrl;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "annotation_type", nullable = false)
     private AnnotationType annotationType;
 
     @Builder
-    public TissueAnnotation(Roi roi, String annotationImagePath, AnnotationType annotationType) {
+    public TissueAnnotation(Roi roi, String annotationImageUrl, AnnotationType annotationType) {
         if (roi == null) throw new IllegalArgumentException("roi cannot be null in TissueAnnotation");
         if (annotationType == null) throw new IllegalArgumentException("annotationType is required");
 
         this.roi = roi;
-        this.annotationImagePath = annotationImagePath;
+        this.annotationImageUrl = annotationImageUrl;
         this.annotationType = annotationType;
     }
 }

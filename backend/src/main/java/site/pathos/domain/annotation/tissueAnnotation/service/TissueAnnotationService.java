@@ -43,7 +43,7 @@ public class TissueAnnotationService {
 
             TissueAnnotation ta = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImagePath(key)
+                    .annotationImageUrl(key)
                     .annotationType(AnnotationType.TILE)
                     .build();
 
@@ -53,25 +53,20 @@ public class TissueAnnotationService {
 
     private void uploadMergedImage(Long subProjectId, Long annotationHistoryId, Roi roi, List<MultipartFile> images) {
         try {
-            // 1. 병합 대상 이미지 크기 (ROI 기준)
             int totalWidth = roi.getWidth();
             int totalHeight = roi.getHeight();
 
-            // 2. 이미지 병합
             BufferedImage merged = ImageUtils.mergeTiles(images, totalWidth, totalHeight);
 
-            // 3. 업로드할 S3 경로
             String mergedKey = "sub-project/" + subProjectId
                     + "/annotation-history/" + annotationHistoryId
                     + "/roi-" + roi.getId() + "/merged.png";
 
-            // 4. S3에 업로드
             s3Service.uploadBufferedImage(merged, mergedKey);
 
-            // 5. DB에 TissueAnnotation 저장
             TissueAnnotation mergedAnnotation = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImagePath(mergedKey)
+                    .annotationImageUrl(mergedKey)
                     .annotationType(AnnotationType.MERGED)
                     .build();
 
@@ -104,7 +99,7 @@ public class TissueAnnotationService {
 
             TissueAnnotation tileAnnotation = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImagePath(tileKey)
+                    .annotationImageUrl(tileKey)
                     .annotationType(AnnotationType.RESULT_TILE)
                     .build();
 

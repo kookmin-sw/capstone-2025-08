@@ -57,12 +57,16 @@ public class RoiService {
             return roi;
         } else {
             //새로 생긴 roi의 경우
+            Integer max = roiRepository.findMaxDisplayOrderByAnnotationHistory(history.getId());
+            int displayOrder = (max == null) ? 0 : max+1;
+
             Roi roi = Roi.builder()
                     .annotationHistory(history)
                     .x(roiDto.getX())
                     .y(roiDto.getY())
                     .width(roiDto.getWidth())
                     .height(roiDto.getHeight())
+                    .displayOrder(displayOrder)
                     .build();
             return roiRepository.save(roi);
         }

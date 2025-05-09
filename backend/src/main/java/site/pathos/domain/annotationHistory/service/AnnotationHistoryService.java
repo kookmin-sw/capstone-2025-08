@@ -45,12 +45,10 @@ public class AnnotationHistoryService {
         AnnotationHistory history = annotationHistoryRepository.findWithSubProjectAndModelById(historyId)
                 .orElseThrow(() -> new RuntimeException("AnnotationHistory not found"));
 
-        // ROI만 조회 (TissueAnnotation, Cell은 나중에 개별 조회)
         List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(history.getId());
 
         List<RoiResponsePayload> roiPayloads = rois.stream()
                 .map(roi -> {
-                    // CellAnnotation 가져오기
                     List<CellAnnotation> cellAnnotations = cellAnnotationRepository.findAllByRoiId(roi.getId());
 
                     List<CellDetail> cellDetails = cellAnnotations.stream()
@@ -60,13 +58,12 @@ public class AnnotationHistoryService {
                     RoiResponseDto detail = new RoiResponseDto(
                             roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
 
-                    // TissueAnnotation 중 클라이언트용(예: TILE or MERGED or RESULT_TILE 등)을 골라서 하나만 선택 (또는 여러 개면 리스트로)
                     List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
-                            .map(TissueAnnotation::getAnnotationImagePath)
+                            .map(TissueAnnotation::getAnnotationImageUrl)
                             .map(s3Service::getPresignedUrl)
                             .toList();
 
-                    return new RoiResponsePayload(detail, presignedTissuePaths, cellDetails);
+                    return new RoiResponsePayload(roi.getDisplayOrder(), detail, presignedTissuePaths, cellDetails);
                 })
                 .toList();
 
