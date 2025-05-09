@@ -81,13 +81,17 @@ public class Ec2Service {
             --overlap=1 \\
             --suffix .jpg[Q=85] \\
             --depth onepixel
+        
+        vips thumbnail original.svs thumbnail.jpg 600
 
         aws s3 cp output_slide.dzi s3://%s/sub-project/%d/tiles/output_slide.dzi
         aws s3 cp output_slide_files/ s3://%s/sub-project/%d/tiles/output_slide_files/ --recursive
-
+        aws s3 cp thumbnail.jpg s3://%s/sub-project/%d/thumbnail/thumbnail.jpg
+                
         shutdown -h now
         """.formatted(
                 s3Path,
+                bucket, subProjectId,
                 bucket, subProjectId,
                 bucket, subProjectId
         );
