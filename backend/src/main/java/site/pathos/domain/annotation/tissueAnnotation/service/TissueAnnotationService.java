@@ -1,6 +1,7 @@
 package site.pathos.domain.annotation.tissueAnnotation.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +17,7 @@ import site.pathos.global.util.image.ImageUtils;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TissueAnnotationService {
@@ -39,43 +41,53 @@ public class TissueAnnotationService {
                     + "/annotation-history/" + annotationHistoryId
                     + "/roi-" + roi.getId() + "/train/" + originalFilename;
 
-            s3Service.uploadFile(key, image);
-
             TissueAnnotation ta = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImagePath(key)
+                    .annotationImageUrl(key)
                     .annotationType(AnnotationType.TILE)
                     .build();
-
             tissueAnnotationRepository.save(ta);
+
+            s3Service.uploadFileAsync(key, image, () ->
+                    {
+                        ta.uploadComplete();
+                        tissueAnnotationRepository.save(ta);
+                    },
+                    ex -> {
+                        log.error("타일 업로드 실패: {}", key, ex);
+                    }
+            );
         }
     }
 
     private void uploadMergedImage(Long subProjectId, Long annotationHistoryId, Roi roi, List<MultipartFile> images) {
         try {
-            // 1. 병합 대상 이미지 크기 (ROI 기준)
             int totalWidth = roi.getWidth();
             int totalHeight = roi.getHeight();
 
-            // 2. 이미지 병합
             BufferedImage merged = ImageUtils.mergeTiles(images, totalWidth, totalHeight);
 
-            // 3. 업로드할 S3 경로
             String mergedKey = "sub-project/" + subProjectId
                     + "/annotation-history/" + annotationHistoryId
                     + "/roi-" + roi.getId() + "/merged.png";
 
-            // 4. S3에 업로드
-            s3Service.uploadBufferedImage(merged, mergedKey);
-
-            // 5. DB에 TissueAnnotation 저장
             TissueAnnotation mergedAnnotation = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImagePath(mergedKey)
+                    .annotationImageUrl(mergedKey)
                     .annotationType(AnnotationType.MERGED)
                     .build();
 
             tissueAnnotationRepository.save(mergedAnnotation);
+
+            s3Service.uploadBufferedImageAsync(merged, mergedKey,
+                    () -> {
+                        mergedAnnotation.uploadComplete();
+                        tissueAnnotationRepository.save(mergedAnnotation);
+                    },
+                    ex -> {
+                        log.error("이미지 업로드 실패: {}", mergedKey, ex);
+                    }
+            );
 
         } catch (Exception e) {
             throw new RuntimeException("병합 이미지 업로드 실패", e);
@@ -104,7 +116,7 @@ public class TissueAnnotationService {
 
             TissueAnnotation tileAnnotation = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImagePath(tileKey)
+                    .annotationImageUrl(tileKey)
                     .annotationType(AnnotationType.RESULT_TILE)
                     .build();
 

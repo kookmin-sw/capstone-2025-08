@@ -63,9 +63,13 @@ public class SubProject {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "is_upload_complete", nullable = false)
+    private boolean isUploadComplete;
+
     @Builder
     public SubProject(Project project) {
         this.project = project;
+        this.isUploadComplete = false;
     }
 
     public String initializeSvsImageUrl() {
@@ -92,5 +96,9 @@ public class SubProject {
         }
         return this.tileImageUrl = String.format("sub-project/%s/tiles/output_slide.dzi", this.id);
 
+    }
+
+    public void markTilingCompleted() {
+        this.isUploadComplete = true;
     }
 }

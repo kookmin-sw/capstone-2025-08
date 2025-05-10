@@ -66,6 +66,20 @@ public class S3Service {
         }
     }
 
+    public void uploadFileAsync(String key, MultipartFile file,
+                                Runnable onSuccess, Consumer<Throwable> onFailure) {
+        CompletableFuture.runAsync(() -> {
+            uploadFile(key, file);
+        }, imageUploadExecutor).thenRun(() -> {
+            log.info("비동기 업로드 성공: {}", key);
+            onSuccess.run();
+        }).exceptionally(ex -> {
+            log.error("비동기 업로드 실패: {}", key, ex);
+            onFailure.accept(ex);
+            return null;
+        });
+    }
+
     public String uploadBufferedImage(BufferedImage image, String filename) {
         byte[] imageBytes = ImageUtils.convertToByteArray(image);
 
@@ -78,6 +92,27 @@ public class S3Service {
         s3Client.putObject(request, RequestBody.fromBytes(imageBytes));
 
         return filename;
+    }
+
+    public void uploadBufferedImageAsync(BufferedImage image, String key,
+                                         Runnable onSuccess, Consumer<Exception> onFailure) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                byte[] imageBytes = ImageUtils.convertToByteArray(image);
+                PutObjectRequest request = PutObjectRequest.builder()
+                        .bucket(awsProperty.s3().bucket())
+                        .key(key)
+                        .contentType("image/png")
+                        .build();
+
+                s3Client.putObject(request, RequestBody.fromBytes(imageBytes));
+                log.info("비동기 S3 업로드 완료: {}", key);
+                onSuccess.run();
+            } catch (Exception e) {
+                log.error("비동기 S3 업로드 실패: {}", key, e);
+                onFailure.accept(e);
+            }
+        }, imageUploadExecutor);
     }
 
     public String getPresignedUrl(String key) {
@@ -111,7 +146,7 @@ public class S3Service {
         }
     }
 
-    public void uploadFilesAsync(List<S3UploadFileDto> files, Consumer<List<SubProjectTilingRequestDto>> onComplete) {
+    public void uploadSvsFilesAsync(List<S3UploadFileDto> files, Consumer<List<SubProjectTilingRequestDto>> onComplete) {
         List<CompletableFuture<Void>> uploadTasks = files.stream()
                 .map(s3UploadFile -> CompletableFuture.runAsync(() -> {
                     uploadFile(s3UploadFile.key(), s3UploadFile.file());

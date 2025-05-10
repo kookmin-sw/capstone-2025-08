@@ -63,6 +63,7 @@ public class Ec2Service {
 
     private String generateUserDataScript(String s3Path, Long subProjectId) {
         String bucket = awsProperty.s3().bucket();
+        String callback = awsProperty.callback().url();
 
         return """
         #!/bin/bash
@@ -86,12 +87,15 @@ public class Ec2Service {
         aws s3 cp output_slide_files/ s3://%s/sub-project/%d/tiles/output_slide_files/ --recursive
         aws s3 cp thumbnail.jpg s3://%s/sub-project/%d/thumbnail/thumbnail.jpg
         
+        curl -X POST %s/internal/tiling-complete -H "Content-Type: application/json" -d '{"subProjectId": %d}'
+        
         shutdown -h now
         """.formatted(
                 s3Path,
                 bucket, subProjectId,
                 bucket, subProjectId,
-                bucket, subProjectId
+                bucket, subProjectId,
+                callback, subProjectId
         );
     }
 

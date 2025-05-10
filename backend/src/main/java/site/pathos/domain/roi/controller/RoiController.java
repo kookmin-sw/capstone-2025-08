@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.label.dto.LabelDto;
 import site.pathos.domain.roi.dto.request.RoiSaveRequestDto;
 import site.pathos.domain.roi.service.RoiService;
 
@@ -24,9 +25,10 @@ public class RoiController {
             @RequestPart("subProjectId") Long subProjectId,
             @RequestPart("annotationHistoryId") Long annotationHistoryId,
             @RequestPart("rois") List<RoiSaveRequestDto> rois,
-            @RequestPart("images") List<MultipartFile> images
+            @RequestPart("images") List<MultipartFile> images,
+            @RequestPart("labels") List<LabelDto> labels
     ){
-        roiService.saveWithAnnotations(subProjectId, annotationHistoryId, rois, images);
+        roiService.saveWithAnnotations(subProjectId, annotationHistoryId, rois, images, labels);
         return ResponseEntity.ok().build();
     }
 }

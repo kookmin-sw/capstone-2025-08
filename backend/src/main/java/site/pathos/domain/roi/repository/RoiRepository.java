@@ -13,6 +13,14 @@ public interface RoiRepository extends JpaRepository<Roi, Long>{
     @Query("""
     SELECT r
     FROM Roi r
-    WHERE r.annotationHistory.id = :historyId""")
+    WHERE r.annotationHistory.id = :historyId
+    """)
     List<Roi> findAllByAnnotationHistoryId(@Param("historyId") Long historyId);
+
+    @Query("""
+    SELECT MAX(r.displayOrder)
+    FROM Roi r 
+    WHERE r.annotationHistory.id = :historyId
+    """)
+    Integer findMaxDisplayOrderByAnnotationHistory(@Param("historyId") Long historyId);
 }

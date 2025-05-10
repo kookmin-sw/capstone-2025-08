@@ -60,9 +60,9 @@ public class ModelServerService {
             // TODO: cell 관련 로직 추가 필요
             List<CellDetail> cellAnnotations = List.of();
 
-            List<String> imagePaths = List.of(ta.getAnnotationImagePath());
+            List<String> imagePaths = List.of(ta.getAnnotationImageUrl());
 
-            return new RoiRequestPayload(detail, imagePaths, cellAnnotations);
+            return new RoiRequestPayload(roi.getDisplayOrder(), detail, imagePaths, cellAnnotations);
         }).toList();
 
         return new TrainingRequestDto(
