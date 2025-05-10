@@ -27,7 +27,7 @@ const MarkdownEditor = dynamic(
   },
 );
 
-export default function UploadPage() {
+export default function SharedModelEditPage() {
   const router = useRouter();
   const [openDataSet, setOpenDataSet] = useState<boolean>(false);
   const [markdownContent, setMarkdownContent] = useState('');
@@ -68,20 +68,6 @@ export default function UploadPage() {
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter((t) => t !== tagToRemove));
   };
-
-  // const handleSubmit = () => {
-  //   const data = {
-  //     title,
-  //     markdownContent,
-  //     tags,
-  //     datasetFiles, // 파일은 FileList 또는 URL로
-  //     projectId,
-  //     modelId,
-  //   };
-  //
-  //   console.log('제출할 데이터:', data);
-  //   // 🔜 API 호출 또는 저장 처리
-  // };
 
   return (
     <div className="space-y-10">
@@ -226,7 +212,7 @@ export default function UploadPage() {
           }}
           className="min-w-[80px]"
         >
-          Share
+          Save
         </Button>
       </div>
     </div>
