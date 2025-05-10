@@ -619,16 +619,8 @@ const AnnotationViewer: React.FC<{
           ensureLabelForCurrentColor();
 
           if (!currentPolygonRef.current) {
-            const matchedROI = allROIs.find(
-              (roi) =>
-                viewportPoint.x >= roi.x &&
-                viewportPoint.x <= roi.x + roi.width &&
-                viewportPoint.y >= roi.y &&
-                viewportPoint.y <= roi.y + roi.height,
-            );
-            if (!matchedROI) return;
+            if (!isInsideAnyROI(viewportPoint)) return;
 
-            currentDrawingROIRef.current = matchedROI;
             currentPolygonRef.current = {
               points: [],
               closed: false,
@@ -660,16 +652,6 @@ const AnnotationViewer: React.FC<{
               return;
             }
           }
-          const polygonROI = currentDrawingROIRef.current;
-          if (
-            !polygonROI ||
-            viewportPoint.x < polygonROI.x ||
-            viewportPoint.x > polygonROI.x + polygonROI.width ||
-            viewportPoint.y < polygonROI.y ||
-            viewportPoint.y > polygonROI.y + polygonROI.height
-          ) {
-            return;
-          }
 
           currentPolygonRef.current.points.push(viewportPoint);
           redraw();
@@ -694,16 +676,8 @@ const AnnotationViewer: React.FC<{
             !currentCellPolygonRef.current ||
             currentCellPolygonRef.current.closed
           ) {
-            const matchedROI = allROIs.find(
-              (roi) =>
-                viewportPoint.x >= roi.x &&
-                viewportPoint.x <= roi.x + roi.width &&
-                viewportPoint.y >= roi.y &&
-                viewportPoint.y <= roi.y + roi.height,
-            );
-            if (!matchedROI) return;
+            if (!isInsideAnyROI(viewportPoint)) return;
 
-            currentDrawingROIRef.current = matchedROI;
             currentCellPolygonRef.current = {
               points: [],
               closed: false,
@@ -742,16 +716,6 @@ const AnnotationViewer: React.FC<{
               currentDrawingROIRef.current = null;
               return;
             }
-          }
-          const cellPolygonROI = currentDrawingROIRef.current;
-          if (
-            !cellPolygonROI ||
-            viewportPoint.x < cellPolygonROI.x ||
-            viewportPoint.x > cellPolygonROI.x + cellPolygonROI.width ||
-            viewportPoint.y < cellPolygonROI.y ||
-            viewportPoint.y > cellPolygonROI.y + cellPolygonROI.height
-          ) {
-            return;
           }
 
           currentCellPolygonRef.current.points.push(viewportPoint);
