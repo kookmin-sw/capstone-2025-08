@@ -2,6 +2,7 @@ package site.pathos.domain.subProject.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import site.pathos.domain.annotationHistory.dto.response.AnnotationHistorySummaryDto;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
@@ -9,6 +10,7 @@ import site.pathos.domain.model.ModelSummaryDto;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.subProject.dto.response.SubProjectResponseDto;
+import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.subProject.repository.SubProjectRepository;
 import site.pathos.domain.userModel.repository.UserModelRepository;
 
@@ -69,5 +71,13 @@ public class SubProjectService {
                 modelDtos,
                 project.getModelType()
         );
+    }
+
+    @Transactional
+    public void markTilingAsComplete(Long subProjectId){
+        SubProject subProject = subProjectRepository.findById(subProjectId)
+                .orElseThrow(() -> new IllegalArgumentException("SubProject not found: " + subProjectId));
+
+        subProject.markTilingCompleted();
     }
 }

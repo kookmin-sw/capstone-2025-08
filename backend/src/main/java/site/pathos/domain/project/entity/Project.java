@@ -68,6 +68,7 @@ public class Project {
         this.title = title;
         this.description = description;
         this.modelType = modelType;
+        isDeleted = false;
         setUpdatedAt();
     }
 
