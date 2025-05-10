@@ -21,4 +21,13 @@ public interface AnnotationHistoryRepository extends JpaRepository<AnnotationHis
     Optional<AnnotationHistory> findWithSubProjectAndModelById(@Param("id") Long id);
 
     List<AnnotationHistory> findAllBySubProjectId(Long subProjectId);
+
+    @Query("""
+        SELECT DISTINCT ah FROM AnnotationHistory ah
+        LEFT JOIN FETCH ah.labels
+        WHERE ah IN :annotationHistories
+    """)
+    List<AnnotationHistory> fetchAnnotationHistoriesAndLabels(
+            @Param("annotationHistories") List<AnnotationHistory> annotationHistories
+    );
 }
