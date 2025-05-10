@@ -12,7 +12,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { formatDateToSimple } from '@/utils/date-utils';
-import { CommentType } from '@/types/comment';
+import { CommentType } from '@/types/public-space-comment';
 
 const dummyComments: CommentType[] = [
   {
