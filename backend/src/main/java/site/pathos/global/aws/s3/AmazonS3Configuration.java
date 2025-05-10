@@ -5,11 +5,14 @@ import org.springframework.context.annotation.Configuration;
 import site.pathos.global.aws.config.AwsProperty;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.internal.crt.S3CrtAsyncClient;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+
+import java.time.Duration;
 
 @Configuration
 public class AmazonS3Configuration {
@@ -35,6 +38,12 @@ public class AmazonS3Configuration {
         return S3Client.builder()
                 .region(awsProperty.regionAsEnum())
                 .credentialsProvider(awsCredentialsProvider)
+                .overrideConfiguration(
+                        ClientOverrideConfiguration.builder()
+                                .apiCallTimeout(Duration.ofMinutes(60))
+                                .apiCallAttemptTimeout(Duration.ofMinutes(30))
+                                .build()
+                )
                 .build();
     }
 

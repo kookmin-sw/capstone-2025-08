@@ -12,7 +12,7 @@ public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
     @Query("SELECT s.project FROM SubProject s WHERE s.id = :subProjectId")
     Project findProjectBySubProjectId(@Param("subProjectId") Long subProjectId);
 
-    @Query("SELECT new site.pathos.domain.subProject.dto.response.SubProjectSummaryDto(sp.id, sp.thumbnailUrl) " +
+    @Query("SELECT new site.pathos.domain.subProject.dto.response.SubProjectSummaryDto(sp.id, sp.thumbnailUrl, sp.isUploadComplete) " +
             "FROM SubProject sp WHERE sp.project.id = :projectId")
     List<SubProjectSummaryDto> findSubProjectIdAndThumbnailByProjectId(@Param("projectId") Long projectId);
 
@@ -30,4 +30,6 @@ public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
             WHERE sp.project = :project and sp.isDeleted = false
         """)
     List<SubProject> findSubProjectsByProject(Project project);
+
+    boolean existsByProjectIdAndIsUploadCompleteFalse(Long projectId);
 }

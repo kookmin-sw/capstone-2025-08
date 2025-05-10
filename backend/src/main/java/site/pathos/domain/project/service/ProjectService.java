@@ -1,5 +1,7 @@
 package site.pathos.domain.project.service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -63,6 +65,11 @@ public class ProjectService {
         Long userId = 1L;   // TODO
         Project project = getProject(projectId, userId);
         List<SubProjectSummaryDto> subProjects = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
+
+        boolean hasIncompleteUploads = subProjectRepository.existsByProjectIdAndIsUploadCompleteFalse(projectId);
+        if (hasIncompleteUploads) {
+            throw new BusinessException(ErrorCode.SUB_PROJECT_NOT_READY);
+        }
 
         return new GetSubProjectResponseDto(
                 projectId,
@@ -291,11 +298,24 @@ public class ProjectService {
     }
 
     private SlideSummaryDto getSlideSummaryDto(List<SubProject> subProjects) {
-        // TODO 이미지 업로드 진행률 필요
+        int total = subProjects.size();
+        int completed = (int) subProjects.stream()
+                .filter(SubProject::isUploadComplete)
+                .count();
+
+        int uploadProgress = total == 0 ? 0 : (int) ((completed * 100.0) / total);
+
+        String lastUploadedTime = subProjects.stream()
+                .filter(SubProject::isUploadComplete)
+                .map(SubProject::getUpdatedAt)
+                .max(LocalDateTime::compareTo)
+                .map(time -> time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm a")))
+                .orElse("");
+
         return new SlideSummaryDto(
-                subProjects.size(),
-                0,
-                ""
+                total,
+                uploadProgress,
+                lastUploadedTime
         );
     }
 
@@ -331,4 +351,6 @@ public class ProjectService {
                 0
         );
     }
+
+    //TODO svs 이미지 추가 업로드 구현 필요
 }

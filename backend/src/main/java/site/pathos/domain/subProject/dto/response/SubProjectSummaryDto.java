@@ -9,6 +9,9 @@ public record SubProjectSummaryDto(
         Long subProjectId,
 
         @Schema(description = "서브 프로젝트 썸네일 URL", example = "https://example.com/subproject-101/thumbnail.jpg")
-        String thumbnailUrl
+        String thumbnailUrl,
+
+        @Schema(description = "이미지 업로드 여부 완료", example = "true")
+        boolean isUploadComplete
 ) {
 }

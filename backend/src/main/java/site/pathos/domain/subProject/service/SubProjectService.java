@@ -54,6 +54,7 @@ public class SubProjectService {
         //TODO 나중에 실제 userId로 변경 필요
         Long userId =  1L;
 
+        //TODO 해당 프로젝트에서 사용 가능한 모델 목록으로 변경 필요
         List<Model> models = userModelRepository.findAllModelsByUserId(userId); // 조건에 따라 필터링 가능
         List<ModelSummaryDto> modelDtos = models.stream()
                 .map(m -> new ModelSummaryDto(
