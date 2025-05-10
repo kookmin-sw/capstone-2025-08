@@ -44,6 +44,9 @@ public class SubProject {
     @Column(name = "svs_image_url")
     private String svsImageUrl;
 
+    @Column(name = "tile_image_url")
+    private String tileImageUrl;
+
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
@@ -74,5 +77,20 @@ public class SubProject {
 
     public String getFileName() {
         return Paths.get(svsImageUrl).getFileName().toString();
+    }
+
+    public String initializeThumbnailImageUrl() {
+        if (this.id == null) {
+            throw new IllegalStateException("SubProject ID must be set before initializing thumbnailImageUrl.");
+        }
+        return this.thumbnailUrl = String.format("sub-project/%s/thumbnail/thumbnail.jpg", this.id);
+    }
+
+    public String initializeTileImageUrl() {
+        if (this.id == null) {
+            throw new IllegalStateException("SubProject ID must be set before initializing tileImageUrl.");
+        }
+        return this.tileImageUrl = String.format("sub-project/%s/tiles/output_slide.dzi", this.id);
+
     }
 }

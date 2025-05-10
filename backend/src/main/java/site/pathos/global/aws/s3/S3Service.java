@@ -13,11 +13,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.subProject.dto.request.SubProjectTilingRequestDto;
 import site.pathos.global.aws.config.AwsProperty;
 import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 import site.pathos.global.util.image.ImageUtils;
@@ -109,7 +111,7 @@ public class S3Service {
         }
     }
 
-    public void uploadFilesAsync(List<S3UploadFileDto> files) {
+    public void uploadFilesAsync(List<S3UploadFileDto> files, Consumer<List<SubProjectTilingRequestDto>> onComplete) {
         List<CompletableFuture<Void>> uploadTasks = files.stream()
                 .map(s3UploadFile -> CompletableFuture.runAsync(() -> {
                     uploadFile(s3UploadFile.key(), s3UploadFile.file());
@@ -117,7 +119,17 @@ public class S3Service {
                 .toList();
 
         CompletableFuture.allOf(uploadTasks.toArray(new CompletableFuture[0]))
-                .thenRun(() -> log.info("모든 파일 업로드 완료"))
+                .thenRun(() -> {
+                    log.info("모든 파일 업로드 완료");
+
+                    List<SubProjectTilingRequestDto> uploadImages = files.stream()
+                            .map(file -> new SubProjectTilingRequestDto(
+                                    file.subProjectId(),
+                                    "s3://" + awsProperty.s3().bucket() + "/" + file.key()))
+                            .toList();
+
+                    onComplete.accept(uploadImages);
+                })
                 .exceptionally(ex -> {
                     log.error("일부 파일 업로드 실패", ex);
                     return null;
