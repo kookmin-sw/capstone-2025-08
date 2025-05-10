@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate:api": "ts-node scripts/generate-openapi.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -34,6 +35,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^16.5.0",
     "eslint-plugin-tailwindcss": "3.12.1",
     "geotiff-tilesource": "^2.1.0",
     "lucide-react": "^0.483.0",
@@ -52,6 +54,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@openapitools/openapi-generator-cli": "^2.20.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/openseadragon": "^4.1.0",
@@ -66,6 +69,7 @@
     "prettier": "3.0.3",
     "prettier-plugin-tailwindcss": "0.5.7",
     "tailwindcss": "^4.1.4",
-    "typescript": "^5"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }

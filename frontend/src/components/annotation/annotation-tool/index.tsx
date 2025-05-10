@@ -14,8 +14,8 @@ import { Slider } from '@/components/ui/slider';
 interface AnnotationToolProps {
   modelType: string;
   isActive: boolean;
-  activeTool: 'circle' | 'polygon' | 'paintbrush' | 'eraser' | null;
-  onSelectTool: (tool: 'circle' | 'polygon' | 'paintbrush' | 'eraser') => void;
+  activeTool: 'point' | 'polygon' | 'paintbrush' | 'eraser' | null;
+  onSelectTool: (tool: 'point' | 'polygon' | 'paintbrush' | 'eraser') => void;
   penColor: string;
   penSize: number;
   onChangePenColor: (color: string) => void;
@@ -71,21 +71,53 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
           <Button
             variant={'ghost'}
             size={'icon'}
-            onClick={() => onSelectTool('circle')}
-            className={activeTool === 'circle' ? 'bg-primary text-white' : ''}
+            onClick={() => onSelectTool('point')}
+            className={activeTool === 'point' ? 'bg-primary text-white' : ''}
           >
             <CircleDot />
           </Button>
         );
       case 'TISSUE':
+        return (
+          <>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('polygon')}
+              className={
+                activeTool === 'polygon' ? 'bg-primary text-white' : ''
+              }
+            >
+              <Waypoints />
+            </Button>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('paintbrush')}
+              className={
+                activeTool === 'paintbrush' ? 'bg-primary text-white' : ''
+              }
+            >
+              <Paintbrush />
+            </Button>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('eraser')}
+              className={activeTool === 'eraser' ? 'bg-primary text-white' : ''}
+            >
+              <Eraser />
+            </Button>
+          </>
+        );
       case 'MULTI':
         return (
           <>
             <Button
               variant={'ghost'}
               size={'icon'}
-              onClick={() => onSelectTool('circle')}
-              className={activeTool === 'circle' ? 'bg-primary text-white' : ''}
+              onClick={() => onSelectTool('point')}
+              className={activeTool === 'point' ? 'bg-primary text-white' : ''}
             >
               <CircleDot />
             </Button>
