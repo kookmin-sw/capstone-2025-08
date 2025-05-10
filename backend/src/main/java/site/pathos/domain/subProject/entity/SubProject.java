@@ -45,9 +45,13 @@ public class SubProject {
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
+    @Column(name = "is_upload_complete", nullable = false)
+    private boolean isUploadComplete;
+
     @Builder
     public SubProject(Project project) {
         this.project = project;
+        this.isUploadComplete = false;
     }
 
     public String initializeSvsImageUrl() {
@@ -69,5 +73,9 @@ public class SubProject {
             throw new IllegalStateException("SubProject ID must be set before initializing tileImageUrl.");
         }
         return this.tileImageUrl = String.format("sub-project/%s/tiles/output_slide.dzi", this.id);
+    }
+
+    public void markTilingCompleted() {
+        this.isUploadComplete = true;
     }
 }

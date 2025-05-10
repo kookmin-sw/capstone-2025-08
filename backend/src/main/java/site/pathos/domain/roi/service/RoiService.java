@@ -7,6 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.tissueAnnotation.service.TissueAnnotationService;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
+import site.pathos.domain.label.dto.LabelDto;
+import site.pathos.domain.label.service.LabelService;
 import site.pathos.domain.roi.dto.request.RoiRequestPayload;
 import site.pathos.domain.roi.dto.request.RoiSaveRequestDto;
 import site.pathos.domain.roi.entity.Roi;
@@ -21,9 +23,11 @@ public class RoiService {
     private final AnnotationHistoryRepository annotationHistoryRepository;
     private final RoiRepository roiRepository;
     private final TissueAnnotationService tissueAnnotationService;
+    private final LabelService labelService;
 
     @Transactional
-    public void saveWithAnnotations(Long subProjectId, Long annotationHistoryId, List<RoiSaveRequestDto> rois, List<MultipartFile> images) {
+    public void saveWithAnnotations(Long subProjectId, Long annotationHistoryId,
+                                    List<RoiSaveRequestDto> rois, List<MultipartFile> images, List<LabelDto> labels) {
         AnnotationHistory history = annotationHistoryRepository.findById(annotationHistoryId)
                 .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
 
@@ -41,6 +45,8 @@ public class RoiService {
                     matchedImages
             );
         }
+
+        labelService.upsertLabels(labels, history);
     }
 
     private Roi upsertRoi(AnnotationHistory history, RoiSaveRequestDto roiDto) {
@@ -57,12 +63,16 @@ public class RoiService {
             return roi;
         } else {
             //새로 생긴 roi의 경우
+            Integer max = roiRepository.findMaxDisplayOrderByAnnotationHistory(history.getId());
+            int displayOrder = (max == null) ? 0 : max+1;
+
             Roi roi = Roi.builder()
                     .annotationHistory(history)
                     .x(roiDto.getX())
                     .y(roiDto.getY())
                     .width(roiDto.getWidth())
                     .height(roiDto.getHeight())
+                    .displayOrder(displayOrder)
                     .build();
             return roiRepository.save(roi);
         }

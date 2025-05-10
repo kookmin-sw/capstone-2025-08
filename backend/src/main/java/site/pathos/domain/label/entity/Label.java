@@ -2,6 +2,7 @@ package site.pathos.domain.label.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
@@ -25,6 +26,21 @@ public class Label {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private AnnotationHistory annotationHistory;
+
+    @Builder
+    public Label(String name, String color, AnnotationHistory annotationHistory) {
+        this.name = name;
+        this.color = color;
+        this.annotationHistory = annotationHistory;
+    }
+
+    public void changeName(String name) {
+        this.name = name;
+    }
+
+    public void changeColor(String color) {
+        this.color = color;
+    }
 
     public LabelDto toLabelDto() {
         return new LabelDto(

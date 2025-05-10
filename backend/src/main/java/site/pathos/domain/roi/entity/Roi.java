@@ -43,8 +43,11 @@ public class Roi {
     @Column(name = "faulty")
     private Double faulty;
 
+    @Column(name = "display_order", nullable = false)
+    private int displayOrder;
+
     @Builder
-    public Roi(AnnotationHistory annotationHistory, int x, int y, int width, int height) {
+    public Roi(AnnotationHistory annotationHistory, int x, int y, int width, int height, int displayOrder) {
         if (annotationHistory == null) throw new IllegalArgumentException("annotationHistory cannot be null");
 
         this.annotationHistory = annotationHistory;
@@ -52,6 +55,7 @@ public class Roi {
         this.y = y;
         this.width = width;
         this.height = height;
+        this.displayOrder = displayOrder;
     }
 
     public void changeCoordinates(int x, int y, int width, int height) {
