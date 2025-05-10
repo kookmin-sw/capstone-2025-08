@@ -47,14 +47,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Toaster } from 'sonner';
-
-export interface SharedModelItem {
-  id: number;
-  title: string;
-  model: string;
-  tag: string[];
-  uploadDate: string;
-}
+import { SharedModelItem } from '@/types/shared-model';
 
 export default function SharedModelPage() {
   const router = useRouter();
@@ -72,35 +65,35 @@ export default function SharedModelPage() {
       title: 'project 1',
       model: 'cell detection model',
       tag: ['Cell', 'Comment', 'DataSet'],
-      uploadDate: '2025-03-19 06:05',
+      uploadedDate: '2025-03-19 06:05',
     },
     {
       id: 2,
       title: 'project 2',
       model: 'cell detection model',
       tag: ['Cell', 'Comment'],
-      uploadDate: '2025-03-20 06:05',
+      uploadedDate: '2025-03-20 06:05',
     },
     {
       id: 3,
       title: 'project 3',
       model: 'cell detection model',
       tag: ['Cell', 'DataSet'],
-      uploadDate: '2025-03-21 06:05',
+      uploadedDate: '2025-03-21 06:05',
     },
     {
       id: 4,
       title: 'project 4',
       model: 'cell detection model',
       tag: ['Cell', 'Comment', 'DataSet'],
-      uploadDate: '2025-03-22 06:05',
+      uploadedDate: '2025-03-22 06:05',
     },
     {
       id: 5,
       title: 'project 5',
       model: 'cell detection model',
       tag: ['Cell'],
-      uploadDate: '2025-03-18 06:05',
+      uploadedDate: '2025-03-18 06:05',
     },
   ]);
 
@@ -191,7 +184,7 @@ export default function SharedModelPage() {
       },
     },
     {
-      accessorKey: 'uploadDate',
+      accessorKey: 'uploadedDate',
       header: ({ column }) => {
         return (
           <Button
@@ -199,13 +192,13 @@ export default function SharedModelPage() {
             onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
             className="text-muted-foreground"
           >
-            Upload Date
+            Uploaded Date
             <ArrowUpDown />
           </Button>
         );
       },
       cell: ({ row }) => (
-        <div className="pl-3 lowercase">{row.getValue('uploadDate')}</div>
+        <div className="pl-3 lowercase">{row.getValue('uploadedDate')}</div>
       ),
     },
     {
@@ -224,7 +217,9 @@ export default function SharedModelPage() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() =>
-                    router.push(`/main/public-space/upload/${row.original.id}`)
+                    router.push(
+                      `/main/public-space/shared-model/${row.original.id}`,
+                    )
                   }
                 >
                   <Pencil />
@@ -280,7 +275,9 @@ export default function SharedModelPage() {
         icon={<Plus />}
         buttonName="Share My Project"
         buttonSize="154px"
-        onButtonClick={() => router.push('/main/public-space/upload')}
+        onButtonClick={() =>
+          router.push('/main/public-space/shared-model/upload')
+        }
       />
 
       <Toaster position="bottom-right" />
@@ -288,7 +285,7 @@ export default function SharedModelPage() {
       <div className="w-full">
         <div className="flex items-center justify-between py-4">
           <Input
-            placeholder="Filter titles..."
+            placeholder="Filter Titles..."
             value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
             onChange={(event) =>
               table.getColumn('title')?.setFilterValue(event.target.value)
