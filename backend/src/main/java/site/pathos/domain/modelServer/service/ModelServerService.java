@@ -77,9 +77,9 @@ public class ModelServerService {
     }
 
     @Transactional
-    public void resultTraining(TrainingResultRequestDto resultRequestDto){
+    public void resultTraining(Long annotationHistoryId,TrainingResultRequestDto resultRequestDto){
         AnnotationHistory history = annotationHistoryRepository
-                .findWithSubProjectAndModelById(resultRequestDto.annotation_history_id())
+                .findWithSubProjectAndModelById(annotationHistoryId)
                 .orElseThrow(() -> new RuntimeException("history not found"));
 
         AnnotationHistory newHistory = AnnotationHistory.builder()
@@ -97,7 +97,7 @@ public class ModelServerService {
         modelService.saveModel(history, history.getModelName(), baseModel.getModelType() ,resultRequestDto.model_path());
 
         //TODO 모델서버에서 기능 추가시 수정 필요
-        inferenceHistoryService.updateInferenceHistory(resultRequestDto.annotation_history_id(),
+        inferenceHistoryService.updateInferenceHistory(annotationHistoryId,
                 0,
                 0,
                 0
