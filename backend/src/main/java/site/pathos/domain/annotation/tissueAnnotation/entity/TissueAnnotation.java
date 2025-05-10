@@ -27,6 +27,9 @@ public class TissueAnnotation {
     @Column(name = "annotation_type", nullable = false)
     private AnnotationType annotationType;
 
+    @Column(name = "is_upload_complete", nullable = false)
+    private boolean isUploadComplete;
+
     @Builder
     public TissueAnnotation(Roi roi, String annotationImageUrl, AnnotationType annotationType) {
         if (roi == null) throw new IllegalArgumentException("roi cannot be null in TissueAnnotation");
@@ -35,5 +38,10 @@ public class TissueAnnotation {
         this.roi = roi;
         this.annotationImageUrl = annotationImageUrl;
         this.annotationType = annotationType;
+        this.isUploadComplete = false;
+    }
+
+    public void uploadComplete() {
+        this.isUploadComplete = true;
     }
 }

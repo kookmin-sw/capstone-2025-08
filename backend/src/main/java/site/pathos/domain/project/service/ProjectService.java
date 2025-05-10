@@ -98,7 +98,7 @@ public class ProjectService {
             annotationHistoryRepository.save(annotationHistory);
         }
 
-        s3Service.uploadFilesAsync(uploadFiles, uploadImages -> {
+        s3Service.uploadSvsFilesAsync(uploadFiles, uploadImages -> {
             for (SubProjectTilingRequestDto image : uploadImages) {
                 ec2Service.asyncLaunchTilingInstance(image);
             }
