@@ -31,11 +31,11 @@ import {
 
 // Top Menu items.
 const topItems = [
-  {
-    title: 'Recents',
-    url: '/main/recents',
-    icon: History,
-  },
+  // {
+  //   title: 'Recents',
+  //   url: '/main/recents',
+  //   icon: History,
+  // },
   {
     title: 'Projects',
     url: '/main/projects',
