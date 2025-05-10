@@ -3,5 +3,5 @@ export interface SharedModelItem {
   title: string;
   model: string;
   tag: string[];
-  uploadDate: string;
+  uploadedDate: string;
 }
