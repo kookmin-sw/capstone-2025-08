@@ -10,6 +10,7 @@ public enum ErrorCode {
     PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 프로젝트를 찾을 수 없습니다."),
     NO_PROJECT_ACCESS(HttpStatus.FORBIDDEN, "프로젝트 접근 권한이 없습니다."),
     MODEL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 모델을 찾을 수 없습니다."),
+    SUB_PROJECT_NOT_READY(HttpStatus.BAD_REQUEST, "아직 모든 SubProject의 이미지 업로드가 완료되지 않았습니다."),
     ;
 
     private final HttpStatus status;
