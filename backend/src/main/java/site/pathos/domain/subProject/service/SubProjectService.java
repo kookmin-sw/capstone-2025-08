@@ -7,12 +7,18 @@ import site.pathos.domain.annotationHistory.dto.response.AnnotationHistorySummar
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
 import site.pathos.domain.model.ModelSummaryDto;
+import site.pathos.domain.model.Repository.ModelRepository;
+import site.pathos.domain.model.Repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.project.entity.Project;
+import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.subProject.dto.response.SubProjectResponseDto;
 import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.subProject.repository.SubProjectRepository;
 import site.pathos.domain.userModel.repository.UserModelRepository;
+import site.pathos.global.error.BusinessException;
+import site.pathos.global.error.ErrorCode;
 
 import java.util.Comparator;
 import java.util.List;
@@ -25,7 +31,11 @@ public class SubProjectService {
     private final AnnotationHistoryRepository annotationHistoryRepository;
     private final UserModelRepository userModelRepository;
     private final SubProjectRepository subProjectRepository;
+    private final ProjectModelRepository projectModelRepository;
+    private final ProjectRepository projectRepository;
+    private final ModelRepository modelRepository;
 
+    @Transactional(readOnly = true)
     public SubProjectResponseDto getSubProject(Long subProjectId){
         //TODO 추후에 메서드 분리 필요
         List<AnnotationHistory> histories = annotationHistoryRepository
@@ -54,16 +64,9 @@ public class SubProjectService {
         //TODO 나중에 실제 userId로 변경 필요
         Long userId =  1L;
 
-        //TODO 해당 프로젝트에서 사용 가능한 모델 목록으로 변경 필요
-        List<Model> models = userModelRepository.findAllModelsByUserId(userId); // 조건에 따라 필터링 가능
-        List<ModelSummaryDto> modelDtos = models.stream()
-                .map(m -> new ModelSummaryDto(
-                        m.getId(),
-                        m.getName()
-                ))
-                .toList();
+        Project project = getProjectBySubProjectId(subProjectId, userId);
 
-        Project project = subProjectRepository.findProjectBySubProjectId(subProjectId);
+        List<ModelSummaryDto> modelDtos = getProjectModels(project.getId());
 
         return new SubProjectResponseDto(
                 subProjectId,
@@ -80,5 +83,29 @@ public class SubProjectService {
                 .orElseThrow(() -> new IllegalArgumentException("SubProject not found: " + subProjectId));
 
         subProject.markTilingCompleted();
+    }
+
+    private List<ModelSummaryDto> getProjectModels(Long projectId){
+        List<ProjectModel> models = projectModelRepository.findByProjectIdOrderByCreatedAt(projectId);
+
+        return models.stream()
+                .map(projectModel -> {
+                    Model model = projectModel.getModel();
+                    return new ModelSummaryDto(model.getId(), model.getName());
+                })
+                .toList();
+    }
+
+    private Project getProjectBySubProjectId(Long subProjectId, Long userId) {
+        SubProject subProject = subProjectRepository.findById(subProjectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SUB_PROJECT_NOT_FOUND));
+
+        Project project = projectRepository.findProjectWithUserBySubProjectId(subProjectId);
+
+        if (!project.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_PROJECT_ACCESS);
+        }
+
+        return project;
     }
 }

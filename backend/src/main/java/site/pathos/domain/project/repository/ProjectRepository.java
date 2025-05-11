@@ -20,4 +20,13 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
         WHERE p.id IN :ids
     """)
     List<Project> fetchProjectsWithSubProjectsByIds(@Param("ids") List<Long> ids);
+
+    @Query("""
+    SELECT p FROM Project p
+    JOIN FETCH p.user
+    WHERE p.id = (
+        SELECT sp.project.id FROM SubProject sp WHERE sp.id = :subProjectId
+    )
+""")
+    Project findProjectWithUserBySubProjectId(@Param("subProjectId") Long subProjectId);
 }
