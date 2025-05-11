@@ -35,3 +35,13 @@ export interface LoadedROI {
   bbox: { x: number; y: number; w: number; h: number };
   tiles: MaskTile[];
 }
+
+export type RenderItem =
+  | { type: 'stroke'; stroke: Stroke }
+  | { type: 'polygon'; polygon: Polygon };
+
+export type RenderSnapshot = {
+  renderQueue: RenderItem[];
+  strokes: Stroke[];
+  polygons: Polygon[];
+};
