@@ -21,11 +21,11 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       {/* 사이드바 헤더 -> 로고 */}
-      <SidebarHeader className="items-center">
+      <SidebarHeader className="items-center py-6">
         <Image
           width={180}
           height={128}
-          src="/images/pathos-logo.png"
+          src="/icons/pathos-text-icon-logo.svg"
           alt="pathos logo"
           priority
           className="cursor-pointer"
