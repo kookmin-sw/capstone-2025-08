@@ -15,7 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
+import site.pathos.domain.label.entity.ProjectLabel;
+import site.pathos.domain.label.repository.ProjectLabelRepository;
 import site.pathos.domain.model.Repository.ModelRepository;
+import site.pathos.domain.model.Repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
@@ -59,6 +62,8 @@ public class ProjectService {
     private final UserModelRepository userModelRepository;
     private final Ec2Service ec2Service;
     private static final int PROJECTS_PAGE_SIZE = 9;
+    private final ProjectModelRepository projectModelRepository;
+    private final ProjectLabelRepository projectLabelRepository;
 
     @Transactional(readOnly = true)
     public GetSubProjectResponseDto getSubProject(Long projectId){
@@ -172,7 +177,7 @@ public class ProjectService {
             }
 
             String modelName = subProjects.get(subProjects.size() - 1).getAnnotationHistories().stream()
-                    .max(Comparator.comparing(AnnotationHistory::getStartedAt))
+                    .max(Comparator.comparing(AnnotationHistory::getCreatedAt))
                     .map(AnnotationHistory::getModel)
                     .map(Model::getName)
                     .orElse("");
@@ -239,7 +244,7 @@ public class ProjectService {
         String updatedAt = DateTimeUtils.dateTimeToStringFormat(project.getUpdatedAt());
         SlideSummaryDto slideSummaryDto = getSlideSummaryDto(subProjects);
         ModelProcessDto modelProcessDto = getModelProcessDto();
-        List<LabelDto> labels = getLabelDtos(subProjects);
+        List<LabelDto> labels = getLabelDtos(projectId);
         List<SlideDto> slides = getSlideDtos(subProjects);
         AnalyticsDto analytics = getAnalyticsDto();
 
@@ -276,7 +281,7 @@ public class ProjectService {
                 .flatMap(sp -> sp.getAnnotationHistories().stream())
                 .toList();
         if (!annotationHistories.isEmpty()) {
-            annotationHistoryRepository.fetchAnnotationHistoriesAndLabels(annotationHistories);
+            annotationHistoryRepository.fetchAnnotationHistories(annotationHistories);
         }
         return subProjects;
     }
@@ -288,12 +293,14 @@ public class ProjectService {
         return recentAnnotationHistory.getModel();
     }
 
-    private List<LabelDto> getLabelDtos(List<SubProject> subProjects) {
-        return subProjects.stream()
-                .flatMap(sub -> sub.getAnnotationHistories().stream())
-                .flatMap(history -> history.getLabels().stream())
-                .distinct()
-                .map(label -> new LabelDto(label.getName(), label.getColor()))
+    private List<LabelDto> getLabelDtos(Long projectId) {
+        List<ProjectLabel> projectLabels = projectLabelRepository.findAllByProjectId(projectId);
+
+        return projectLabels.stream()
+                .map(pl -> new LabelDto(
+                        pl.getName(),
+                        pl.getColor()
+                ))
                 .toList();
     }
 

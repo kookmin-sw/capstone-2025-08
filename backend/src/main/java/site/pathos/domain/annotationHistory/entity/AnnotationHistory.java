@@ -1,14 +1,11 @@
 package site.pathos.domain.annotationHistory.entity;
 
 import jakarta.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import site.pathos.domain.label.entity.Label;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.subProject.entity.SubProject;
 
@@ -35,12 +32,13 @@ public class AnnotationHistory {
     @Column(name = "model_name", nullable = false)
     private String modelName;
 
-    @OneToMany(mappedBy = "annotationHistory", fetch = FetchType.LAZY)
-    private List<Label> labels = new ArrayList<>();
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
 
     @CreationTimestamp
-    @Column(name = "started_at", nullable = false)
-    private LocalDateTime startedAt;
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
