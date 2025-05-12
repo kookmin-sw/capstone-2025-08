@@ -6,5 +6,4 @@ import site.pathos.domain.label.entity.Label;
 import java.util.List;
 
 public interface LabelRepository extends JpaRepository<Label, Long> {
-    List<Label> findByAnnotationHistoryId(Long annotationHistoryId);
 }

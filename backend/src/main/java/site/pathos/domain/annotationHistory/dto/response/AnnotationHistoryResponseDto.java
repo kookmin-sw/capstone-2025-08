@@ -14,8 +14,5 @@ public record AnnotationHistoryResponseDto(
         String modelName,
 
         @Schema(description = "ROI 데이터 목록")
-        List<RoiResponsePayload> roiPayloads,
-
-        @Schema(description = "Label 데이터 목록")
-        List<LabelDto> labels
+        List<RoiResponsePayload> roiPayloads
 ) {}

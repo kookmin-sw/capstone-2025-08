@@ -10,8 +10,6 @@ import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
 import site.pathos.domain.annotationHistory.dto.response.AnnotationHistoryResponseDto;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
-import site.pathos.domain.label.dto.LabelDto;
-import site.pathos.domain.label.entity.Label;
 import site.pathos.domain.label.repository.LabelRepository;
 import site.pathos.domain.roi.dto.response.RoiResponseDto;
 import site.pathos.domain.roi.dto.response.RoiResponsePayload;
@@ -67,17 +65,10 @@ public class AnnotationHistoryService {
                 })
                 .toList();
 
-        List<Label> labels = labelRepository.findByAnnotationHistoryId(historyId);
-
-        List<LabelDto> labelDtos = labels.stream()
-                .map(Label::toLabelDto)
-                .toList();
-
         return new AnnotationHistoryResponseDto(
                 history.getId(),
                 history.getModelName(),
-                roiPayloads,
-                labelDtos
+                roiPayloads
         );
     }
 }
