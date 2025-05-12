@@ -30,14 +30,6 @@ public class AnnotationHistoryService {
 
     private final S3Service s3Service;
 
-    @Transactional
-    public void updateModelName(Long annotationHistoryId, String newModelName) {
-        AnnotationHistory history = annotationHistoryRepository.findById(annotationHistoryId)
-                .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
-
-        history.updateModelName(newModelName);
-    }
-
     @Transactional(readOnly = true)
     public AnnotationHistoryResponseDto getAnnotationHistory(Long historyId) {
         AnnotationHistory history = annotationHistoryRepository.findWithSubProjectAndModelById(historyId)
@@ -67,7 +59,6 @@ public class AnnotationHistoryService {
 
         return new AnnotationHistoryResponseDto(
                 history.getId(),
-                history.getModelName(),
                 roiPayloads
         );
     }
