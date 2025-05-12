@@ -23,11 +23,20 @@ import {
   drawROIs,
 } from '@/utils/canvas-roi-utils';
 import {
+  deepCopyRenderQueue,
   deepCopyStrokes,
+  deepCopyPolygons,
   drawStroke,
-  subtractStroke,
 } from '@/utils/canvas-drawing-utils';
-import { Point, Stroke, ROI, LoadedROI, Polygon } from '@/types/annotation';
+import {
+  Point,
+  Stroke,
+  ROI,
+  LoadedROI,
+  Polygon,
+  RenderItem,
+  RenderSnapshot,
+} from '@/types/annotation';
 import { SubProject } from '@/types/project-schema';
 import { dummyInferenceResults } from '@/data/dummy';
 import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
@@ -74,9 +83,9 @@ const AnnotationViewer: React.FC<{
     polygonIndex: number;
     pointIndex: number;
   } | null>(null);
-  const isRedoingRef = useRef(false);
 
   // 드로잉 도구 관련 상태
+  const [renderQueueVersion, setRenderQueueVersion] = useState(0);
   const [penColor, setPenColor] = useState('#FF0000');
   const [penSize, setPenSize] = useState(10);
   const [mousePosition, setMousePosition] = useState<Point | null>(null);
@@ -98,8 +107,15 @@ const AnnotationViewer: React.FC<{
   const [cellPolygonsMap, setCellPolygonsMap] = useState<
     Record<number, Polygon[]>
   >({});
-  const [undoMap, setUndoMap] = useState<Record<number, Stroke[][]>>({});
-  const [redoMap, setRedoMap] = useState<Record<number, Stroke[][]>>({});
+  const [renderQueueMap, setRenderQueueMap] = useState<
+    Record<number, RenderItem[]>
+  >({});
+  const [renderQueueUndoMap, setRenderQueueUndoMap] = useState<
+    Record<number, RenderItem[][]>
+  >({});
+  const [renderQueueRedoMap, setRenderQueueRedoMap] = useState<
+    Record<number, RenderItem[][]>
+  >({});
 
   // 현재 서브프로젝트 ID 기준 상태 접근
   const subProjectId = subProject?.id ?? -1;
@@ -120,15 +136,12 @@ const AnnotationViewer: React.FC<{
     () => cellPolygonsMap[subProjectId] || [],
     [cellPolygonsMap, subProjectId],
   );
-
-  const undoStack = useMemo(
-    () => undoMap[subProjectId] || [],
-    [undoMap, subProjectId],
-  );
-  const redoStack = useMemo(
-    () => redoMap[subProjectId] || [],
-    [redoMap, subProjectId],
-  );
+  const [renderSnapshotUndoMap, setRenderSnapshotUndoMap] = useState<
+    Record<number, RenderSnapshot[]>
+  >({});
+  const [renderSnapshotRedoMap, setRenderSnapshotRedoMap] = useState<
+    Record<number, RenderSnapshot[]>
+  >({});
 
   // 현재 서브프로젝트 ID 기준 상태 업데이트 함수들
   const setUserDefinedROIs = (rois: ROI[]) => {
@@ -151,14 +164,34 @@ const AnnotationViewer: React.FC<{
     setCellPolygonsMap((prev) => ({ ...prev, [subProjectId]: polygons }));
   };
 
-  const setUndoStack = (s: Stroke[][]) => {
-    if (subProjectId == null) return;
-    setUndoMap((prev) => ({ ...prev, [subProjectId]: s }));
+  // 스냅샷 저장 함수
+  const pushRenderSnapshot = () => {
+    const snapshot: RenderSnapshot = {
+      renderQueue: deepCopyRenderQueue(renderQueueMap[subProjectId] || []),
+      strokes: deepCopyStrokes(strokesMap[subProjectId] || []),
+      polygons: deepCopyPolygons(polygonsMap[subProjectId] || []),
+    };
+
+    setRenderSnapshotUndoMap((prev) => ({
+      ...prev,
+      [subProjectId]: [...(prev[subProjectId] || []), snapshot],
+    }));
+    setRenderSnapshotRedoMap((prev) => ({
+      ...prev,
+      [subProjectId]: [],
+    }));
   };
 
-  const setRedoStack = (s: Stroke[][]) => {
-    if (subProjectId == null) return;
-    setRedoMap((prev) => ({ ...prev, [subProjectId]: s }));
+  // 스냅샷 복원 함수
+  const restoreRenderSnapshot = (snapshot: RenderSnapshot) => {
+    setRenderQueueMap((prev) => ({
+      ...prev,
+      [subProjectId]: snapshot.renderQueue,
+    }));
+    setStrokes(snapshot.strokes);
+    setPolygons(snapshot.polygons);
+    setRenderQueueVersion((v) => v + 1);
+    redraw();
   };
 
   /* =============================================
@@ -273,9 +306,6 @@ const AnnotationViewer: React.FC<{
     return null;
   };
 
-  /* =============================================
-        셀 폴리곤 점 클릭 감지 함수
-   ============================================== */
   const getClickedCellPolygonPoint = (x: number, y: number) => {
     if (!viewerInstance.current) return null;
     const threshold = 6;
@@ -450,9 +480,7 @@ const AnnotationViewer: React.FC<{
       viewerInstance.current,
       canvasRef,
       loadedROIs,
-      strokes,
-      currentStrokeRef.current,
-      polygons,
+      renderQueueMap[subProjectId] || [],
       currentPolygonRef.current,
       mousePosition,
     );
@@ -467,6 +495,7 @@ const AnnotationViewer: React.FC<{
         isInsideAnyROI,
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     viewerInstance,
     canvasRef,
@@ -476,6 +505,11 @@ const AnnotationViewer: React.FC<{
     cellPolygons,
     mousePosition,
   ]);
+
+  useEffect(() => {
+    redraw();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renderQueueMap, strokesMap, polygonsMap, subProjectId]);
 
   const syncAllCanvases = useCallback(() => {
     if (!viewerInstance.current) return;
@@ -496,6 +530,7 @@ const AnnotationViewer: React.FC<{
         );
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     viewerInstance,
     canvasRef,
@@ -619,16 +654,8 @@ const AnnotationViewer: React.FC<{
           ensureLabelForCurrentColor();
 
           if (!currentPolygonRef.current) {
-            const matchedROI = allROIs.find(
-              (roi) =>
-                viewportPoint.x >= roi.x &&
-                viewportPoint.x <= roi.x + roi.width &&
-                viewportPoint.y >= roi.y &&
-                viewportPoint.y <= roi.y + roi.height,
-            );
-            if (!matchedROI) return;
+            if (!isInsideAnyROI(viewportPoint)) return;
 
-            currentDrawingROIRef.current = matchedROI;
             currentPolygonRef.current = {
               points: [],
               closed: false,
@@ -650,25 +677,41 @@ const AnnotationViewer: React.FC<{
               firstPixel.y - mousePixel.y,
             );
             if (dist < 10) {
-              currentPolygonRef.current.points.push(first);
-              currentPolygonRef.current.closed = true;
-              polygons.push(currentPolygonRef.current);
+              const closedPolygon = {
+                ...currentPolygonRef.current!,
+                closed: true,
+              };
+
+              // 현재 상태 스냅샷 저장
+              pushRenderSnapshot();
+
+              const prevRenderQueue = renderQueueMap[subProjectId] || [];
+              const updatedRenderQueue = [
+                ...prevRenderQueue,
+                { type: 'polygon', polygon: closedPolygon } as RenderItem,
+              ];
+
+              setRenderQueueMap((prev) => ({
+                ...prev,
+                [subProjectId]: updatedRenderQueue,
+              }));
+
+              setPolygons([...polygons, closedPolygon]);
+              setRenderSnapshotRedoMap((prev) => ({
+                ...prev,
+                [subProjectId]: [],
+              }));
+
+              setRenderQueueVersion((v) => v + 1);
+              redraw();
+
+              // 상태 정리
               currentPolygonRef.current = null;
               currentDrawingROIRef.current = null;
               setMousePosition(null);
-              redraw();
+
               return;
             }
-          }
-          const polygonROI = currentDrawingROIRef.current;
-          if (
-            !polygonROI ||
-            viewportPoint.x < polygonROI.x ||
-            viewportPoint.x > polygonROI.x + polygonROI.width ||
-            viewportPoint.y < polygonROI.y ||
-            viewportPoint.y > polygonROI.y + polygonROI.height
-          ) {
-            return;
           }
 
           currentPolygonRef.current.points.push(viewportPoint);
@@ -694,16 +737,8 @@ const AnnotationViewer: React.FC<{
             !currentCellPolygonRef.current ||
             currentCellPolygonRef.current.closed
           ) {
-            const matchedROI = allROIs.find(
-              (roi) =>
-                viewportPoint.x >= roi.x &&
-                viewportPoint.x <= roi.x + roi.width &&
-                viewportPoint.y >= roi.y &&
-                viewportPoint.y <= roi.y + roi.height,
-            );
-            if (!matchedROI) return;
+            if (!isInsideAnyROI(viewportPoint)) return;
 
-            currentDrawingROIRef.current = matchedROI;
             currentCellPolygonRef.current = {
               points: [],
               closed: false,
@@ -742,16 +777,6 @@ const AnnotationViewer: React.FC<{
               currentDrawingROIRef.current = null;
               return;
             }
-          }
-          const cellPolygonROI = currentDrawingROIRef.current;
-          if (
-            !cellPolygonROI ||
-            viewportPoint.x < cellPolygonROI.x ||
-            viewportPoint.x > cellPolygonROI.x + cellPolygonROI.width ||
-            viewportPoint.y < cellPolygonROI.y ||
-            viewportPoint.y > cellPolygonROI.y + cellPolygonROI.height
-          ) {
-            return;
           }
 
           currentCellPolygonRef.current.points.push(viewportPoint);
@@ -827,8 +852,7 @@ const AnnotationViewer: React.FC<{
         y: viewportPoint.y,
       });
 
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvasRef.current.getContext('2d');
       if (!ctx) return;
       ctx.save();
       drawStroke(currentStrokeRef.current, viewerInstance.current, ctx);
@@ -967,42 +991,38 @@ const AnnotationViewer: React.FC<{
 
     // 드로잉 모드일 때
     if (isDrawingMode && currentStrokeRef.current) {
-      const isEraser = currentStrokeRef.current.isEraser;
-      const prevStrokes = deepCopyStrokes(strokes);
-      setUndoStack([...undoStack, prevStrokes]);
-      setRedoStack([]);
+      const newStroke = currentStrokeRef.current;
 
-      if (isEraser) {
-        const eraserStroke = currentStrokeRef.current;
+      // 현재 상태 스냅샷 저장
+      pushRenderSnapshot();
 
-        const pencilStrokes = strokes.filter((s) => !s.isEraser);
-        const oldEraserStrokes = strokes.filter((s) => s.isEraser);
+      const updatedRenderQueue = [
+        ...(renderQueueMap[subProjectId] || []),
+        { type: 'stroke', stroke: newStroke } as RenderItem,
+      ];
 
-        const updatedStrokes: Stroke[] = [];
+      setRenderQueueMap((prev) => ({
+        ...prev,
+        [subProjectId]: updatedRenderQueue,
+      }));
 
-        for (const pencilStroke of pencilStrokes) {
-          const segs = subtractStroke(
-            pencilStroke,
-            eraserStroke,
-            viewerInstance.current,
-            canvasRef.current,
-          );
-          updatedStrokes.push(...segs);
-        }
+      setStrokes([...strokes, newStroke]);
+      setRenderSnapshotRedoMap((prev) => ({
+        ...prev,
+        [subProjectId]: [],
+      }));
 
-        const newStrokes = [
-          ...updatedStrokes,
-          ...oldEraserStrokes,
-          eraserStroke,
-        ];
-
-        setStrokes(newStrokes);
-      } else {
-        setStrokes([...strokes, currentStrokeRef.current]);
-      }
+      setRenderQueueVersion((v) => v + 1);
+      redraw();
 
       currentStrokeRef.current = null;
-      redraw();
+
+      const ctx = canvasRef.current?.getContext('2d');
+      if (ctx) {
+        ctx.save();
+        drawStroke(newStroke, viewerInstance.current, ctx);
+        ctx.restore();
+      }
     }
   };
 
@@ -1033,8 +1053,8 @@ const AnnotationViewer: React.FC<{
     }
 
     if (!isDrawingMode) {
-      setUndoStack([]);
-      setRedoStack([]);
+      setRenderQueueUndoMap((prev) => ({ ...prev, [subProjectId]: [] }));
+      setRenderQueueRedoMap((prev) => ({ ...prev, [subProjectId]: [] }));
       setIsDrawingMode(true);
       setIsSelectingROI(false);
       setIsEditingROI(false);
@@ -1092,8 +1112,17 @@ const AnnotationViewer: React.FC<{
       const updatedROIs = [...userDefinedROIs];
       updatedROIs.splice(adjustedIndex, 1);
 
-      setUndoStack([...undoStack, deepCopyStrokes(strokes)]);
-      setRedoStack([]);
+      setRenderQueueUndoMap((prev) => ({
+        ...prev,
+        [subProjectId]: [
+          ...(prev[subProjectId] || []),
+          [...(renderQueueMap[subProjectId] || [])],
+        ],
+      }));
+      setRenderQueueRedoMap((prev) => ({
+        ...prev,
+        [subProjectId]: [],
+      }));
       setUserDefinedROIs(updatedROIs);
       setStrokes(filteredStrokes);
       setPolygons(filteredPolygons);
@@ -1145,39 +1174,80 @@ const AnnotationViewer: React.FC<{
   const handleReset = () => {
     if (!subProjectId) return;
 
-    setUndoStack([...undoStack, deepCopyStrokes(strokes)]);
-    setRedoStack([]);
+    // 현재 상태 스냅샷 저장
+    pushRenderSnapshot();
+
+    // 상태 초기화
+    setRenderQueueMap((prev) => ({
+      ...prev,
+      [subProjectId]: [],
+    }));
+
     setStrokes([]);
-    currentStrokeRef.current = null;
     setPolygons([]);
-    currentPolygonRef.current = null;
     setCellPolygons([]);
+    setRenderSnapshotRedoMap((prev) => ({
+      ...prev,
+      [subProjectId]: [],
+    }));
+
+    currentStrokeRef.current = null;
+    currentPolygonRef.current = null;
     currentCellPolygonRef.current = null;
     setROI(null);
+
+    setRenderQueueVersion((v) => v + 1);
     redraw();
   };
 
   const handleUndo = () => {
-    if (!subProjectId) return;
+    const undoStack = renderSnapshotUndoMap[subProjectId] || [];
     if (undoStack.length === 0) return;
 
-    const lastState = undoStack[undoStack.length - 1];
-    setRedoStack([...redoStack, deepCopyStrokes(strokes)]);
-    setStrokes(deepCopyStrokes(lastState));
-    setUndoStack(undoStack.slice(0, undoStack.length - 1));
-    redraw();
+    const lastSnapshot = undoStack[undoStack.length - 1];
+    setRenderSnapshotRedoMap((prev) => ({
+      ...prev,
+      [subProjectId]: [
+        ...(renderSnapshotRedoMap[subProjectId] || []),
+        {
+          renderQueue: deepCopyRenderQueue(renderQueueMap[subProjectId] || []),
+          strokes: deepCopyStrokes(strokesMap[subProjectId] || []),
+          polygons: deepCopyPolygons(polygonsMap[subProjectId] || []),
+        },
+      ],
+    }));
+
+    setRenderSnapshotUndoMap((prev) => ({
+      ...prev,
+      [subProjectId]: undoStack.slice(0, undoStack.length - 1),
+    }));
+
+    restoreRenderSnapshot(lastSnapshot);
   };
 
   const handleRedo = () => {
-    if (!subProjectId || isRedoingRef.current || redoStack.length === 0) return;
+    const redoStack = renderSnapshotRedoMap[subProjectId] || [];
+    if (redoStack.length === 0) return;
 
-    isRedoingRef.current = true;
-    const nextState = redoStack[redoStack.length - 1];
-    setUndoStack([...undoStack, deepCopyStrokes(strokes)]);
-    setStrokes(deepCopyStrokes(nextState));
-    setRedoStack(redoStack.slice(0, redoStack.length - 1));
-    redraw();
-    isRedoingRef.current = false;
+    const nextSnapshot = redoStack[redoStack.length - 1];
+    setRenderSnapshotUndoMap((prev) => ({
+      ...prev,
+      [subProjectId]: [
+        ...(renderSnapshotUndoMap[subProjectId] || []),
+        {
+          renderQueue: deepCopyRenderQueue(renderQueueMap[subProjectId] || []),
+          strokes: deepCopyStrokes(strokesMap[subProjectId] || []),
+          polygons: deepCopyPolygons(polygonsMap[subProjectId] || []),
+        },
+      ],
+    }));
+
+    setRenderSnapshotRedoMap((prev) => ({
+      ...prev,
+      [subProjectId]: redoStack.slice(0, redoStack.length - 1),
+    }));
+
+    restoreRenderSnapshot(nextSnapshot);
   };
 
   // ESC로 polygon 모드 취소 + ROI 리사이징 취소

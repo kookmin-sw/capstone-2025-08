@@ -1,6 +1,6 @@
 import OpenSeadragon from 'openseadragon';
 import React from 'react';
-import { Stroke, LoadedROI, Polygon, Point } from '@/types/annotation';
+import { LoadedROI, Polygon, Point, RenderItem } from '@/types/annotation';
 import { drawStroke } from '@/utils/canvas-drawing-utils';
 import { drawCellPolygons, drawPolygon } from '@/utils/canvas-ploygon-utils';
 
@@ -39,9 +39,7 @@ export const redrawCanvas = (
   viewerInstance: any,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
   loadedROIs: LoadedROI[],
-  strokes: Stroke[],
-  currentStroke: Stroke | null,
-  polygons: Polygon[],
+  renderQueue: RenderItem[],
   currentPolygon: Polygon | null,
   mousePosition?: Point | null,
 ) => {
@@ -86,41 +84,29 @@ export const redrawCanvas = (
     }),
   );
 
-  /* ========= 2. 지우개 stroke로 PNG에 구멍 내기 ========= */
-  [...strokes, ...(currentStroke ? [currentStroke] : [])]
-    .filter((s) => s.isEraser)
-    .forEach((stroke) => {
-      ctx.save();
-      ctx.globalCompositeOperation = 'destination-out';
-      drawStroke(stroke, viewerInstance, ctx);
-      ctx.restore();
-    });
-
-  /* ========= 3. 일반 펜 stroke ========= */
-  [...strokes, ...(currentStroke ? [currentStroke] : [])]
-    .filter((s) => !s.isEraser)
-    .forEach((stroke) => {
-      ctx.save();
+  /* ========= 2. 드로잉, 폴리곤, 지우개를 하나의 큐로 렌더링 ========= */
+  renderQueue.forEach((item) => {
+    ctx.save();
+    if (item.type === 'polygon') {
       ctx.globalCompositeOperation = 'source-over';
-      drawStroke(stroke, viewerInstance, ctx);
-      ctx.restore();
-    });
-
-  /* ========= 4. 완성된 폴리곤들 먼저 ========= */
-  polygons.forEach((polygon) => {
-    if (polygon.closed) {
       drawPolygon(
         viewerInstance,
         ctx,
-        polygon.points,
+        item.polygon.points,
         null,
-        polygon.color,
+        item.polygon.color,
         true,
       );
+    } else {
+      ctx.globalCompositeOperation = item.stroke.isEraser
+        ? 'destination-out'
+        : 'source-over';
+      drawStroke(item.stroke, viewerInstance, ctx);
     }
+    ctx.restore();
   });
 
-  /* ========= 5. 지금 그리는 중인 일반 폴리곤 ========= */
+  /* ========= 3. 지금 그리는 중인 일반 폴리곤 ========= */
   if (currentPolygon) {
     drawPolygon(
       viewerInstance,
