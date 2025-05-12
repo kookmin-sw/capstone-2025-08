@@ -41,7 +41,7 @@ public class SubProjectService {
         List<AnnotationHistory> histories = annotationHistoryRepository
                 .findAllBySubProjectId(subProjectId)
                 .stream()
-                .sorted(Comparator.comparing(AnnotationHistory::getStartedAt)) // startedAt 기준 정렬
+                .sorted(Comparator.comparing(AnnotationHistory::getCreatedAt)) // startedAt 기준 정렬
                 .toList();
 
         List<AnnotationHistorySummaryDto> historyDtos = IntStream.range(0, histories.size())
@@ -50,7 +50,7 @@ public class SubProjectService {
                     return new AnnotationHistorySummaryDto(
                             h.getId(),
                             i+1,
-                            h.getStartedAt(),
+                            h.getCreatedAt(),
                             h.getCompletedAt()// 1번부터 시작
                     );
                 })

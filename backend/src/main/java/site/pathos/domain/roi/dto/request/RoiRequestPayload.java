@@ -17,6 +17,6 @@ public record RoiRequestPayload(
         List<String> tissue_path,
 
         @Schema(description = "세포 좌표 리스트")
-        List<CellDetail> cell
+        List<CellDetail> cells
 
 ) {}

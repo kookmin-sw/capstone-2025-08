@@ -31,6 +31,6 @@ public class CellAnnotation {
     @Column(name = "color", nullable = false)
     private String color;
 
-    @Column(name = "label", nullable = false)
-    private String label;
+    @Column(name = "class_index", nullable = false)
+    private int classIndex;
 }

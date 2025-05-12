@@ -11,7 +11,10 @@ import site.pathos.domain.project.entity.Project;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "project_model")
+@Table(
+        name = "project_model",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"project_id", "model_id"})
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProjectModel {
@@ -23,7 +26,7 @@ public class ProjectModel {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "model_id", nullable = false)
     private Model model;
 
@@ -34,7 +37,8 @@ public class ProjectModel {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Builder ProjectModel(Project project, Model model, boolean isInitial){
+    @Builder
+    public ProjectModel(Project project, Model model, boolean isInitial){
         this.project = project;
         this.model = model;
         this.isInitial = isInitial;

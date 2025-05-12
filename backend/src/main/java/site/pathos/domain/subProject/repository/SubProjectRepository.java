@@ -29,4 +29,6 @@ public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
     List<SubProject> findSubProjectsByProject(Project project);
 
     boolean existsByProjectIdAndIsUploadCompleteFalse(Long projectId);
+
+    List<SubProject> findAllByProjectId(Long projectId);
 }
