@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import site.pathos.domain.inferenceHistory.entity.TrainingHistory;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.subProject.entity.SubProject;
 
@@ -26,11 +27,12 @@ public class AnnotationHistory {
     private SubProject subProject;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "training_history_id")
+    private TrainingHistory trainingHistory;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "model_id")
     private Model model;
-
-    @Column(name = "model_name", nullable = false)
-    private String modelName;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -44,16 +46,8 @@ public class AnnotationHistory {
     private LocalDateTime completedAt;
 
     @Builder
-    public AnnotationHistory(SubProject subProject, Model model, String modelName) {
+    public AnnotationHistory(SubProject subProject, Model model) {
         this.subProject = subProject;
         this.model = model;
-        this.modelName = modelName;
-    }
-
-    public void updateModelName(String newName) {
-        if (newName == null || newName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Model name must not be empty");
-        }
-        this.modelName = newName;
     }
 }

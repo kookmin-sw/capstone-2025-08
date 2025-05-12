@@ -112,7 +112,6 @@ public class ProjectService {
             AnnotationHistory annotationHistory = AnnotationHistory.builder()
                     .subProject(subProject)
                     .model(model)
-                    .modelName(model.getName())
                     .build();
             annotationHistoryRepository.save(annotationHistory);
         }
