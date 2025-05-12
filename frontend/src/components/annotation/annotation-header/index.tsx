@@ -14,14 +14,30 @@ import {
 import { formatDateTime } from '@/lib/utils';
 import { exportROIAsPNG } from '@/utils/canvas-image-utils';
 import { useAnnotationSharedStore } from '@/stores/annotation-shared';
+import { useState, useEffect } from 'react';
+import AnnotationModelExportModal from '@/components/annotation/annotation-model-export-modal';
 
 export default function AnnotationHeader() {
   const router = useRouter();
-  const { id } = useParams(); // 현재 프로젝트 ID 가져오기
+  const { id } = useParams();
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  if (!id) return null;
-
+  // project 찾기 (항상 실행)
   const project = dummyProjects.find((proj) => proj.id === Number(id));
+
+  // modelName 상태 초기화
+  const [selectedModelName, setSelectedModelName] = useState('none');
+
+  useEffect(() => {
+    if (project?.modelNameList?.[0]) {
+      setSelectedModelName(project.modelNameList[0]);
+    }
+  }, [project]);
+
+  // project가 없으면 빈 UI 반환 (하지만 Hook 이후 실행됨)
+  if (!project) {
+    return <div className="p-4">Project not found</div>;
+  }
 
   // 가장 최근 버전 기록 찾기 (startedAt 기준 내림차순 정렬 후 첫 번째)
   const latestHistory = project?.history
@@ -31,18 +47,53 @@ export default function AnnotationHeader() {
         new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
     )[0];
 
-  const handleSave = () => {
-    const { viewer, canvas, loadedROIs, userDefinedROIs } =
-      useAnnotationSharedStore.getState();
+  const modelType = project?.modelType?.toLowerCase() as
+    | 'cell'
+    | 'tissue'
+    | 'multi'
+    | undefined;
 
-    console.log({ viewer, canvas, loadedROIs, userDefinedROIs });
+  const handleSave = () => {
+    const {
+      viewer,
+      canvas,
+      loadedROIs,
+      userDefinedROIs,
+      cellPolygons,
+      labels,
+    } = useAnnotationSharedStore.getState();
+
+    console.log('Viewer:', viewer);
+    console.log('Canvas:', canvas);
+    console.log('Loaded ROIs:', loadedROIs);
+    console.log('User Defined ROIs:', userDefinedROIs);
+    console.log('Cell Polygons:', cellPolygons);
+    console.log('Labels:', labels);
 
     if (!viewer || !canvas || !loadedROIs || !userDefinedROIs) {
       alert('내보낼 수 있는 ROI가 없습니다.');
       return;
     }
 
-    exportROIAsPNG(viewer, canvas, loadedROIs, userDefinedROIs);
+    if (modelType === 'cell') {
+      const exportData = cellPolygons.map((poly, index) => ({
+        index,
+        color: poly.color,
+        points: poly.points,
+      }));
+      console.log('Exporting Cell Polygon Data:', exportData);
+      // 필요 시 여기서 JSON.stringify(exportData) 등으로 처리
+    } else if (modelType === 'tissue') {
+      exportROIAsPNG(viewer, canvas, loadedROIs, userDefinedROIs);
+    } else if (modelType === 'multi') {
+      exportROIAsPNG(viewer, canvas, loadedROIs, userDefinedROIs);
+      const exportData = cellPolygons.map((poly, index) => ({
+        index,
+        color: poly.color,
+        points: poly.points,
+      }));
+      console.log('Exporting Cell Polygon Data:', exportData);
+    }
   };
 
   return (
@@ -120,13 +171,14 @@ export default function AnnotationHeader() {
         </Select>
         {/* 모델 이름 */}
         <Select
-          value={project?.modelNameList[0] ?? ''}
+          value={selectedModelName}
           onValueChange={(value) => {
             console.log('선택된 모델 이름:', value);
+            setSelectedModelName(value);
           }}
         >
           <SelectTrigger className="w-36">
-            <SelectValue placeholder="모델 이름 선택" />
+            <SelectValue placeholder="Select Model Name" />
           </SelectTrigger>
           <SelectContent>
             {project?.modelNameList?.map((name: string) => (
@@ -134,15 +186,29 @@ export default function AnnotationHeader() {
                 {name}
               </SelectItem>
             ))}
-            <SelectItem value="none">선택없음</SelectItem>
+
+            {/* 항상 고정으로 표시 */}
+            <SelectItem value="none">Not Selected</SelectItem>
           </SelectContent>
         </Select>
+
         {/* 버튼 */}
         <Button variant="secondary">Train</Button>
         <Button variant="secondary">Run</Button>
         <Button variant="secondary" onClick={handleSave}>
           Save
         </Button>
+        <Button variant="secondary" onClick={() => setIsExportModalOpen(true)}>
+          Export
+        </Button>
+        <AnnotationModelExportModal
+          open={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          onSave={(modelName) => {
+            console.log('Export with model name:', modelName);
+            setIsExportModalOpen(false);
+          }}
+        />
       </div>
     </div>
   );
