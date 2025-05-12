@@ -2,7 +2,11 @@ import OpenSeadragon from 'openseadragon';
 import React from 'react';
 import { LoadedROI, Polygon, Point, RenderItem } from '@/types/annotation';
 import { drawStroke } from '@/utils/canvas-drawing-utils';
-import { drawCellPolygons, drawPolygon } from '@/utils/canvas-ploygon-utils';
+import {
+  drawCellInferencePoints,
+  drawCellPolygons,
+  drawPolygon,
+} from '@/utils/canvas-ploygon-utils';
 
 /**
  * 뷰어와 캔버스 동기화
@@ -69,7 +73,9 @@ export const redrawCanvas = (
   }
 
   /* ========= 1. 모든 ROI의 PNG 타일만 표시 ========= */
-  loadedROIs.forEach(({ tiles }) =>
+  loadedROIs.forEach(({ tiles }) => {
+    if (!tiles || tiles.length === 0) return;
+
     tiles.forEach(({ img, x, y, w, h }) => {
       const tlImg = new OpenSeadragon.Point(x, y);
       const brImg = new OpenSeadragon.Point(x + w, y + h);
@@ -81,8 +87,8 @@ export const redrawCanvas = (
       ctx.save();
       ctx.drawImage(img, p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
       ctx.restore();
-    }),
-  );
+    });
+  });
 
   /* ========= 2. 드로잉, 폴리곤, 지우개를 하나의 큐로 렌더링 ========= */
   renderQueue.forEach((item) => {
@@ -129,6 +135,7 @@ export const redrawCellCanvas = (
   current: Polygon | null,
   mouse: Point | null,
   isInsideAnyROI: (point: Point) => boolean,
+  loadedROIs: LoadedROI[],
 ) => {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -145,4 +152,6 @@ export const redrawCellCanvas = (
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   drawCellPolygons(viewer, ctx, cellPolygons, current, mouse, isInsideAnyROI);
+
+  drawCellInferencePoints(viewer, ctx, loadedROIs);
 };
