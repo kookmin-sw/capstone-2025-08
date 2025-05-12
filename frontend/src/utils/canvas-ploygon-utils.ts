@@ -1,6 +1,9 @@
 import OpenSeadragon from 'openseadragon';
-import { Point, Polygon } from '@/types/annotation';
+import { LoadedROI, Point, Polygon } from '@/types/annotation';
 
+/**
+ * 폴리곤 그리기
+ */
 export const drawPolygon = (
   viewerInstance: any,
   ctx: CanvasRenderingContext2D,
@@ -43,8 +46,27 @@ export const drawPolygon = (
 
   // 내부 색 채우기 (닫혀 있고 dashed 아님)
   if (isClosed && !dashed && points.length > 2) {
+    ctx.save();
+
+    // 폴리곤 경계 설정
+    ctx.beginPath();
+    ctx.moveTo(pixelPoints[0].x, pixelPoints[0].y);
+    for (let i = 1; i < pixelPoints.length; i++) {
+      ctx.lineTo(pixelPoints[i].x, pixelPoints[i].y);
+    }
+    ctx.closePath();
+
+    // 폴리곤 경계 내에서만 작업
+    ctx.clip();
+
+    // 알파 무시하고 덮어쓰기
+    ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = color;
+
+    // fillRect 대신 다시 경계를 채움
     ctx.fill();
+
+    ctx.restore();
   }
 
   // 모든 점 그리기 (dashed 라면 항상, 아니면 isClosed가 아닐 때만)
@@ -80,6 +102,9 @@ export const drawPolygon = (
   ctx.restore();
 };
 
+/**
+ * 셀 폴리곤 그리기
+ */
 export const drawCellPolygons = (
   viewer: OpenSeadragon.Viewer,
   ctx: CanvasRenderingContext2D,
@@ -111,4 +136,42 @@ export const drawCellPolygons = (
   });
 
   ctx.restore();
+};
+
+export const drawCellInferencePoints = (
+  viewer: OpenSeadragon.Viewer,
+  ctx: CanvasRenderingContext2D,
+  loadedROIs: LoadedROI[],
+) => {
+  loadedROIs.forEach((roi) => {
+    if (roi.points && roi.points.length > 0) {
+      // 기존 유틸 함수 재사용 (닫힌 폴리곤 + 점선 스타일 적용)
+      drawPolygon(
+        viewer,
+        ctx,
+        roi.points.map((pt) =>
+          viewer.viewport.imageToViewportCoordinates(
+            new OpenSeadragon.Point(pt.x, pt.y),
+          ),
+        ),
+        null,
+        roi.color || '#FF0000',
+        true,
+        true,
+      );
+
+      // 각 포인트에 원형 점 추가
+      roi.points.forEach((pt) => {
+        const viewportPt = viewer.viewport.imageToViewportCoordinates(
+          new OpenSeadragon.Point(pt.x, pt.y),
+        );
+        const pixelPt = viewer.viewport.pixelFromPoint(viewportPt);
+
+        ctx.beginPath();
+        ctx.arc(pixelPt.x, pixelPt.y, 3, 0, 2 * Math.PI);
+        ctx.fillStyle = roi.color || '#FF0000';
+        ctx.fill();
+      });
+    }
+  });
 };
