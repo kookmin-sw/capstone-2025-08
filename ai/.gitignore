@@ -34,3 +34,9 @@ archive.zip
 .DS_Store
 
 model/.git
+
+# data
+datasets/data
+
+# model
+model
