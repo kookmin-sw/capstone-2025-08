@@ -15,19 +15,23 @@
 
 import * as runtime from '../runtime';
 import type {
+  TrainingRequestDto,
   TrainingResultRequestDto,
 } from '../models/index';
 import {
+    TrainingRequestDtoFromJSON,
+    TrainingRequestDtoToJSON,
     TrainingResultRequestDtoFromJSON,
     TrainingResultRequestDtoToJSON,
 } from '../models/index';
 
 export interface RequestTrainingRequest {
-    annotationHistoryId: number;
+    projectId: number;
+    trainingRequestDto: TrainingRequestDto;
 }
 
 export interface ResponseTrainingRequest {
-    annotationHistoryId: number;
+    projectId: number;
     trainingResultRequestDto: TrainingResultRequestDto;
 }
 
@@ -41,10 +45,17 @@ export class ModelServerAPIApi extends runtime.BaseAPI {
      * 모델 학습 요청
      */
     async requestTrainingRaw(requestParameters: RequestTrainingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['annotationHistoryId'] == null) {
+        if (requestParameters['projectId'] == null) {
             throw new runtime.RequiredError(
-                'annotationHistoryId',
-                'Required parameter "annotationHistoryId" was null or undefined when calling requestTraining().'
+                'projectId',
+                'Required parameter "projectId" was null or undefined when calling requestTraining().'
+            );
+        }
+
+        if (requestParameters['trainingRequestDto'] == null) {
+            throw new runtime.RequiredError(
+                'trainingRequestDto',
+                'Required parameter "trainingRequestDto" was null or undefined when calling requestTraining().'
             );
         }
 
@@ -52,11 +63,14 @@ export class ModelServerAPIApi extends runtime.BaseAPI {
 
         const headerParameters: runtime.HTTPHeaders = {};
 
+        headerParameters['Content-Type'] = 'application/json';
+
         const response = await this.request({
-            path: `/api/model-server/training/{annotationHistoryId}`.replace(`{${"annotationHistoryId"}}`, encodeURIComponent(String(requestParameters['annotationHistoryId']))),
+            path: `/api/model-server/training/{projectId}`.replace(`{${"projectId"}}`, encodeURIComponent(String(requestParameters['projectId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
+            body: TrainingRequestDtoToJSON(requestParameters['trainingRequestDto']),
         }, initOverrides);
 
         return new runtime.VoidApiResponse(response);
@@ -75,10 +89,10 @@ export class ModelServerAPIApi extends runtime.BaseAPI {
      * 모델 학습 결과 수신
      */
     async responseTrainingRaw(requestParameters: ResponseTrainingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['annotationHistoryId'] == null) {
+        if (requestParameters['projectId'] == null) {
             throw new runtime.RequiredError(
-                'annotationHistoryId',
-                'Required parameter "annotationHistoryId" was null or undefined when calling responseTraining().'
+                'projectId',
+                'Required parameter "projectId" was null or undefined when calling responseTraining().'
             );
         }
 
@@ -96,7 +110,7 @@ export class ModelServerAPIApi extends runtime.BaseAPI {
         headerParameters['Content-Type'] = 'application/json';
 
         const response = await this.request({
-            path: `/api/model-server/annotation-histories/{annotationHistoryId}/training/result`.replace(`{${"annotationHistoryId"}}`, encodeURIComponent(String(requestParameters['annotationHistoryId']))),
+            path: `/api/model-server/porjects/{projectId}/training/result`.replace(`{${"projectId"}}`, encodeURIComponent(String(requestParameters['projectId']))),
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,

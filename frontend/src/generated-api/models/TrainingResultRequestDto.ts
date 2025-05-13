@@ -13,13 +13,27 @@
  */
 
 import { mapValues } from '../runtime';
-import type { RoiRequestPayload } from './RoiRequestPayload';
+import type { LabelInfo } from './LabelInfo';
 import {
-    RoiRequestPayloadFromJSON,
-    RoiRequestPayloadFromJSONTyped,
-    RoiRequestPayloadToJSON,
-    RoiRequestPayloadToJSONTyped,
-} from './RoiRequestPayload';
+    LabelInfoFromJSON,
+    LabelInfoFromJSONTyped,
+    LabelInfoToJSON,
+    LabelInfoToJSONTyped,
+} from './LabelInfo';
+import type { Performance } from './Performance';
+import {
+    PerformanceFromJSON,
+    PerformanceFromJSONTyped,
+    PerformanceToJSON,
+    PerformanceToJSONTyped,
+} from './Performance';
+import type { SubProjectInfo } from './SubProjectInfo';
+import {
+    SubProjectInfoFromJSON,
+    SubProjectInfoFromJSONTyped,
+    SubProjectInfoToJSON,
+    SubProjectInfoToJSONTyped,
+} from './SubProjectInfo';
 
 /**
  * 모델 학습 결과 데이터
@@ -28,25 +42,83 @@ import {
  */
 export interface TrainingResultRequestDto {
     /**
-     * 학습된 모델이 저장된 경로
+     * 학습 기록 ID
+     * @type {number}
+     * @memberof TrainingResultRequestDto
+     */
+    trainingHistoryId?: number;
+    /**
+     * 추론 기록 ID
+     * @type {number}
+     * @memberof TrainingResultRequestDto
+     */
+    inferenceHistoryId?: number;
+    /**
+     * 요청 타입
      * @type {string}
      * @memberof TrainingResultRequestDto
      */
-    modelPath: string;
+    type?: string;
     /**
-     * 학습 결과 ROI 정보 리스트
-     * @type {Array<RoiRequestPayload>}
+     * 모델 종류
+     * @type {string}
      * @memberof TrainingResultRequestDto
      */
-    roi: Array<RoiRequestPayload>;
+    modelType?: TrainingResultRequestDtoModelTypeEnum;
+    /**
+     * 모델 이름
+     * @type {string}
+     * @memberof TrainingResultRequestDto
+     */
+    modelName?: string;
+    /**
+     * 생성된 티슈 모델 경로
+     * @type {string}
+     * @memberof TrainingResultRequestDto
+     */
+    tissueModelPath?: string;
+    /**
+     * 생성된 셀 모델 경로
+     * @type {string}
+     * @memberof TrainingResultRequestDto
+     */
+    cellModelPath?: string;
+    /**
+     * 모델 라벨 정보 목록
+     * @type {Array<LabelInfo>}
+     * @memberof TrainingResultRequestDto
+     */
+    labels?: Array<LabelInfo>;
+    /**
+     * SubProject 정보 목록
+     * @type {Array<SubProjectInfo>}
+     * @memberof TrainingResultRequestDto
+     */
+    subProjects?: Array<SubProjectInfo>;
+    /**
+     * 
+     * @type {Performance}
+     * @memberof TrainingResultRequestDto
+     */
+    performance?: Performance;
 }
+
+
+/**
+ * @export
+ */
+export const TrainingResultRequestDtoModelTypeEnum = {
+    Tissue: 'TISSUE',
+    Cell: 'CELL',
+    Multi: 'MULTI'
+} as const;
+export type TrainingResultRequestDtoModelTypeEnum = typeof TrainingResultRequestDtoModelTypeEnum[keyof typeof TrainingResultRequestDtoModelTypeEnum];
+
 
 /**
  * Check if a given object implements the TrainingResultRequestDto interface.
  */
 export function instanceOfTrainingResultRequestDto(value: object): value is TrainingResultRequestDto {
-    if (!('modelPath' in value) || value['modelPath'] === undefined) return false;
-    if (!('roi' in value) || value['roi'] === undefined) return false;
     return true;
 }
 
@@ -60,8 +132,16 @@ export function TrainingResultRequestDtoFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'modelPath': json['model_path'],
-        'roi': ((json['roi'] as Array<any>).map(RoiRequestPayloadFromJSON)),
+        'trainingHistoryId': json['trainingHistoryId'] == null ? undefined : json['trainingHistoryId'],
+        'inferenceHistoryId': json['inferenceHistoryId'] == null ? undefined : json['inferenceHistoryId'],
+        'type': json['type'] == null ? undefined : json['type'],
+        'modelType': json['modelType'] == null ? undefined : json['modelType'],
+        'modelName': json['modelName'] == null ? undefined : json['modelName'],
+        'tissueModelPath': json['tissueModelPath'] == null ? undefined : json['tissueModelPath'],
+        'cellModelPath': json['cellModelPath'] == null ? undefined : json['cellModelPath'],
+        'labels': json['labels'] == null ? undefined : ((json['labels'] as Array<any>).map(LabelInfoFromJSON)),
+        'subProjects': json['subProjects'] == null ? undefined : ((json['subProjects'] as Array<any>).map(SubProjectInfoFromJSON)),
+        'performance': json['performance'] == null ? undefined : PerformanceFromJSON(json['performance']),
     };
 }
 
@@ -76,8 +156,16 @@ export function TrainingResultRequestDtoToJSONTyped(value?: TrainingResultReques
 
     return {
         
-        'model_path': value['modelPath'],
-        'roi': ((value['roi'] as Array<any>).map(RoiRequestPayloadToJSON)),
+        'trainingHistoryId': value['trainingHistoryId'],
+        'inferenceHistoryId': value['inferenceHistoryId'],
+        'type': value['type'],
+        'modelType': value['modelType'],
+        'modelName': value['modelName'],
+        'tissueModelPath': value['tissueModelPath'],
+        'cellModelPath': value['cellModelPath'],
+        'labels': value['labels'] == null ? undefined : ((value['labels'] as Array<any>).map(LabelInfoToJSON)),
+        'subProjects': value['subProjects'] == null ? undefined : ((value['subProjects'] as Array<any>).map(SubProjectInfoToJSON)),
+        'performance': PerformanceToJSON(value['performance']),
     };
 }
 

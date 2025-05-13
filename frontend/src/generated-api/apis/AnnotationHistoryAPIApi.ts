@@ -26,11 +26,6 @@ export interface GetAnnotationHistoryRequest {
     annotationHistoryId: number;
 }
 
-export interface UpdateModelNameRequest {
-    annotationHistoryId: number;
-    name: string;
-}
-
 /**
  * 
  */
@@ -69,51 +64,6 @@ export class AnnotationHistoryAPIApi extends runtime.BaseAPI {
     async getAnnotationHistory(requestParameters: GetAnnotationHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AnnotationHistoryResponseDto> {
         const response = await this.getAnnotationHistoryRaw(requestParameters, initOverrides);
         return await response.value();
-    }
-
-    /**
-     * Annotation History에 연결된 모델의 이름을 수정합니다.
-     * 모델 이름 수정
-     */
-    async updateModelNameRaw(requestParameters: UpdateModelNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters['annotationHistoryId'] == null) {
-            throw new runtime.RequiredError(
-                'annotationHistoryId',
-                'Required parameter "annotationHistoryId" was null or undefined when calling updateModelName().'
-            );
-        }
-
-        if (requestParameters['name'] == null) {
-            throw new runtime.RequiredError(
-                'name',
-                'Required parameter "name" was null or undefined when calling updateModelName().'
-            );
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters['name'] != null) {
-            queryParameters['name'] = requestParameters['name'];
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        const response = await this.request({
-            path: `/api/annotation-histories/{annotationHistoryId}/model-name`.replace(`{${"annotationHistoryId"}}`, encodeURIComponent(String(requestParameters['annotationHistoryId']))),
-            method: 'PATCH',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * Annotation History에 연결된 모델의 이름을 수정합니다.
-     * 모델 이름 수정
-     */
-    async updateModelName(requestParameters: UpdateModelNameRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.updateModelNameRaw(requestParameters, initOverrides);
     }
 
 }

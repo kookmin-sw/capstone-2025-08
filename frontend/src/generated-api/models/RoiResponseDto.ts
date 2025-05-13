@@ -50,7 +50,7 @@ export interface RoiResponseDto {
      */
     height?: number;
     /**
-     * ROI의 결함 비율 (0.0 ~ 1.0)
+     * ROI의 결함 백분율 19
      * @type {number}
      * @memberof RoiResponseDto
      */

@@ -32,6 +32,12 @@ export interface GetProjectsResponseDetailDto {
      */
     title?: string;
     /**
+     * 프로젝트 설명
+     * @type {string}
+     * @memberof GetProjectsResponseDetailDto
+     */
+    description?: string;
+    /**
      * 프로젝트 생성일
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
@@ -94,6 +100,7 @@ export function GetProjectsResponseDetailDtoFromJSONTyped(json: any, ignoreDiscr
         
         'projectId': json['projectId'] == null ? undefined : json['projectId'],
         'title': json['title'] == null ? undefined : json['title'],
+        'description': json['description'] == null ? undefined : json['description'],
         'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
         'updatedAt': json['updatedAt'] == null ? undefined : json['updatedAt'],
         'modelType': json['modelType'] == null ? undefined : json['modelType'],
@@ -115,6 +122,7 @@ export function GetProjectsResponseDetailDtoToJSONTyped(value?: GetProjectsRespo
         
         'projectId': value['projectId'],
         'title': value['title'],
+        'description': value['description'],
         'createdAt': value['createdAt'],
         'updatedAt': value['updatedAt'],
         'modelType': value['modelType'],

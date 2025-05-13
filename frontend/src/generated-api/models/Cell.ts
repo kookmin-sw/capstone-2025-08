@@ -22,59 +22,52 @@ import {
 } from './PolygonDto';
 
 /**
- * 세포 어노테이션 정보
+ * 셀 정보
  * @export
- * @interface CellDetail
+ * @interface Cell
  */
-export interface CellDetail {
+export interface Cell {
     /**
-     * 세포 클래스 인덱스
+     * 클래스 인덱스
      * @type {number}
-     * @memberof CellDetail
+     * @memberof Cell
      */
     classIndex?: number;
     /**
-     * 세포 색상 (Hex)
-     * @type {string}
-     * @memberof CellDetail
-     */
-    color?: string;
-    /**
      * 
      * @type {PolygonDto}
-     * @memberof CellDetail
+     * @memberof Cell
      */
     polygon?: PolygonDto;
 }
 
 /**
- * Check if a given object implements the CellDetail interface.
+ * Check if a given object implements the Cell interface.
  */
-export function instanceOfCellDetail(value: object): value is CellDetail {
+export function instanceOfCell(value: object): value is Cell {
     return true;
 }
 
-export function CellDetailFromJSON(json: any): CellDetail {
-    return CellDetailFromJSONTyped(json, false);
+export function CellFromJSON(json: any): Cell {
+    return CellFromJSONTyped(json, false);
 }
 
-export function CellDetailFromJSONTyped(json: any, ignoreDiscriminator: boolean): CellDetail {
+export function CellFromJSONTyped(json: any, ignoreDiscriminator: boolean): Cell {
     if (json == null) {
         return json;
     }
     return {
         
         'classIndex': json['classIndex'] == null ? undefined : json['classIndex'],
-        'color': json['color'] == null ? undefined : json['color'],
         'polygon': json['polygon'] == null ? undefined : PolygonDtoFromJSON(json['polygon']),
     };
 }
 
-export function CellDetailToJSON(json: any): CellDetail {
-    return CellDetailToJSONTyped(json, false);
+export function CellToJSON(json: any): Cell {
+    return CellToJSONTyped(json, false);
 }
 
-export function CellDetailToJSONTyped(value?: CellDetail | null, ignoreDiscriminator: boolean = false): any {
+export function CellToJSONTyped(value?: Cell | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -82,7 +75,6 @@ export function CellDetailToJSONTyped(value?: CellDetail | null, ignoreDiscrimin
     return {
         
         'classIndex': value['classIndex'],
-        'color': value['color'],
         'polygon': PolygonDtoToJSON(value['polygon']),
     };
 }
