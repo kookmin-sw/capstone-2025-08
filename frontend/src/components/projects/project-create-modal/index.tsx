@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label';
 interface ProjectCreateModalProps {
   open: boolean;
   onClose: () => void;
-  onNext: () => void;
+  onNext: (info: { title: string; description: string }) => void;
 }
 
 const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
@@ -30,6 +30,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
   onClose,
   onNext,
 }) => {
+  // TODO: 모델 목록 연결
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [modelType, setModelType] = useState('Cell');
@@ -88,7 +89,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                 <SelectContent>
                   <SelectItem value="resnet50">ResNet-50</SelectItem>
                   <SelectItem value="unet">UNet</SelectItem>
-                  <SelectItem value="none">선택없음</SelectItem>
+                  <SelectItem value="none">No Selected</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -100,7 +101,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
             Cancel
           </Button>
           <Button
-            onClick={onNext}
+            onClick={() => onNext({ title, description })}
             className="min-w-[80px]"
             disabled={!isFormValid}
           >
