@@ -184,6 +184,7 @@ public class ProjectService {
             List<String> thumbnailUrls = subProjects.stream()
                     .map(SubProject::getThumbnailPath)
                     .filter(url -> url != null && !url.isBlank())
+                    .map(s3Service::getPresignedUrl)
                     .limit(4)
                     .toList();
 
