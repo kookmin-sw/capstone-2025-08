@@ -11,6 +11,6 @@ import java.util.List;
 
 @Repository
 public interface UserModelRepository extends JpaRepository<UserModel, Long> {
-    @Query("SELECT m FROM UserModel u JOIN u.model m WHERE u.id = :userId")
+    @Query("SELECT m FROM UserModel u JOIN u.model m WHERE u.user.id = :userId")
     List<Model> findAllModelsByUserId(@Param("userId") Long userId);
 }
