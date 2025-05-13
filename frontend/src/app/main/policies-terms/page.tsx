@@ -15,7 +15,7 @@ import {
   Clock,
   HelpCircle,
 } from 'lucide-react';
-import { policiesTermsData } from '@/data/policies-terms';
+import { policiesTermsData, policyInfoCardData } from '@/data/policies-terms';
 import PageTitle from '@/components/common/page-title';
 import PoliciesInfoCard from '@/components/policies-terms/policies-info-card';
 
@@ -27,30 +27,6 @@ const iconMap = {
 } as const;
 
 type IconKey = keyof typeof iconMap;
-
-const policyInfoCardData = [
-  {
-    icon: Clock,
-    title: 'Policy Updates',
-    description:
-      'We regularly review and update our policies to ensure they remain current with the latest regulations and best practices.',
-    haveButton: false,
-  },
-  {
-    icon: CheckCircle,
-    title: 'Compliance',
-    description:
-      'PathOs is compliant with HIPAA, GDPR, and other relevant regulations to ensure the highest standards of data protection.',
-    haveButton: false,
-  },
-  {
-    icon: HelpCircle,
-    title: 'Questions?',
-    description:
-      'If you have any questions about our policies or terms, our team is here to help.',
-    haveButton: true,
-  },
-];
 
 export default function PoliciesTermsPage() {
   const policies = policiesTermsData;

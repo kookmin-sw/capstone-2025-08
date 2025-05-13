@@ -1,3 +1,5 @@
+import { CheckCircle, Clock, HelpCircle } from 'lucide-react';
+
 export const policiesTermsData = {
   terms: {
     title: 'Terms of Service',
@@ -148,3 +150,27 @@ export const policiesTermsData = {
     ],
   },
 };
+
+export const policyInfoCardData = [
+  {
+    icon: Clock,
+    title: 'Policy Updates',
+    description:
+      'We regularly review and update our policies to ensure they remain current with the latest regulations and best practices.',
+    haveButton: false,
+  },
+  {
+    icon: CheckCircle,
+    title: 'Compliance',
+    description:
+      'PathOs is compliant with HIPAA, GDPR, and other relevant regulations to ensure the highest standards of data protection.',
+    haveButton: false,
+  },
+  {
+    icon: HelpCircle,
+    title: 'Questions?',
+    description:
+      'If you have any questions about our policies or terms, our team is here to help.',
+    haveButton: true,
+  },
+];
