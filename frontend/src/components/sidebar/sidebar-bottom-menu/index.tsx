@@ -14,6 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import AlarmModal from '@/components/alarm-modal';
 
 // Bottom Menu items.
 const bottomItems = [
@@ -40,12 +41,11 @@ export function BottomMenu() {
 
   // notifications 클릭 시, 알림 모달창을 띄우는 함수
   const handleNotificationClick = () => {
-    console.log('알림 모달창');
     setClickNotifications((prev) => !prev); // 현재 상태를 반전시킴 (true ↔ false)
   };
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className="relative">
       <SidebarGroupLabel>Supported</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu className="gap-2">
@@ -82,6 +82,13 @@ export function BottomMenu() {
           ))}
         </SidebarMenu>
       </SidebarGroupContent>
+
+      {clickNotifications && (
+        <AlarmModal
+          open={clickNotifications}
+          onClose={() => setClickNotifications(false)}
+        />
+      )}
     </SidebarGroup>
   );
 }
