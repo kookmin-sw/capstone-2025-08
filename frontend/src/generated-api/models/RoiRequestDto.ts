@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * ROI 상세 정보
  * @export
  * @interface RoiRequestDto
  */
 export interface RoiRequestDto {
     /**
-     * 
+     * ROI의 X 좌표
      * @type {number}
      * @memberof RoiRequestDto
      */
     x?: number;
     /**
-     * 
+     * ROI의 Y 좌표
      * @type {number}
      * @memberof RoiRequestDto
      */
     y?: number;
     /**
-     * 
+     * ROI의 너비
      * @type {number}
      * @memberof RoiRequestDto
      */
     width?: number;
     /**
-     * 
+     * ROI의 높이
      * @type {number}
      * @memberof RoiRequestDto
      */

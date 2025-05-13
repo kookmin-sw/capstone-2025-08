@@ -20,13 +20,13 @@ import { mapValues } from '../runtime';
  */
 export interface UpdateProjectRequestDto {
     /**
-     * 
+     * 프로젝트명
      * @type {string}
      * @memberof UpdateProjectRequestDto
      */
     title?: string;
     /**
-     * 
+     * 프로젝트 설명
      * @type {string}
      * @memberof UpdateProjectRequestDto
      */

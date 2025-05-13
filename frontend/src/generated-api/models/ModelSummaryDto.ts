@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * 사용 가능한 모델 요약 정보 DTO
  * @export
  * @interface ModelSummaryDto
  */
 export interface ModelSummaryDto {
     /**
-     * 
+     * 모델 ID
      * @type {number}
      * @memberof ModelSummaryDto
      */
     id?: number;
     /**
-     * 
+     * 모델 이름
      * @type {string}
      * @memberof ModelSummaryDto
      */

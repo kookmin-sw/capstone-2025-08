@@ -14,23 +14,29 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * 서브 프로젝트 요약 정보 DTO
  * @export
  * @interface SubProjectSummaryDto
  */
 export interface SubProjectSummaryDto {
     /**
-     * 
+     * 서브 프로젝트 ID
      * @type {number}
      * @memberof SubProjectSummaryDto
      */
     subProjectId?: number;
     /**
-     * 
+     * 서브 프로젝트 썸네일 URL
      * @type {string}
      * @memberof SubProjectSummaryDto
      */
     thumbnailUrl?: string;
+    /**
+     * 이미지 업로드 여부 완료
+     * @type {boolean}
+     * @memberof SubProjectSummaryDto
+     */
+    isUploadComplete?: boolean;
 }
 
 /**
@@ -52,6 +58,7 @@ export function SubProjectSummaryDtoFromJSONTyped(json: any, ignoreDiscriminator
         
         'subProjectId': json['subProjectId'] == null ? undefined : json['subProjectId'],
         'thumbnailUrl': json['thumbnailUrl'] == null ? undefined : json['thumbnailUrl'],
+        'isUploadComplete': json['isUploadComplete'] == null ? undefined : json['isUploadComplete'],
     };
 }
 
@@ -68,6 +75,7 @@ export function SubProjectSummaryDtoToJSONTyped(value?: SubProjectSummaryDto | n
         
         'subProjectId': value['subProjectId'],
         'thumbnailUrl': value['thumbnailUrl'],
+        'isUploadComplete': value['isUploadComplete'],
     };
 }
 

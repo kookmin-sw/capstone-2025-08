@@ -20,43 +20,43 @@ import { mapValues } from '../runtime';
  */
 export interface GetProjectsResponseDetailDto {
     /**
-     * 
+     * 프로젝트 id
      * @type {number}
      * @memberof GetProjectsResponseDetailDto
      */
     projectId?: number;
     /**
-     * 
+     * 프로젝트명
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     title?: string;
     /**
-     * 
+     * 프로젝트 생성일
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     createdAt?: string;
     /**
-     * 
+     * 프로젝트 수정일
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     updatedAt?: string;
     /**
-     * 
+     * 모델 타입
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     modelType?: GetProjectsResponseDetailDtoModelTypeEnum;
     /**
-     * 
+     * 모델명
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     modelName?: string;
     /**
-     * 
+     * 썸네일 이미지 url
      * @type {Array<string>}
      * @memberof GetProjectsResponseDetailDto
      */

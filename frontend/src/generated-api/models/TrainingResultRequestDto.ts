@@ -22,41 +22,31 @@ import {
 } from './RoiRequestPayload';
 
 /**
- * 
+ * 모델 학습 결과 데이터
  * @export
  * @interface TrainingResultRequestDto
  */
 export interface TrainingResultRequestDto {
     /**
-     * 
-     * @type {number}
-     * @memberof TrainingResultRequestDto
-     */
-    subProjectId?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof TrainingResultRequestDto
-     */
-    annotationHistoryId?: number;
-    /**
-     * 
+     * 학습된 모델이 저장된 경로
      * @type {string}
      * @memberof TrainingResultRequestDto
      */
-    modelPath?: string;
+    modelPath: string;
     /**
-     * 
+     * 학습 결과 ROI 정보 리스트
      * @type {Array<RoiRequestPayload>}
      * @memberof TrainingResultRequestDto
      */
-    roi?: Array<RoiRequestPayload>;
+    roi: Array<RoiRequestPayload>;
 }
 
 /**
  * Check if a given object implements the TrainingResultRequestDto interface.
  */
 export function instanceOfTrainingResultRequestDto(value: object): value is TrainingResultRequestDto {
+    if (!('modelPath' in value) || value['modelPath'] === undefined) return false;
+    if (!('roi' in value) || value['roi'] === undefined) return false;
     return true;
 }
 
@@ -70,10 +60,8 @@ export function TrainingResultRequestDtoFromJSONTyped(json: any, ignoreDiscrimin
     }
     return {
         
-        'subProjectId': json['sub_project_id'] == null ? undefined : json['sub_project_id'],
-        'annotationHistoryId': json['annotation_history_id'] == null ? undefined : json['annotation_history_id'],
-        'modelPath': json['model_path'] == null ? undefined : json['model_path'],
-        'roi': json['roi'] == null ? undefined : ((json['roi'] as Array<any>).map(RoiRequestPayloadFromJSON)),
+        'modelPath': json['model_path'],
+        'roi': ((json['roi'] as Array<any>).map(RoiRequestPayloadFromJSON)),
     };
 }
 
@@ -88,10 +76,8 @@ export function TrainingResultRequestDtoToJSONTyped(value?: TrainingResultReques
 
     return {
         
-        'sub_project_id': value['subProjectId'],
-        'annotation_history_id': value['annotationHistoryId'],
         'model_path': value['modelPath'],
-        'roi': value['roi'] == null ? undefined : ((value['roi'] as Array<any>).map(RoiRequestPayloadToJSON)),
+        'roi': ((value['roi'] as Array<any>).map(RoiRequestPayloadToJSON)),
     };
 }
 

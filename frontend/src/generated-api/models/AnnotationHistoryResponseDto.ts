@@ -35,25 +35,25 @@ import {
  */
 export interface AnnotationHistoryResponseDto {
     /**
-     * 
+     * Annotation History의 ID
      * @type {number}
      * @memberof AnnotationHistoryResponseDto
      */
     id?: number;
     /**
-     * 
+     * 연결된 모델의 이름
      * @type {string}
      * @memberof AnnotationHistoryResponseDto
      */
     modelName?: string;
     /**
-     * 
+     * ROI 데이터 목록
      * @type {Array<RoiResponsePayload>}
      * @memberof AnnotationHistoryResponseDto
      */
     roiPayloads?: Array<RoiResponsePayload>;
     /**
-     * 
+     * Label 데이터 목록
      * @type {Array<LabelDto>}
      * @memberof AnnotationHistoryResponseDto
      */

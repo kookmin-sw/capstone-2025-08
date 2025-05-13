@@ -14,31 +14,31 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * 어노테이션 히스토리 요약 정보 DTO
  * @export
  * @interface AnnotationHistorySummaryDto
  */
 export interface AnnotationHistorySummaryDto {
     /**
-     * 
+     * 히스토리 ID
      * @type {number}
      * @memberof AnnotationHistorySummaryDto
      */
     id?: number;
     /**
-     * 
+     * 히스토리 순서
      * @type {number}
      * @memberof AnnotationHistorySummaryDto
      */
     order?: number;
     /**
-     * 
+     * 히스토리 시작 시각
      * @type {Date}
      * @memberof AnnotationHistorySummaryDto
      */
     startedAt?: Date;
     /**
-     * 
+     * 히스토리 종료 시각
      * @type {Date}
      * @memberof AnnotationHistorySummaryDto
      */

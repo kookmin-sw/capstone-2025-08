@@ -14,19 +14,19 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * 세포 좌표 리스트
  * @export
  * @interface CellDetail
  */
 export interface CellDetail {
     /**
-     * 
+     * 세포의 X 좌표
      * @type {number}
      * @memberof CellDetail
      */
     x?: number;
     /**
-     * 
+     * 세포의 Y 좌표
      * @type {number}
      * @memberof CellDetail
      */

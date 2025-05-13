@@ -20,19 +20,19 @@ import { mapValues } from '../runtime';
  */
 export interface CreateProjectRequestDto {
     /**
-     * 
+     * 프로젝트명
      * @type {string}
      * @memberof CreateProjectRequestDto
      */
     title?: string;
     /**
-     * 
+     * 프로젝트 설명
      * @type {string}
      * @memberof CreateProjectRequestDto
      */
     description?: string;
     /**
-     * 
+     * 모델 id
      * @type {number}
      * @memberof CreateProjectRequestDto
      */
