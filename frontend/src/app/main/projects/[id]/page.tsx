@@ -1,7 +1,13 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import React, { useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ChevronLeft,
   PenTool,
@@ -13,64 +19,76 @@ import {
   CalendarClock,
   Clock3,
 } from 'lucide-react';
-
-import { dummyProjects, dummySubProject } from '@/data/dummy';
-import { Project, SubProject } from '@/types/project-schema';
-import { formatDateTime } from '@/lib/utils';
-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ProjectInfoCard from '@/components/projects/project-info-card';
 import SubProjectTable from '@/components/projects/subproject-table';
-import { StatusBadge } from '@/components/common/status-badge';
+import { StatusBadge, StatusType } from '@/components/common/status-badge';
 import ImageUploadModal from '@/components/projects/image-upload-modal';
 import ProjectEditModal from '@/components/projects/project-edit-modal';
 import ProjectDeleteModal from '@/components/projects/poject-delete-modal';
 import ModelTrainingMetricsChart from '@/components/projects/model-training-metrics-chart';
-
-const dummyMetrics = [
-  { epoch: 1, loss: 0.9, iou: 0.45, f1: 0.52 },
-  { epoch: 2, loss: 0.7, iou: 0.55, f1: 0.6 },
-  { epoch: 3, loss: 0.5, iou: 0.62, f1: 0.68 },
-  { epoch: 4, loss: 0.42, iou: 0.68, f1: 0.75 },
-  { epoch: 5, loss: 0.35, iou: 0.73, f1: 0.81 },
-];
-
-const dummyLabels = [
-  { name: 'Tumor', color: '#EF4444' }, // Red
-  { name: 'Stroma', color: '#10B981' }, // Green
-  { name: 'Lymphocyte', color: '#3B82F6' }, // Blue
-  { name: 'Necrosis', color: '#FACC15' }, // Yellow
-  { name: 'Blood Vessel', color: '#8B5CF6' }, // Purple
-  { name: 'Background', color: '#9CA3AF' }, // Gray
-  { name: 'Artifact', color: '#EC4899' }, // Pink
-];
+import { ProjectAPIApi, GetProjectDetailResponseDto } from '@/generated-api';
+import { toast } from 'sonner';
 
 export default function ProjectDetails() {
-  // TODO: 프로젝트 상세 정보 Api 연동 / 이미지 추가 (모달) Api 연동 / 프로젝트 수정, 삭제 (모달) Api 연동 / Recent Activity 기획 및 퍼블리싱
-
+  // TODO: 서브프로젝트 추가, 프로젝트 수정 에러 해결
+  const projectApi = useMemo(() => new ProjectAPIApi(), []);
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [subProjects, setSubProjects] = useState<SubProject[]>([]);
-
+  const [project, setProject] = useState<GetProjectDetailResponseDto | null>(
+    null,
+  );
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchProject = useCallback(async () => {
     if (!id) return;
-    const p = dummyProjects.find((d) => d.id === Number(id)) ?? null;
-    setProject(p);
-    setSubProjects(dummySubProject.filter((sp) => sp.projectId === id));
-  }, [id]);
+    try {
+      const detail = await projectApi.getProjectDetail({
+        projectId: Number(id),
+      });
+      setProject(detail);
+    } catch (error) {
+      toast.error('Failed to load project details.');
+    }
+  }, [id, projectApi]);
 
-  const handleEdit = (updated: { title: string; description: string }) => {
-    if (!project) return;
-    setProject({ ...project, ...updated });
-    setEditOpen(false);
+  useEffect(() => {
+    fetchProject();
+  }, [fetchProject]);
+
+  const handleEdit = async (updated: {
+    title: string;
+    description: string;
+  }) => {
+    try {
+      await projectApi.updateProject({
+        projectId: Number(id),
+        updateProjectRequestDto: updated,
+      });
+      toast.success('Project updated successfully.');
+      await fetchProject();
+    } catch (error) {
+      toast.error('Failed to update the project.');
+    } finally {
+      setEditOpen(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await projectApi.deleteProject({ projectId: Number(id) });
+      toast.success('Project deleted successfully.');
+      router.push('/main/projects');
+    } catch (error) {
+      toast.error('Failed to delete the project.');
+    } finally {
+      setDeleteOpen(false);
+    }
   };
 
   if (!project) return null;
@@ -78,22 +96,22 @@ export default function ProjectDetails() {
   return (
     <div className="flex flex-col px-20 py-16">
       <Header
-        title={project.title}
-        description={project.description}
+        title={project.title || ''}
+        description={project.description || ''}
         onBack={router.back}
         onAnnotate={() =>
-          router.push(`/main/projects/annotation/${project.id}`)
+          router.push(`/main/projects/annotation/${project?.projectId}`)
         }
         onDelete={() => setDeleteOpen(true)}
       />
       <div className="mt-4 grid grid-cols-3 gap-x-6 gap-y-0">
         <div className="col-span-2 flex flex-col">
           <StatsCards
-            subProjects={subProjects}
+            project={project}
             onUploadClick={() => setUploadOpen(true)}
           />
           <div className="my-8 w-full border-b" />
-          <ProjectTabs subProjects={subProjects} />
+          <ProjectTabs project={project} />
         </div>
 
         <div className="col-span-1">
@@ -111,18 +129,15 @@ export default function ProjectDetails() {
         open={editOpen}
         onClose={() => setEditOpen(false)}
         onClickEdit={handleEdit}
-        initialTitle={project.title}
-        initialDescription={project.description}
+        initialTitle={project.title || ''}
+        initialDescription={project.description || ''}
       />
 
       <ProjectDeleteModal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        projectTitle={project.title}
-        onClickDelete={() => {
-          setDeleteOpen(false);
-          router.push('/main/projects');
-        }}
+        projectTitle={project.title || ''}
+        onClickDelete={handleDelete}
       />
     </div>
   );
@@ -178,10 +193,10 @@ function Header({
 }
 
 function StatsCards({
-  subProjects,
+  project,
   onUploadClick,
 }: {
-  subProjects: SubProject[];
+  project: GetProjectDetailResponseDto;
   onUploadClick: () => void;
 }) {
   return (
@@ -191,30 +206,66 @@ function StatsCards({
         iconBgColor="bg-sky-100"
         iconColor="text-sky-600"
         label="Slides"
-        value={subProjects.length}
-        progress={60}
-        subText="60% processed • Last uploaded : 1h ago"
+        value={
+          project.slideSummary?.totalSlides &&
+          project.slideSummary.totalSlides > 0 ? (
+            project.slideSummary.totalSlides
+          ) : (
+            <span className="text-muted-foreground">No slides</span>
+          )
+        }
+        progress={project.slideSummary?.uploadProgress ?? 0}
+        subText={
+          project.slideSummary?.lastUploadedDateTime ? (
+            `Last uploaded: ${project.slideSummary.lastUploadedDateTime}`
+          ) : (
+            <span className="text-muted-foreground">No uploads yet</span>
+          )
+        }
         rightElement={
           <Button variant="outline" onClick={onUploadClick}>
             Upload
           </Button>
         }
       />
+
       <ProjectInfoCard
         icon={<Bot className="h-5 w-5" />}
         iconBgColor="bg-green-100"
         iconColor="text-green-600"
-        label="Model Training & Inference"
-        value="92.5%"
-        progress={60}
-        subText="Epoch 15/20 • Est. completion: 2024-04-03 03:30 PM"
-        rightElement={<StatusBadge status="progress" />}
+        label="Recent Model Training & Inference"
+        value={
+          project.modelProcess?.progress &&
+          project.modelProcess.progress > 0 ? (
+            `${project.modelProcess.progress}%`
+          ) : (
+            <span className="text-muted-foreground">No progress</span>
+          )
+        }
+        progress={project.modelProcess?.progress ?? 0}
+        subText={
+          project.modelProcess?.currentEpoch &&
+          project.modelProcess?.totalEpoch ? (
+            `Epoch ${project.modelProcess.currentEpoch}/${
+              project.modelProcess.totalEpoch
+            } • Est. completion: ${
+              project.modelProcess.estimatedCompletionDateTime ?? 'Unknown'
+            }`
+          ) : (
+            <span className="text-muted-foreground">Not started</span>
+          )
+        }
+        rightElement={
+          <StatusBadge
+            status={(project.modelProcess?.status as StatusType) ?? 'pending'}
+          />
+        }
       />
     </div>
   );
 }
 
-function ProjectTabs({ subProjects }: { subProjects: SubProject[] }) {
+function ProjectTabs({ project }: { project: GetProjectDetailResponseDto }) {
   return (
     <Tabs defaultValue="sub-project" className="col-span-2">
       <TabsList className="grid w-full grid-cols-2">
@@ -226,12 +277,12 @@ function ProjectTabs({ subProjects }: { subProjects: SubProject[] }) {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="sub-project">
-        <SubProjectTable subProjects={subProjects} />
+        <SubProjectTable subProjects={project.slides || []} />
       </TabsContent>
       <TabsContent value="analytics">
         <ModelTrainingMetricsChart
-          data={dummyMetrics}
-          f1Score={dummyMetrics.at(-1)?.f1 ?? 0}
+          data={project.analytics || {}}
+          f1Score={project.analytics?.f1Score ?? 0}
         />
       </TabsContent>
     </Tabs>
@@ -251,7 +302,7 @@ function ProjectSidebar({
   project,
   onEdit,
 }: {
-  project: Project;
+  project: GetProjectDetailResponseDto;
   onEdit: () => void;
 }) {
   const [hasScroll, setHasScroll] = useState(false);
@@ -271,7 +322,13 @@ function ProjectSidebar({
   return (
     <div className="col-span-1 flex flex-col gap-6">
       <div className="rounded-md border p-6">
-        <h3 className="text-lg font-bold">Label</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold">Label</h3>
+          <span className="text-muted-foreground text-sm">
+            total: {project.labels?.length ?? 0}
+          </span>
+        </div>
+
         <div className="my-4 border-b" />
 
         <div
@@ -280,21 +337,29 @@ function ProjectSidebar({
             hasScroll ? 'pr-1' : ''
           }`}
         >
-          {dummyLabels.map((label) => (
-            <div
-              key={label.name}
-              className="flex w-full items-center justify-between rounded-md px-4 py-2"
-              style={{ backgroundColor: hexToRgba(label.color, 0.2) }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="h-4 w-4 rounded-full"
-                  style={{ backgroundColor: label.color }}
-                />
-                <span className="text-sm font-medium">{label.name}</span>
-              </div>
-            </div>
-          ))}
+          {project.labels && project.labels.length > 0 ? (
+            project.labels.map(
+              (label) =>
+                label.name &&
+                label.color && (
+                  <div
+                    key={label.id ?? label.name}
+                    className="flex w-full items-center justify-between rounded-md px-4 py-2"
+                    style={{ backgroundColor: hexToRgba(label.color, 0.2) }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-4 w-4 rounded-full"
+                        style={{ backgroundColor: label.color }}
+                      />
+                      <span className="text-sm font-medium">{label.name}</span>
+                    </div>
+                  </div>
+                ),
+            )
+          ) : (
+            <p className="text-muted-foreground text-sm">No labels available</p>
+          )}
         </div>
       </div>
       <div className="rounded-md border p-6">
@@ -307,25 +372,23 @@ function ProjectSidebar({
           />
           <DetailItem
             label="Model Name"
-            value={
-              <Badge variant="secondary">{project.modelNameList[0]}</Badge>
-            }
+            value={<Badge variant="secondary">{project.modelName}</Badge>}
           />
           <DetailItem
-            label="Created At"
+            label="Created"
             value={
               <span className="flex items-center gap-1">
                 <CalendarClock className="h-3 w-3" />
-                {formatDateTime(project.createdAt).full}
+                {project.createdAt}
               </span>
             }
           />
           <DetailItem
-            label="Updated At"
+            label="Edited"
             value={
               <span className="flex items-center gap-1">
                 <Clock3 className="h-3 w-3" />
-                {formatDateTime(project.updatedAt).full}
+                {project.updatedAt}
               </span>
             }
           />
