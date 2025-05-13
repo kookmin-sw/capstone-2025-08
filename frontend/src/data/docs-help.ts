@@ -36,27 +36,18 @@ export const docCategories = [
     description:
       'Learn the basics of navigating the platform and setting up your first project',
     icon: Book,
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-100',
     link: '/docs/getting-started',
   },
   {
     title: 'User Guide',
     description: 'Comprehensive documentation for using PathOs features',
     icon: FileText,
-    color: 'text-indigo-500',
-    bgColor: 'bg-indigo-50',
-    borderColor: 'border-indigo-100',
     link: '/docs/user-guide',
   },
   {
     title: 'Video Tutorials',
     description: 'Visual guides for learning PathOs features',
     icon: Video,
-    color: 'text-amber-500',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-100',
     link: '/docs/videos',
   },
 ];
