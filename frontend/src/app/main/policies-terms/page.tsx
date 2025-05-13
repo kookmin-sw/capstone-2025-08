@@ -53,7 +53,7 @@ export default function PoliciesTermsPage() {
                 <Card className="border border-gray-100 shadow-sm">
                   <CardHeader className="[.border-b]:pb-5 border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                      <Icon className="h-5 w-5 text-blue-500" />
+                      <Icon className="text-primary/50 h-5 w-5" />
                       <div>
                         <CardTitle>{policy.title}</CardTitle>
                         <CardDescription>
@@ -66,7 +66,7 @@ export default function PoliciesTermsPage() {
                     <div className="prose max-w-none">
                       {policy.sections.map((section, idx) => (
                         <div key={idx} className="mb-8">
-                          <h2 className="mb-2 text-xl font-semibold text-gray-800">
+                          <h2 className="text-primary mb-2 text-xl font-semibold">
                             {section.heading}
                           </h2>
                           <p className="text-gray-600">{section.body}</p>
