@@ -340,13 +340,22 @@ public class ProjectService {
 
     private List<SlideDto> getSlideDtos(List<SubProject> subProjects) {
         return subProjects.stream()
-                .map(subProject -> new SlideDto(
-                        subProject.getId(),
-                        Objects.requireNonNullElse(subProject.getThumbnailPath(), ""),
-                        subProject.getFileName(),
-                        "", // TODO 파일 사이즈
-                        DateTimeUtils.dateTimeToDateFormat(subProject.getCreatedAt())  // TODO 파일 업로드 시간
-                ))
+                .map(subProject -> {
+                    String thumbnailPath = subProject.getThumbnailPath();
+                    String thumbnailUrl = "";
+
+                    if (thumbnailPath != null && !thumbnailPath.isBlank()) {
+                        thumbnailUrl = s3Service.getPresignedUrl(thumbnailPath);
+                    }
+
+                    return new SlideDto(
+                            subProject.getId(),
+                            thumbnailUrl,
+                            subProject.getFileName(),
+                            "", // TODO 파일 사이즈
+                            DateTimeUtils.dateTimeToDateFormat(subProject.getCreatedAt()) // TODO 파일 업로드 시간
+                    );
+                })
                 .toList();
     }
 
