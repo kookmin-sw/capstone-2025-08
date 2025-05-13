@@ -11,6 +11,8 @@ import java.util.List;
 
 @Repository
 public interface TissueAnnotationRepository extends JpaRepository<TissueAnnotation, Long> {
-    @Query("SELECT ta FROM TissueAnnotation ta WHERE ta.roi.annotationHistory.id = :historyId AND ta.annotationType = :type")
-    List<TissueAnnotation> findMergedByAnnotationHistoryId(@Param("historyId") Long historyId, @Param("type") AnnotationType type);
+    @Query("SELECT t FROM TissueAnnotation t WHERE t.roi.id = :roiId")
+    List<TissueAnnotation> findByRoiId(@Param("roiId") Long roiId);
+
+    List<TissueAnnotation> findByRoiIdInAndAnnotationType(List<Long> roiIds, AnnotationType annotationType);
 }

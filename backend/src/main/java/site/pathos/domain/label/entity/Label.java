@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.label.dto.LabelDto;
+import site.pathos.domain.model.entity.Model;
 
 @Entity
 @Table(name = "label")
@@ -18,35 +19,4 @@ public class Label {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    @Column(name = "color", nullable = false)
-    private String color;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    private AnnotationHistory annotationHistory;
-
-    @Builder
-    public Label(String name, String color, AnnotationHistory annotationHistory) {
-        this.name = name;
-        this.color = color;
-        this.annotationHistory = annotationHistory;
-    }
-
-    public void changeName(String name) {
-        this.name = name;
-    }
-
-    public void changeColor(String color) {
-        this.color = color;
-    }
-
-    public LabelDto toLabelDto() {
-        return new LabelDto(
-                id,
-                name,
-                color
-        );
-    }
 }

@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
+import site.pathos.domain.subProject.entity.SubProject;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,10 +25,16 @@ public interface AnnotationHistoryRepository extends JpaRepository<AnnotationHis
 
     @Query("""
         SELECT DISTINCT ah FROM AnnotationHistory ah
-        LEFT JOIN FETCH ah.labels
         WHERE ah IN :annotationHistories
     """)
-    List<AnnotationHistory> fetchAnnotationHistoriesAndLabels(
+    List<AnnotationHistory> fetchAnnotationHistories(
             @Param("annotationHistories") List<AnnotationHistory> annotationHistories
     );
+
+    @Query("""
+    SELECT ah FROM AnnotationHistory ah
+    WHERE ah.subProject.id = :subProjectId
+    ORDER BY ah.updatedAt DESC
+""")
+    Optional<AnnotationHistory> findLatestBySubProjectId(@Param("subProjectId") Long subProjectId);
 }

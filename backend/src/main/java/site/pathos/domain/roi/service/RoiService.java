@@ -32,50 +32,57 @@ public class RoiService {
                 .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
 
         for(RoiSaveRequestDto roiDto : rois){
-            Roi roi = upsertRoi(history, roiDto);
-
             List<MultipartFile> matchedImages = images.stream()
                     .filter(img -> roiDto.getImageNames().contains(img.getOriginalFilename()))
                     .toList();
-
-            tissueAnnotationService.uploadTissueAnnotations(
-                    subProjectId,
-                    annotationHistoryId,
-                    roi.getId(),
-                    matchedImages
-            );
+            if (roiDto.getRoiId() != null) {
+                Roi roi = updateRoi(roiDto);
+                tissueAnnotationService.deleteTissueAnnotationsByRoiId(roi.getId());
+                tissueAnnotationService.uploadTissueAnnotations(
+                        subProjectId,
+                        annotationHistoryId,
+                        roi.getId(),
+                        matchedImages
+                );
+            } else {
+                Roi roi = createRoi(history, roiDto);
+                tissueAnnotationService.uploadTissueAnnotations(
+                        subProjectId,
+                        annotationHistoryId,
+                        roi.getId(),
+                        matchedImages
+                );
+            }
         }
 
-        labelService.upsertLabels(labels, history);
+        //TODO: 라벨 저장 로직 필요
     }
 
-    private Roi upsertRoi(AnnotationHistory history, RoiSaveRequestDto roiDto) {
-        if (roiDto.getRoiId() != null) {
-            //기존에 존재하던 roi를 수정한 경우
-            Roi roi = roiRepository.findById(roiDto.getRoiId())
-                    .orElseThrow(() -> new RuntimeException("ROI not found: " + roiDto.getRoiId()));
-            roi.changeCoordinates(
-                    roiDto.getX(),
-                    roiDto.getY(),
-                    roiDto.getWidth(),
-                    roiDto.getHeight()
-            );
-            return roi;
-        } else {
-            //새로 생긴 roi의 경우
-            Integer max = roiRepository.findMaxDisplayOrderByAnnotationHistory(history.getId());
-            int displayOrder = (max == null) ? 0 : max+1;
+    private Roi updateRoi(RoiSaveRequestDto roiDto) {
+        Roi roi = roiRepository.findById(roiDto.getRoiId())
+                .orElseThrow(() -> new RuntimeException("ROI not found: " + roiDto.getRoiId()));
+        roi.changeCoordinates(
+                roiDto.getX(),
+                roiDto.getY(),
+                roiDto.getWidth(),
+                roiDto.getHeight()
+        );
+        return roi;
+    }
 
-            Roi roi = Roi.builder()
-                    .annotationHistory(history)
-                    .x(roiDto.getX())
-                    .y(roiDto.getY())
-                    .width(roiDto.getWidth())
-                    .height(roiDto.getHeight())
-                    .displayOrder(displayOrder)
-                    .build();
-            return roiRepository.save(roi);
-        }
+    private Roi createRoi(AnnotationHistory history, RoiSaveRequestDto roiDto) {
+        Integer max = roiRepository.findMaxDisplayOrderByAnnotationHistory(history.getId());
+        int displayOrder = (max == null) ? 0 : max + 1;
+
+        Roi roi = Roi.builder()
+                .annotationHistory(history)
+                .x(roiDto.getX())
+                .y(roiDto.getY())
+                .width(roiDto.getWidth())
+                .height(roiDto.getHeight())
+                .displayOrder(displayOrder)
+                .build();
+        return roiRepository.save(roi);
     }
 
     @Transactional

@@ -6,26 +6,22 @@ import org.springframework.transaction.annotation.Transactional;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.inferenceHistory.entity.InferenceHistory;
 import site.pathos.domain.inferenceHistory.repository.InferenceHistoryRepository;
+import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.project.entity.Project;
 
 @Service
 @RequiredArgsConstructor
 public class InferenceHistoryService {
+
     private final InferenceHistoryRepository inferenceHistoryRepository;
 
     @Transactional
-    public void saveInferenceHistory(AnnotationHistory annotationHistory){
+    public InferenceHistory createInferenceHistory(Project project, Model model) {
         InferenceHistory inferenceHistory = InferenceHistory.builder()
-                .annotationHistory(annotationHistory)
+                .project(project)
+                .model(model)
                 .build();
 
-        inferenceHistoryRepository.save(inferenceHistory);
-    }
-
-    @Transactional
-    public void updateInferenceHistory(Long annotationHistoryId, float accuracy, float loss, float loopPerformance) {
-        InferenceHistory history = inferenceHistoryRepository.findByAnnotationHistoryId(annotationHistoryId)
-                .orElseThrow(() -> new RuntimeException("InferenceHistory not found"));
-
-        history.updateResult(accuracy, loss, loopPerformance);
+        return inferenceHistoryRepository.save(inferenceHistory);
     }
 }

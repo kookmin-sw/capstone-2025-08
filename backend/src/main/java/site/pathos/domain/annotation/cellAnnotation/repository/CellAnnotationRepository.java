@@ -13,4 +13,6 @@ public interface CellAnnotationRepository extends JpaRepository<CellAnnotation, 
     FROM CellAnnotation ca
     WHERE ca.roi.id = :roiId""")
     List<CellAnnotation> findAllByRoiId(@Param("roiId") Long roiId);
+
+    List<CellAnnotation> findAllByRoiIdIn(List<Long> roiIds);
 }

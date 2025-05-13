@@ -43,7 +43,7 @@ public class TissueAnnotationService {
 
             TissueAnnotation ta = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImageUrl(key)
+                    .annotationImagePath(key)
                     .annotationType(AnnotationType.TILE)
                     .build();
             tissueAnnotationRepository.save(ta);
@@ -73,7 +73,7 @@ public class TissueAnnotationService {
 
             TissueAnnotation mergedAnnotation = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImageUrl(mergedKey)
+                    .annotationImagePath(mergedKey)
                     .annotationType(AnnotationType.MERGED)
                     .build();
 
@@ -116,11 +116,36 @@ public class TissueAnnotationService {
 
             TissueAnnotation tileAnnotation = TissueAnnotation.builder()
                     .roi(roi)
-                    .annotationImageUrl(tileKey)
-                    .annotationType(AnnotationType.RESULT_TILE)
+                    .annotationImagePath(tileKey)
+                    .annotationType(AnnotationType.RESULT)
                     .build();
 
             tissueAnnotationRepository.save(tileAnnotation);
         }
+    }
+
+    @Transactional
+    public void deleteTissueAnnotationsByRoiId(Long roiId) {
+        List<TissueAnnotation> annotations = tissueAnnotationRepository.findByRoiId(roiId);
+
+        if (annotations.isEmpty()) {
+            log.warn("No TissueAnnotations found for ROI ID: {}", roiId);
+            return;
+        }
+
+        for (TissueAnnotation annotation : annotations) {
+            String key = annotation.getAnnotationImagePath();
+
+            try {
+                s3Service.deleteFile(key);
+                log.info("S3 이미지 삭제 완료: {}", key);
+            } catch (Exception e) {
+                log.error("S3 이미지 삭제 실패: {}", key, e);
+            }
+
+            tissueAnnotationRepository.delete(annotation);
+        }
+
+        log.info("ROI ID {} 관련 TissueAnnotation 모두 삭제 완료", roiId);
     }
 }

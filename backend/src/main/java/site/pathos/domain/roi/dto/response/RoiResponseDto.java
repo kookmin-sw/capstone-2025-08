@@ -18,6 +18,6 @@ public record RoiResponseDto(
         @Schema(description = "ROI의 높이", example = "512")
         int height,
 
-        @Schema(description = "ROI의 결함 비율 (0.0 ~ 1.0)", example = "0.15")
-        Double faulty
+        @Schema(description = "ROI의 결함 백분율 19", example = "19")
+        int faulty
 ) {}

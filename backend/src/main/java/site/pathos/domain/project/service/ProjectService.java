@@ -15,8 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
+import site.pathos.domain.label.entity.ProjectLabel;
+import site.pathos.domain.label.repository.ProjectLabelRepository;
 import site.pathos.domain.model.Repository.ModelRepository;
+import site.pathos.domain.model.Repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto;
@@ -59,6 +63,8 @@ public class ProjectService {
     private final UserModelRepository userModelRepository;
     private final Ec2Service ec2Service;
     private static final int PROJECTS_PAGE_SIZE = 9;
+    private final ProjectModelRepository projectModelRepository;
+    private final ProjectLabelRepository projectLabelRepository;
 
     @Transactional(readOnly = true)
     public GetSubProjectResponseDto getSubProject(Long projectId){
@@ -99,15 +105,14 @@ public class ProjectService {
                     .project(project)
                     .build();
             subProjectRepository.save(subProject);
-            String svsKey = subProject.initializeSvsImageUrl();
-            subProject.initializeThumbnailImageUrl();
-            subProject.initializeTileImageUrl();
+            String svsKey = subProject.initializeSvsImagePath();
+            subProject.initializeThumbnailImagePath();
+            subProject.initializeTileImagePath();
             uploadFiles.add(new S3UploadFileDto(subProject.getId(), svsKey, file));
 
             AnnotationHistory annotationHistory = AnnotationHistory.builder()
                     .subProject(subProject)
                     .model(model)
-                    .modelName(model.getName())
                     .build();
             annotationHistoryRepository.save(annotationHistory);
         }
@@ -172,20 +177,22 @@ public class ProjectService {
             }
 
             String modelName = subProjects.get(subProjects.size() - 1).getAnnotationHistories().stream()
-                    .max(Comparator.comparing(AnnotationHistory::getStartedAt))
+                    .max(Comparator.comparing(AnnotationHistory::getCreatedAt))
                     .map(AnnotationHistory::getModel)
                     .map(Model::getName)
                     .orElse("");
 
             List<String> thumbnailUrls = subProjects.stream()
-                    .map(SubProject::getThumbnailUrl)
+                    .map(SubProject::getThumbnailPath)
                     .filter(url -> url != null && !url.isBlank())
+                    .map(s3Service::getPresignedUrl)
                     .limit(4)
                     .toList();
 
             projectDetails.add(new GetProjectsResponseDto.GetProjectsResponseDetailDto(
                     project.getId(),
                     project.getTitle(),
+                    project.getDescription(),
                     DateTimeUtils.dateTimeToStringFormat(project.getCreatedAt()),
                     DateTimeUtils.dateTimeToStringFormat(project.getUpdatedAt()),
                     project.getModelType(),
@@ -234,12 +241,12 @@ public class ProjectService {
         Project project = getProject(projectId, userId);
 
         List<SubProject> subProjects = getSubProjects(project);
-        Model recentModel = getRecentModel(subProjects);
+        Model recentModel = getRecentModel(project);
         String createdAt = DateTimeUtils.dateTimeToStringFormat(project.getCreatedAt());
         String updatedAt = DateTimeUtils.dateTimeToStringFormat(project.getUpdatedAt());
         SlideSummaryDto slideSummaryDto = getSlideSummaryDto(subProjects);
         ModelProcessDto modelProcessDto = getModelProcessDto();
-        List<LabelDto> labels = getLabelDtos(subProjects);
+        List<LabelDto> labels = getLabelDtos(projectId);
         List<SlideDto> slides = getSlideDtos(subProjects);
         AnalyticsDto analytics = getAnalyticsDto();
 
@@ -247,7 +254,7 @@ public class ProjectService {
                 projectId,
                 project.getTitle(),
                 project.getDescription(),
-                recentModel.getModelType(),
+                project.getModelType(),
                 recentModel.getName(),
                 createdAt,
                 updatedAt,
@@ -276,24 +283,25 @@ public class ProjectService {
                 .flatMap(sp -> sp.getAnnotationHistories().stream())
                 .toList();
         if (!annotationHistories.isEmpty()) {
-            annotationHistoryRepository.fetchAnnotationHistoriesAndLabels(annotationHistories);
+            annotationHistoryRepository.fetchAnnotationHistories(annotationHistories);
         }
         return subProjects;
     }
 
-    private Model getRecentModel(List<SubProject> subProjects) {
-        SubProject recentSubProject = subProjects.get(subProjects.size() - 1);
-        AnnotationHistory recentAnnotationHistory = recentSubProject.getAnnotationHistories()
-                .get(recentSubProject.getAnnotationHistories().size() - 1);
-        return recentAnnotationHistory.getModel();
+    private Model getRecentModel(Project project) {
+        return projectModelRepository.findLatestByProjectIdWithModel(project.getId())
+                .map(ProjectModel::getModel)
+                .orElse(null); // 혹은 orElseThrow(...)로 바꿔도 됨
     }
 
-    private List<LabelDto> getLabelDtos(List<SubProject> subProjects) {
-        return subProjects.stream()
-                .flatMap(sub -> sub.getAnnotationHistories().stream())
-                .flatMap(history -> history.getLabels().stream())
-                .distinct()
-                .map(label -> new LabelDto(label.getName(), label.getColor()))
+    private List<LabelDto> getLabelDtos(Long projectId) {
+        List<ProjectLabel> projectLabels = projectLabelRepository.findAllByProjectId(projectId);
+
+        return projectLabels.stream()
+                .map(pl -> new LabelDto(
+                        pl.getName(),
+                        pl.getColor()
+                ))
                 .toList();
     }
 
@@ -334,7 +342,7 @@ public class ProjectService {
         return subProjects.stream()
                 .map(subProject -> new SlideDto(
                         subProject.getId(),
-                        Objects.requireNonNullElse(subProject.getThumbnailUrl(), ""),
+                        Objects.requireNonNullElse(subProject.getThumbnailPath(), ""),
                         subProject.getFileName(),
                         "", // TODO 파일 사이즈
                         DateTimeUtils.dateTimeToDateFormat(subProject.getCreatedAt())  // TODO 파일 업로드 시간

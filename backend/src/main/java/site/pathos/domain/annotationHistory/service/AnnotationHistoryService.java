@@ -3,6 +3,7 @@ package site.pathos.domain.annotationHistory.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import site.pathos.domain.annotation.cellAnnotation.dto.PolygonDto;
 import site.pathos.domain.annotation.cellAnnotation.repository.CellAnnotationRepository;
 import site.pathos.domain.annotation.cellAnnotation.dto.CellDetail;
 import site.pathos.domain.annotation.cellAnnotation.entity.CellAnnotation;
@@ -10,8 +11,6 @@ import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
 import site.pathos.domain.annotationHistory.dto.response.AnnotationHistoryResponseDto;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
-import site.pathos.domain.label.dto.LabelDto;
-import site.pathos.domain.label.entity.Label;
 import site.pathos.domain.label.repository.LabelRepository;
 import site.pathos.domain.roi.dto.response.RoiResponseDto;
 import site.pathos.domain.roi.dto.response.RoiResponsePayload;
@@ -32,14 +31,6 @@ public class AnnotationHistoryService {
 
     private final S3Service s3Service;
 
-    @Transactional
-    public void updateModelName(Long annotationHistoryId, String newModelName) {
-        AnnotationHistory history = annotationHistoryRepository.findById(annotationHistoryId)
-                .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
-
-        history.updateModelName(newModelName);
-    }
-
     @Transactional(readOnly = true)
     public AnnotationHistoryResponseDto getAnnotationHistory(Long historyId) {
         AnnotationHistory history = annotationHistoryRepository.findWithSubProjectAndModelById(historyId)
@@ -52,14 +43,22 @@ public class AnnotationHistoryService {
                     List<CellAnnotation> cellAnnotations = cellAnnotationRepository.findAllByRoiId(roi.getId());
 
                     List<CellDetail> cellDetails = cellAnnotations.stream()
-                            .map(ca -> new CellDetail(ca.getX(), ca.getY()))
+                            .map(ca -> new CellDetail(
+                                    ca.getClassIndex(),
+                                    ca.getColor(),
+                                    new PolygonDto(
+                                            ca.getPolygon().stream()
+                                                    .map(p -> new PolygonDto.PointDto(p.getX(), p.getY()))
+                                                    .toList()
+                                    )
+                            ))
                             .toList();
 
                     RoiResponseDto detail = new RoiResponseDto(
                             roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
 
                     List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
-                            .map(TissueAnnotation::getAnnotationImageUrl)
+                            .map(TissueAnnotation::getAnnotationImagePath)
                             .map(s3Service::getPresignedUrl)
                             .toList();
 
@@ -67,17 +66,9 @@ public class AnnotationHistoryService {
                 })
                 .toList();
 
-        List<Label> labels = labelRepository.findByAnnotationHistoryId(historyId);
-
-        List<LabelDto> labelDtos = labels.stream()
-                .map(Label::toLabelDto)
-                .toList();
-
         return new AnnotationHistoryResponseDto(
                 history.getId(),
-                history.getModelName(),
-                roiPayloads,
-                labelDtos
+                roiPayloads
         );
     }
 }

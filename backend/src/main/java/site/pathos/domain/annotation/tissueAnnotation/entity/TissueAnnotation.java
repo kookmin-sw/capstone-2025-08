@@ -20,8 +20,8 @@ public class TissueAnnotation {
     @JoinColumn(name = "roi_id", nullable = false)
     private Roi roi;
 
-    @Column(name = "annotation_image_url", nullable = false)
-    private String annotationImageUrl;
+    @Column(name = "annotation_image_path", nullable = false)
+    private String annotationImagePath;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "annotation_type", nullable = false)
@@ -31,12 +31,12 @@ public class TissueAnnotation {
     private boolean isUploadComplete;
 
     @Builder
-    public TissueAnnotation(Roi roi, String annotationImageUrl, AnnotationType annotationType) {
+    public TissueAnnotation(Roi roi, String annotationImagePath, AnnotationType annotationType) {
         if (roi == null) throw new IllegalArgumentException("roi cannot be null in TissueAnnotation");
         if (annotationType == null) throw new IllegalArgumentException("annotationType is required");
 
         this.roi = roi;
-        this.annotationImageUrl = annotationImageUrl;
+        this.annotationImagePath = annotationImagePath;
         this.annotationType = annotationType;
         this.isUploadComplete = false;
     }

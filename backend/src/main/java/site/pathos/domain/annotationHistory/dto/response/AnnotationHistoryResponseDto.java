@@ -10,12 +10,6 @@ public record AnnotationHistoryResponseDto(
         @Schema(description = "Annotation History의 ID", example = "1")
         Long id,
 
-        @Schema(description = "연결된 모델의 이름", example = "My Custom Model")
-        String modelName,
-
         @Schema(description = "ROI 데이터 목록")
-        List<RoiResponsePayload> roiPayloads,
-
-        @Schema(description = "Label 데이터 목록")
-        List<LabelDto> labels
+        List<RoiResponsePayload> roiPayloads
 ) {}

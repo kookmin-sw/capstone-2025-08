@@ -8,5 +8,4 @@ import java.util.Optional;
 
 @Repository
 public interface InferenceHistoryRepository extends JpaRepository<InferenceHistory, Long> {
-    Optional<InferenceHistory> findByAnnotationHistoryId(Long annotationHistoryId);
 }
