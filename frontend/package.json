@@ -42,6 +42,7 @@
     "eslint-plugin-tailwindcss": "3.12.1",
     "geotiff-tilesource": "^2.1.0",
     "lucide-react": "^0.483.0",
+    "motion": "^12.11.0",
     "next": "15.2.2",
     "next-themes": "^0.4.6",
     "openseadragon": "^5.0.1",
