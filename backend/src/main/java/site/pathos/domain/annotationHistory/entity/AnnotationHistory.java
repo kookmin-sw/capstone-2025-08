@@ -46,8 +46,9 @@ public class AnnotationHistory {
     private LocalDateTime completedAt;
 
     @Builder
-    public AnnotationHistory(SubProject subProject, Model model) {
+    public AnnotationHistory(SubProject subProject, Model model, TrainingHistory trainingHistory) {
         this.subProject = subProject;
         this.model = model;
+        this.trainingHistory = trainingHistory;
     }
 }

@@ -30,14 +30,14 @@ public class ModelServerController {
         return ResponseEntity.ok().build();
     }
 
-//    @PostMapping("/annotation-histories/{annotationHistoryId}/training/result")
-//    @Operation(summary = "모델 학습 결과 수신", description = "모델 서버가 학습 결과를 서버에 전달합니다.")
-//    public ResponseEntity<Void> responseTraining(
-//            @Parameter(description = "어노테이션 히스토리 ID") @PathVariable Long annotationHistoryId,
-//            @Parameter(description = "모델 학습 결과 데이터", required = true)
-//            @RequestBody TrainingResultRequestDto resultRequestDto) {
-//
-//        modelServerService.resultTraining(annotationHistoryId, resultRequestDto);
-//        return ResponseEntity.ok().build();
-//    }
+    @PostMapping("/porjects/{projectId}/training/result")
+    @Operation(summary = "모델 학습 결과 수신", description = "모델 서버가 학습 결과를 서버에 전달합니다.")
+    public ResponseEntity<Void> responseTraining(
+            @Parameter(description = "어노테이션 히스토리 ID") @PathVariable Long projectId,
+            @Parameter(description = "모델 학습 결과 데이터", required = true)
+            @RequestBody TrainingResultRequestDto resultRequestDto) {
+
+        modelServerService.resultTraining(projectId, resultRequestDto);
+        return ResponseEntity.ok().build();
+    }
 }

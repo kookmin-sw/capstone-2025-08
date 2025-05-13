@@ -41,14 +41,14 @@ public class SubProject {
     @OneToMany(mappedBy = "subProject", fetch = FetchType.LAZY)
     private List<AnnotationHistory> annotationHistories = new ArrayList<>();
 
-    @Column(name = "svs_image_url")
-    private String svsImageUrl;
+    @Column(name = "svs_image_path")
+    private String svsImagePath;
 
-    @Column(name = "tile_image_url")
-    private String tileImageUrl;
+    @Column(name = "tile_image_path")
+    private String tileImagePath;
 
-    @Column(name = "thumbnail_url")
-    private String thumbnailUrl;
+    @Column(name = "thumbnail_path")
+    private String thumbnailPath;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -72,29 +72,29 @@ public class SubProject {
         this.isUploadComplete = false;
     }
 
-    public String initializeSvsImageUrl() {
+    public String initializeSvsImagePath() {
         if (this.id == null) {
             throw new IllegalStateException("SubProject ID must be set before initializing svsImageUrl.");
         }
-        return this.svsImageUrl = String.format("sub-project/%s/svs/original.svs", this.id);
+        return this.svsImagePath = String.format("sub-project/%s/svs/original.svs", this.id);
     }
 
     public String getFileName() {
-        return Paths.get(svsImageUrl).getFileName().toString();
+        return Paths.get(svsImagePath).getFileName().toString();
     }
 
-    public String initializeThumbnailImageUrl() {
+    public String initializeThumbnailImagePath() {
         if (this.id == null) {
             throw new IllegalStateException("SubProject ID must be set before initializing thumbnailImageUrl.");
         }
-        return this.thumbnailUrl = String.format("sub-project/%s/thumbnail/thumbnail.jpg", this.id);
+        return this.thumbnailPath = String.format("sub-project/%s/thumbnail/thumbnail.jpg", this.id);
     }
 
-    public String initializeTileImageUrl() {
+    public String initializeTileImagePath() {
         if (this.id == null) {
             throw new IllegalStateException("SubProject ID must be set before initializing tileImageUrl.");
         }
-        return this.tileImageUrl = String.format("sub-project/%s/tiles/output_slide.dzi", this.id);
+        return this.tileImagePath = String.format("sub-project/%s/tiles/output_slide.dzi", this.id);
 
     }
 

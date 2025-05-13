@@ -104,9 +104,9 @@ public class ProjectService {
                     .project(project)
                     .build();
             subProjectRepository.save(subProject);
-            String svsKey = subProject.initializeSvsImageUrl();
-            subProject.initializeThumbnailImageUrl();
-            subProject.initializeTileImageUrl();
+            String svsKey = subProject.initializeSvsImagePath();
+            subProject.initializeThumbnailImagePath();
+            subProject.initializeTileImagePath();
             uploadFiles.add(new S3UploadFileDto(subProject.getId(), svsKey, file));
 
             AnnotationHistory annotationHistory = AnnotationHistory.builder()
@@ -182,7 +182,7 @@ public class ProjectService {
                     .orElse("");
 
             List<String> thumbnailUrls = subProjects.stream()
-                    .map(SubProject::getThumbnailUrl)
+                    .map(SubProject::getThumbnailPath)
                     .filter(url -> url != null && !url.isBlank())
                     .limit(4)
                     .toList();
@@ -340,7 +340,7 @@ public class ProjectService {
         return subProjects.stream()
                 .map(subProject -> new SlideDto(
                         subProject.getId(),
-                        Objects.requireNonNullElse(subProject.getThumbnailUrl(), ""),
+                        Objects.requireNonNullElse(subProject.getThumbnailPath(), ""),
                         subProject.getFileName(),
                         "", // TODO 파일 사이즈
                         DateTimeUtils.dateTimeToDateFormat(subProject.getCreatedAt())  // TODO 파일 업로드 시간

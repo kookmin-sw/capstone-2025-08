@@ -47,4 +47,12 @@ public class CellAnnotation {
             this.y = y;
         }
     }
+
+    @Builder
+    public CellAnnotation(Roi roi, int classIndex, String color, List<Point> polygon){
+        this.roi = roi;
+        this.classIndex = classIndex;
+        this.color = color;
+        this.polygon = polygon;
+    }
 }

@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.project.entity.Project;
 
@@ -26,7 +25,7 @@ public class TrainingHistory {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "base_model_id")
+    @JoinColumn(name = "base_model_id", nullable = false)
     private Model baseModel;
 
     @CreationTimestamp

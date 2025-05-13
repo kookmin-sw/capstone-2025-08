@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
+import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.project.entity.Project;
 
 import java.time.LocalDateTime;
 
@@ -21,8 +23,12 @@ public class InferenceHistory {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "annotation_history_id", nullable = false)
-    private AnnotationHistory annotationHistory;
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "base_model_id", nullable = false)
+    private Model baseModel;
 
     @Column(name = "accuracy")
     private Float accuracy;
@@ -34,16 +40,18 @@ public class InferenceHistory {
     private Float loopPerformance;
 
     @CreationTimestamp
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
     @Builder
-    public InferenceHistory(AnnotationHistory annotationHistory){
-        this.annotationHistory = annotationHistory;
+    public InferenceHistory(Project project, Model model){
+        this.project = project;
+        this.baseModel = model;
     }
+
 
     public void updateResult(float accuracy, float loss, float loopPerformance) {
         this.accuracy = accuracy;

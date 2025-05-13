@@ -58,7 +58,7 @@ public class AnnotationHistoryService {
                             roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
 
                     List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
-                            .map(TissueAnnotation::getAnnotationImageUrl)
+                            .map(TissueAnnotation::getAnnotationImagePath)
                             .map(s3Service::getPresignedUrl)
                             .toList();
 

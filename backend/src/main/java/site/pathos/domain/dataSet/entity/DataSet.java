@@ -20,8 +20,8 @@ public class DataSet {
     @JoinColumn(name = "shared_project_id", nullable = false)
     private SharedProject sharedProject;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(name = "image_path", nullable = false)
+    private String imagePath;
 
     @Column(name = "data_type", nullable = false)
     private DataType dataType;

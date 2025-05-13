@@ -12,10 +12,11 @@ public enum ErrorCode {
     MODEL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 모델을 찾을 수 없습니다."),
     SUB_PROJECT_NOT_READY(HttpStatus.BAD_REQUEST, "아직 모든 서브프로젝트의 이미지 업로드가 완료되지 않았습니다."),
     SUB_PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 서브프로젝트를 찾을 수 없습니다."),
-    HEX_COLOR_INVALID(HttpStatus.BAD_REQUEST, "색상정보가 올바른 형식이 아닙니다. 않습니다"),
+    HEX_COLOR_INVALID(HttpStatus.BAD_REQUEST, "색상정보가 올바른 형식이 아닙니다."),
     ANNOTATION_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 서브 프로젝트에서 어노테이션 히스토리를 찾을수 없습니다."),
     MERGED_TISSUE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 ROI에서 TISSUE 어노테이션의 파일을 찾을 수 없습니다."),
-
+    TRAINING_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 학습 기록을 찾을 수 없습니다."),
+    INFERENCE_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 추론 기록을 찾을 수 없습니다."),
     ;
 
     private final HttpStatus status;
