@@ -3,6 +3,7 @@ package site.pathos.domain.annotationHistory.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import site.pathos.domain.annotation.cellAnnotation.dto.PolygonDto;
 import site.pathos.domain.annotation.cellAnnotation.repository.CellAnnotationRepository;
 import site.pathos.domain.annotation.cellAnnotation.dto.CellDetail;
 import site.pathos.domain.annotation.cellAnnotation.entity.CellAnnotation;
@@ -42,7 +43,15 @@ public class AnnotationHistoryService {
                     List<CellAnnotation> cellAnnotations = cellAnnotationRepository.findAllByRoiId(roi.getId());
 
                     List<CellDetail> cellDetails = cellAnnotations.stream()
-                            .map(ca -> new CellDetail(ca.getX(), ca.getY()))
+                            .map(ca -> new CellDetail(
+                                    ca.getClassIndex(),
+                                    ca.getColor(),
+                                    new PolygonDto(
+                                            ca.getPolygon().stream()
+                                                    .map(p -> new PolygonDto.PointDto(p.getX(), p.getY()))
+                                                    .toList()
+                                    )
+                            ))
                             .toList();
 
                     RoiResponseDto detail = new RoiResponseDto(

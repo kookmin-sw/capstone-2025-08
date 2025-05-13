@@ -2,9 +2,16 @@ package site.pathos.domain.annotation.cellAnnotation.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "세포 어노테이션 정보")
 public record CellDetail(
-        @Schema(description = "세포의 X 좌표", example = "120")
-        int x,
-        @Schema(description = "세포의 Y 좌표", example = "340")
-        int y
+
+        @Schema(description = "세포 클래스 인덱스", example = "0")
+        int classIndex,
+
+        @Schema(description = "세포 색상 (Hex)", example = "#FF0000")
+        String color,
+
+        @Schema(description = "세포 외곽 폴리곤 정보")
+        PolygonDto polygon
+
 ) {}
