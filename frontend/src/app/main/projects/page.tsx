@@ -1,8 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { dummyProjects, dummySubProject } from '@/data/dummy';
-import { Project } from '@/types/project-schema';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import PageTitle from '@/components/common/page-title';
 import ProjectCard from '@/components/projects/project-card';
 import SearchBar from '@/components/common/search-bar';
@@ -17,25 +15,94 @@ import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import ProjectCreateModal from '@/components/projects/project-create-modal';
 import ImageUploadModal from '@/components/projects/image-upload-modal';
+import { ProjectAPIApi, GetProjectsResponseDetailDto } from '@/generated-api';
+import { toast } from 'sonner';
+import ProjectCardSkeleton from '@/components/projects/project-card-skeleton';
 
 const sortOptions = [
-  { value: 'created-desc', label: 'Created (desc)' },
-  { value: 'created-asc', label: 'Created (asc)' },
-  { value: 'updated-desc', label: 'Edited (desc)' },
-  { value: 'updated-asc', label: 'Edited (asc)' },
+  { value: 'Edited (desc)', label: 'Edited (desc)' },
+  { value: 'Edited (asc)', label: 'Edited (asc)' },
+  { value: 'Created (desc)', label: 'Created (desc)' },
+  { value: 'Created (asc)', label: 'Created (asc)' },
 ];
 
 export default function ProjectsPage() {
-  // TODO: 페이지네이션, 정렬 옵션, 검색 백엔드 연동 / 프로젝트 생성 (모달) Api 연동
+  const projectApi = useMemo(() => new ProjectAPIApi(), []);
 
+  const [projects, setProjects] = useState<GetProjectsResponseDetailDto[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sort, setSort] = useState('created-desc');
+  const [sort, setSort] = useState('Edited (desc)');
   const [recentKeywords, setRecentKeywords] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [newProjectInfo, setNewProjectInfo] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
+  const estimatedItemCount = projects.length || 6;
 
-  const itemsPerPage = 9;
+  const fetchProjects = useCallback(
+    async (options?: { search?: string; sort?: string; page?: number }) => {
+      let showSkeletonTimer: NodeJS.Timeout | null = null;
+
+      // 300ms 후에 스켈레톤 표시 (느린 요청일 경우에만)
+      showSkeletonTimer = setTimeout(() => setIsLoading(true), 500);
+
+      const {
+        search = searchTerm,
+        sort: sortOption = sort,
+        page = currentPage,
+      } = options || {};
+
+      try {
+        const response = await projectApi.getProjects({
+          search,
+          sort: sortOption,
+          page: page,
+        });
+        setProjects(response.project?.content || []);
+        setTotalPages(response.project?.totalPages || 1);
+      } catch (error) {
+        toast.error('Failed to load project list. Please try again.');
+      } finally {
+        if (showSkeletonTimer) {
+          clearTimeout(showSkeletonTimer);
+        }
+        setIsLoading(false);
+      }
+    },
+    [searchTerm, sort, currentPage, projectApi],
+  );
+
+  const handleCreateProject = async (files: File[]) => {
+    if (!newProjectInfo) {
+      toast.error('Project information is missing.');
+      return;
+    }
+
+    try {
+      await projectApi.createProject({
+        requestDto: {
+          title: newProjectInfo.title,
+          description: newProjectInfo.description,
+        },
+        files: files,
+      });
+      toast.success('The project has been created successfully.');
+      setIsUploadOpen(false);
+      await fetchProjects();
+      setCurrentPage(1);
+    } catch (error) {
+      toast.error('Failed to create the project. Please try again.');
+    }
+  };
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -51,31 +118,6 @@ export default function ProjectsPage() {
     setRecentKeywords((prev) => prev.filter((k) => k !== keyword));
   };
 
-  const sortedProjects = [...dummyProjects].sort((a, b) => {
-    if (sort === 'created-desc')
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    if (sort === 'created-asc')
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    if (sort === 'updated-desc')
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    if (sort === 'updated-asc')
-      return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
-    return 0;
-  });
-
-  const filteredProjects = sortedProjects.filter((project) =>
-    project.title.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredProjects.length / itemsPerPage),
-  );
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
   return (
     <div className="space-y-4">
       <PageTitle
@@ -90,7 +132,7 @@ export default function ProjectsPage() {
         sortOptions={sortOptions}
         onSortChange={(value) => {
           setSort(value);
-          setCurrentPage(1); // 정렬 변경 시도 첫 페이지로
+          setCurrentPage(1);
         }}
         searchTerm={searchTerm}
         onSearch={handleSearch}
@@ -98,61 +140,75 @@ export default function ProjectsPage() {
         onRemoveKeyword={handleRemoveKeyword}
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {paginatedProjects.map((project: Project) => (
-          <ProjectCard
-            key={project.id}
-            project={project}
-            subProjects={dummySubProject}
-          />
-        ))}
+      <div className="grid grid-cols-3 gap-4">
+        {isLoading ? (
+          Array.from({ length: estimatedItemCount }).map((_, index) => (
+            <ProjectCardSkeleton key={index} />
+          ))
+        ) : projects.length > 0 ? (
+          projects.map((project) => (
+            <ProjectCard
+              key={project.projectId}
+              project={project}
+              refetchProjects={fetchProjects}
+            />
+          ))
+        ) : (
+          <p>There are no projects yet.</p>
+        )}
       </div>
 
-      <div className="my-10 flex justify-center">
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage > 1) setCurrentPage(currentPage - 1);
-                }}
-              />
-            </PaginationItem>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <PaginationItem key={page}>
-                <Button
+      {totalPages > 1 && (
+        <div className="my-10 flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setCurrentPage(page);
+                    if (currentPage > 1) setCurrentPage(currentPage - 1);
                   }}
-                  variant={currentPage === page ? 'outline' : 'ghost'}
-                  size="icon"
-                >
-                  {page}
-                </Button>
+                />
               </PaginationItem>
-            ))}
 
-            <PaginationItem>
-              <PaginationNext
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                }}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(page);
+                      }}
+                      variant={currentPage === page ? 'outline' : 'ghost'}
+                      size="icon"
+                    >
+                      {page}
+                    </Button>
+                  </PaginationItem>
+                ),
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages)
+                      setCurrentPage(currentPage + 1);
+                  }}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <ProjectCreateModal
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onNext={() => {
+        onNext={(info) => {
+          setNewProjectInfo(info);
           setIsCreateOpen(false);
           setIsUploadOpen(true);
         }}
@@ -162,9 +218,7 @@ export default function ProjectsPage() {
         open={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         mode="create"
-        onUpload={(files) => {
-          console.log('업로드된 파일 목록:', files);
-        }}
+        onUpload={handleCreateProject}
         onPrevious={() => {
           setIsUploadOpen(false);
           setIsCreateOpen(true);
