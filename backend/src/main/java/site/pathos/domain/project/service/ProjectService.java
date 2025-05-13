@@ -192,6 +192,7 @@ public class ProjectService {
             projectDetails.add(new GetProjectsResponseDto.GetProjectsResponseDetailDto(
                     project.getId(),
                     project.getTitle(),
+                    project.getDescription(),
                     DateTimeUtils.dateTimeToStringFormat(project.getCreatedAt()),
                     DateTimeUtils.dateTimeToStringFormat(project.getUpdatedAt()),
                     project.getModelType(),
