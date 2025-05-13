@@ -20,6 +20,7 @@ import site.pathos.domain.label.repository.ProjectLabelRepository;
 import site.pathos.domain.model.Repository.ModelRepository;
 import site.pathos.domain.model.Repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto;
@@ -239,7 +240,7 @@ public class ProjectService {
         Project project = getProject(projectId, userId);
 
         List<SubProject> subProjects = getSubProjects(project);
-        Model recentModel = getRecentModel(subProjects);
+        Model recentModel = getRecentModel(project);
         String createdAt = DateTimeUtils.dateTimeToStringFormat(project.getCreatedAt());
         String updatedAt = DateTimeUtils.dateTimeToStringFormat(project.getUpdatedAt());
         SlideSummaryDto slideSummaryDto = getSlideSummaryDto(subProjects);
@@ -252,7 +253,7 @@ public class ProjectService {
                 projectId,
                 project.getTitle(),
                 project.getDescription(),
-                recentModel.getModelType(),
+                project.getModelType(),
                 recentModel.getName(),
                 createdAt,
                 updatedAt,
@@ -286,11 +287,10 @@ public class ProjectService {
         return subProjects;
     }
 
-    private Model getRecentModel(List<SubProject> subProjects) {
-        SubProject recentSubProject = subProjects.get(subProjects.size() - 1);
-        AnnotationHistory recentAnnotationHistory = recentSubProject.getAnnotationHistories()
-                .get(recentSubProject.getAnnotationHistories().size() - 1);
-        return recentAnnotationHistory.getModel();
+    private Model getRecentModel(Project project) {
+        return projectModelRepository.findLatestByProjectIdWithModel(project.getId())
+                .map(ProjectModel::getModel)
+                .orElse(null); // 혹은 orElseThrow(...)로 바꿔도 됨
     }
 
     private List<LabelDto> getLabelDtos(Long projectId) {
