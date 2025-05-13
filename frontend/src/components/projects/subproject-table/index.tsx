@@ -9,27 +9,35 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { format } from 'date-fns';
-import { SubProject } from '@/types/project-schema';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import SubProjectDeleteModal from '@/components/projects/subproject-delete-modal';
+import type { SlideDto } from '@/generated-api';
+import { Trash } from 'lucide-react';
 
 export default function SubProjectTable({
   subProjects,
 }: {
-  subProjects: SubProject[];
+  subProjects: SlideDto[];
 }) {
-  // TODO: 서브 프로젝트 삭제 (모달) Api 연동, 서브 프로젝트 페이지네이션 추가
+  // TODO: 서브 프로젝트 삭제
 
   const [isExpanded, setIsExpanded] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<SubProject | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SlideDto | null>(null);
 
   const visibleCount = isExpanded ? subProjects.length : 10;
   const visibleProjects = subProjects.slice(0, visibleCount);
   const showToggle = subProjects.length > 10;
 
-  const handleDelete = (sp: SubProject) => setDeleteTarget(sp);
+  const handleDelete = (sp: SlideDto) => setDeleteTarget(sp);
+
+  if (visibleProjects.length === 0) {
+    return (
+      <div className="text-muted-foreground py-10 text-center text-sm">
+        No slides available.
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-sm border">
@@ -45,28 +53,26 @@ export default function SubProjectTable({
         </TableHeader>
         <TableBody>
           {visibleProjects.map((sp) => (
-            <TableRow key={sp.id}>
+            <TableRow key={sp.subProjectId}>
               <TableCell className="flex items-center justify-center">
                 <Image
-                  src={sp.thumbnail}
-                  alt={sp.thumbnail}
+                  src={sp.thumbnailUrl || ''}
+                  alt={sp.name || 'Slide thumbnail'}
                   width={50}
                   height={50}
                   className="rounded-md object-cover"
                 />
               </TableCell>
-              <TableCell className="truncate">{sp.svsPath}</TableCell>
-              <TableCell className="text-center">{sp.size}MB</TableCell>
-              <TableCell className="text-center">
-                {format(new Date(sp.uploadedOn), 'yyyy-MM-dd')}
-              </TableCell>
+              <TableCell className="truncate">{sp.name}</TableCell>
+              <TableCell className="text-center">{sp.size}</TableCell>
+              <TableCell className="text-center">{sp.uploadedOn}</TableCell>
               <TableCell className="text-center">
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="icon"
                   onClick={() => handleDelete(sp)}
                 >
-                  삭제
+                  <Trash />
                 </Button>
               </TableCell>
             </TableRow>
@@ -95,9 +101,9 @@ export default function SubProjectTable({
         <SubProjectDeleteModal
           open={!!deleteTarget}
           onClose={() => setDeleteTarget(null)}
-          subProjectFileName={deleteTarget.svsPath}
+          subProjectFileName={deleteTarget.name || ''}
           onClickDelete={() => {
-            console.log(`Deleted: ${deleteTarget.id}`);
+            console.log(`Deleted: ${deleteTarget.subProjectId}`);
             setDeleteTarget(null);
           }}
         />
