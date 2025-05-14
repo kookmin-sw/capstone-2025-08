@@ -51,4 +51,6 @@ public class AnnotationHistory {
         this.model = model;
         this.trainingHistory = trainingHistory;
     }
+
+    public void setUpdatedAt() { this.updatedAt = LocalDateTime.now(); }
 }

@@ -17,6 +17,7 @@ public enum ErrorCode {
     MERGED_TISSUE_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 ROI에서 TISSUE 어노테이션의 파일을 찾을 수 없습니다."),
     TRAINING_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 학습 기록을 찾을 수 없습니다."),
     INFERENCE_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 추론 기록을 찾을 수 없습니다."),
+    PROJECT_LABEL_NOT_FUND(HttpStatus.NOT_FOUND, "해당 프로젝트 라벨을 찾을 수 없습니다"),
     ;
 
     private final HttpStatus status;

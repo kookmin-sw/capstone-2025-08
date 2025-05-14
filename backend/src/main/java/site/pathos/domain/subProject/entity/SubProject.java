@@ -101,4 +101,6 @@ public class SubProject {
     public void markTilingCompleted() {
         this.isUploadComplete = true;
     }
+
+    public void setUpdatedAt() { this.updatedAt = LocalDateTime.now(); }
 }
