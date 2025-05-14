@@ -13,7 +13,7 @@ import site.pathos.domain.label.repository.LabelRepository;
 import site.pathos.domain.label.repository.ProjectLabelRepository;
 import site.pathos.domain.model.Repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.ProjectModel;
-import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
+import site.pathos.domain.project.dto.response.GetProjectAnnotationResponseDto;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.roi.dto.request.RoiLabelSaveRequestDto;
@@ -134,7 +134,7 @@ public class AnnotationService {
     }
 
     @Transactional(readOnly = true)
-    public GetSubProjectResponseDto getProjectAnnotation(Long projectId){
+    public GetProjectAnnotationResponseDto getProjectAnnotation(Long projectId){
         Long userId = 1L;   // TODO
         Project project = getProject(projectId, userId);
         List<SubProjectSummaryDto> subProjects = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
@@ -146,18 +146,18 @@ public class AnnotationService {
 
         List<ProjectModel> projectModels = projectModelRepository.findByProjectIdOrderByCreatedAt(projectId);
 
-        List<GetSubProjectResponseDto.ProjectModelsDto> dtos = projectModels.stream()
-                .map(pm -> new GetSubProjectResponseDto.ProjectModelsDto(
+        List<GetProjectAnnotationResponseDto.ProjectModelsDto> dtos = projectModels.stream()
+                .map(pm -> new GetProjectAnnotationResponseDto.ProjectModelsDto(
                         pm.getId(),
                         pm.getModel().getName()
                 ))
                 .toList();
 
-        GetSubProjectResponseDto.ModelsDto modelsDto = getProjectModels(project);
+        GetProjectAnnotationResponseDto.ModelsDto modelsDto = getProjectModels(project);
 
-        List<GetSubProjectResponseDto.LabelDto> labelDtos = getProjectLabels(project);
+        List<GetProjectAnnotationResponseDto.LabelDto> labelDtos = getProjectLabels(project);
 
-        return new GetSubProjectResponseDto(
+        return new GetProjectAnnotationResponseDto(
                 projectId,
                 project.getTitle(),
                 modelsDto,
@@ -177,27 +177,27 @@ public class AnnotationService {
         return project;
     }
 
-    private GetSubProjectResponseDto.ModelsDto getProjectModels(Project project){
+    private GetProjectAnnotationResponseDto.ModelsDto getProjectModels(Project project){
         List<ProjectModel> projectModels = projectModelRepository.findByProjectIdOrderByCreatedAt(project.getId());
 
-        List<GetSubProjectResponseDto.ProjectModelsDto> projectModelsDto = projectModels.stream()
-                .map(pm -> new GetSubProjectResponseDto.ProjectModelsDto(
+        List<GetProjectAnnotationResponseDto.ProjectModelsDto> projectModelsDto = projectModels.stream()
+                .map(pm -> new GetProjectAnnotationResponseDto.ProjectModelsDto(
                         pm.getId(),
                         pm.getModel().getName()
                 ))
                 .toList();
 
-        return new GetSubProjectResponseDto.ModelsDto(
+        return new GetProjectAnnotationResponseDto.ModelsDto(
                 project.getModelType(),
                 projectModelsDto
         );
     }
 
-    private List<GetSubProjectResponseDto.LabelDto> getProjectLabels(Project project){
+    private List<GetProjectAnnotationResponseDto.LabelDto> getProjectLabels(Project project){
         List<ProjectLabel> projectLabels = projectLabelRepository.findAllByProjectId(project.getId());
 
         return projectLabels.stream()
-                .map(projectLabel -> new GetSubProjectResponseDto.LabelDto(
+                .map(projectLabel -> new GetProjectAnnotationResponseDto.LabelDto(
                         projectLabel.getId(),
                         projectLabel.getName(),
                         projectLabel.getColor()
