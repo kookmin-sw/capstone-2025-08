@@ -33,7 +33,7 @@ import { ProjectAPIApi, GetProjectDetailResponseDto } from '@/generated-api';
 import { toast } from 'sonner';
 
 export default function ProjectDetails() {
-  // TODO: 서브프로젝트 추가, 프로젝트 수정 에러 해결
+  // TODO: 서브프로젝트 추가
   const projectApi = useMemo(() => new ProjectAPIApi(), []);
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
