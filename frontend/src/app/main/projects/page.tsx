@@ -15,7 +15,11 @@ import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import ProjectCreateModal from '@/components/projects/project-create-modal';
 import ImageUploadModal from '@/components/projects/image-upload-modal';
-import { ProjectAPIApi, GetProjectsResponseDetailDto } from '@/generated-api';
+import {
+  ProjectAPIApi,
+  GetProjectsResponseDetailDto,
+  GetProjectsResponseModelsDto,
+} from '@/generated-api';
 import { toast } from 'sonner';
 import ProjectCardSkeleton from '@/components/projects/project-card-skeleton';
 
@@ -27,9 +31,11 @@ const sortOptions = [
 ];
 
 export default function ProjectsPage() {
+  // TODO: 서버 500에러 테스트 필요함
   const projectApi = useMemo(() => new ProjectAPIApi(), []);
 
   const [projects, setProjects] = useState<GetProjectsResponseDetailDto[]>([]);
+  const [models, setModels] = useState<GetProjectsResponseModelsDto[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +47,7 @@ export default function ProjectsPage() {
   const [newProjectInfo, setNewProjectInfo] = useState<{
     title: string;
     description: string;
+    modelId: number;
   } | null>(null);
   const estimatedItemCount = projects.length || 6;
 
@@ -64,6 +71,7 @@ export default function ProjectsPage() {
           page: page,
         });
         setProjects(response.project?.content || []);
+        setModels(response.models || []);
         setTotalPages(response.project?.totalPages || 1);
       } catch (error) {
         toast.error('Failed to load project list. Please try again.');
@@ -88,6 +96,7 @@ export default function ProjectsPage() {
         requestDto: {
           title: newProjectInfo.title,
           description: newProjectInfo.description,
+          modelId: newProjectInfo.modelId,
         },
         files: files,
       });
@@ -205,6 +214,7 @@ export default function ProjectsPage() {
       )}
 
       <ProjectCreateModal
+        models={models}
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onNext={(info) => {
@@ -218,11 +228,11 @@ export default function ProjectsPage() {
         open={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         mode="create"
-        onUpload={handleCreateProject}
         onPrevious={() => {
           setIsUploadOpen(false);
           setIsCreateOpen(true);
         }}
+        onCreateSubmit={handleCreateProject}
       />
     </div>
   );
