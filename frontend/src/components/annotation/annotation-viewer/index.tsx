@@ -1540,6 +1540,9 @@ const AnnotationViewer: React.FC<{
               className={`absolute inset-0 z-20 ${
                 isEditingROI ? 'pointer-events-auto' : 'pointer-events-none'
               }`}
+              style={{
+                cursor: isEditingROI ? 'crosshair' : 'default',
+              }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
