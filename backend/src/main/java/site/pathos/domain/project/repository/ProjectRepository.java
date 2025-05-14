@@ -1,6 +1,8 @@
 package site.pathos.domain.project.repository;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,4 +31,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     )
 """)
     Project findProjectWithUserBySubProjectId(@Param("subProjectId") Long subProjectId);
+
+    @Query("""
+    SELECT p FROM Project p
+    WHERE p.id = (
+        SELECT sp.project.id FROM SubProject sp WHERE sp.id = :subProjectId
+    )
+""")
+    Optional<Project> findBySubProjectId(@Param("subProjectId") Long subProjectId);
 }

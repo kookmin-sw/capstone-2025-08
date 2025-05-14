@@ -79,6 +79,7 @@ public class Project {
     public void updateDetail(String title, String description) {
         this.title = title;
         this.description = description;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void delete() {

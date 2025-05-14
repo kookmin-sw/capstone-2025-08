@@ -5,9 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
-import site.pathos.domain.label.dto.LabelDto;
-import site.pathos.domain.model.entity.Model;
+
 
 @Entity
 @Table(name = "label")
@@ -19,4 +17,7 @@ public class Label {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    public static Label create() {
+        return new Label();
+    }
 }

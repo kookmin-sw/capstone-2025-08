@@ -41,4 +41,9 @@ public class ProjectLabel {
         this.name = name;
         this.color = color;
     }
+
+    public void changeLabel(String color, String name){
+        this.color = color;
+        this.name = name;
+    }
 }

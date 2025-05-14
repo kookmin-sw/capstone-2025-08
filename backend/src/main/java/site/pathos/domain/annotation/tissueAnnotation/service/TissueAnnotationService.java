@@ -39,7 +39,7 @@ public class TissueAnnotationService {
             String originalFilename = image.getOriginalFilename().replaceAll("\\s+", "_");
             String key = "sub-project/" + subProjectId
                     + "/annotation-history/" + annotationHistoryId
-                    + "/roi-" + roi.getId() + "/train/" + originalFilename;
+                    + "/roi" + roi.getId() + "/train/" + originalFilename;
 
             TissueAnnotation ta = TissueAnnotation.builder()
                     .roi(roi)
@@ -69,7 +69,7 @@ public class TissueAnnotationService {
 
             String mergedKey = "sub-project/" + subProjectId
                     + "/annotation-history/" + annotationHistoryId
-                    + "/roi-" + roi.getId() + "/merged.png";
+                    + "/roi/" + roi.getId() + "/merged.png";
 
             TissueAnnotation mergedAnnotation = TissueAnnotation.builder()
                     .roi(roi)
@@ -142,7 +142,6 @@ public class TissueAnnotationService {
             } catch (Exception e) {
                 log.error("S3 이미지 삭제 실패: {}", key, e);
             }
-
             tissueAnnotationRepository.delete(annotation);
         }
 
