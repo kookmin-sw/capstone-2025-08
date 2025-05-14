@@ -31,7 +31,6 @@ export default function ProjectCard({
   project,
   refetchProjects,
 }: ProjectCardProps) {
-  // TODO: 프로젝트 수정 에러 해결
   const projectApi = useMemo(() => new ProjectAPIApi(), []);
   const router = useRouter();
 
