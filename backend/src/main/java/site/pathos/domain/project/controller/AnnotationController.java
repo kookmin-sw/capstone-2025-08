@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
 import site.pathos.domain.project.service.AnnotationService;
 import site.pathos.domain.roi.dto.request.RoiLabelSaveRequestDto;
 
@@ -41,5 +42,18 @@ public class AnnotationController {
     ) {
         annotationService.saveWithAnnotations(subProjectId, annotationHistoryId, roiLabelSaveRequestDto.rois(), images, roiLabelSaveRequestDto.labels());
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "서브 프로젝트를 조회합니다.",
+            description = "해당 projectId를 기반으로 연결된 서브 프로젝트 정보를 반환합니다."
+    )
+    @GetMapping("/projects/{projectId}")
+    public ResponseEntity<GetSubProjectResponseDto> getSubProject(
+            @Parameter(description = "조회할 프로젝트 ID", example = "1")
+            @PathVariable Long projectId
+    ) {
+        GetSubProjectResponseDto response = annotationService.getProjectAnnotation(projectId);
+        return ResponseEntity.ok(response);
     }
 }

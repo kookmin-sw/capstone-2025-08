@@ -11,11 +11,15 @@ import site.pathos.domain.label.entity.Label;
 import site.pathos.domain.label.entity.ProjectLabel;
 import site.pathos.domain.label.repository.LabelRepository;
 import site.pathos.domain.label.repository.ProjectLabelRepository;
+import site.pathos.domain.model.Repository.ProjectModelRepository;
+import site.pathos.domain.model.entity.ProjectModel;
+import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.roi.dto.request.RoiLabelSaveRequestDto;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
+import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.subProject.repository.SubProjectRepository;
 import site.pathos.global.error.BusinessException;
@@ -34,6 +38,8 @@ public class AnnotationService {
     private final ProjectLabelRepository projectLabelRepository;
     private final LabelRepository labelRepository;
     private final SubProjectRepository subProjectRepository;
+    private final ProjectService projectService;
+    private final ProjectModelRepository projectModelRepository;
 
     @Transactional
     public void saveWithAnnotations(Long subProjectId, Long annotationHistoryId,
@@ -125,5 +131,77 @@ public class AnnotationService {
         projectLabel.changeLabel(labelDto.color(), labelDto.name());
 
         return projectLabel;
+    }
+
+    @Transactional(readOnly = true)
+    public GetSubProjectResponseDto getProjectAnnotation(Long projectId){
+        Long userId = 1L;   // TODO
+        Project project = getProject(projectId, userId);
+        List<SubProjectSummaryDto> subProjects = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
+
+        boolean hasIncompleteUploads = subProjectRepository.existsByProjectIdAndIsUploadCompleteFalse(projectId);
+        if (hasIncompleteUploads) {
+            throw new BusinessException(ErrorCode.SUB_PROJECT_NOT_READY);
+        }
+
+        List<ProjectModel> projectModels = projectModelRepository.findByProjectIdOrderByCreatedAt(projectId);
+
+        List<GetSubProjectResponseDto.ProjectModelsDto> dtos = projectModels.stream()
+                .map(pm -> new GetSubProjectResponseDto.ProjectModelsDto(
+                        pm.getId(),
+                        pm.getModel().getName()
+                ))
+                .toList();
+
+        GetSubProjectResponseDto.ModelsDto modelsDto = getProjectModels(project);
+
+        List<GetSubProjectResponseDto.LabelDto> labelDtos = getProjectLabels(project);
+
+        return new GetSubProjectResponseDto(
+                projectId,
+                project.getTitle(),
+                modelsDto,
+                labelDtos,
+                subProjects
+        );
+    }
+
+    private Project getProject(Long projectId, Long userId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+
+        if (!project.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_PROJECT_ACCESS);
+        }
+
+        return project;
+    }
+
+    private GetSubProjectResponseDto.ModelsDto getProjectModels(Project project){
+        List<ProjectModel> projectModels = projectModelRepository.findByProjectIdOrderByCreatedAt(project.getId());
+
+        List<GetSubProjectResponseDto.ProjectModelsDto> projectModelsDto = projectModels.stream()
+                .map(pm -> new GetSubProjectResponseDto.ProjectModelsDto(
+                        pm.getId(),
+                        pm.getModel().getName()
+                ))
+                .toList();
+
+        return new GetSubProjectResponseDto.ModelsDto(
+                project.getModelType(),
+                projectModelsDto
+        );
+    }
+
+    private List<GetSubProjectResponseDto.LabelDto> getProjectLabels(Project project){
+        List<ProjectLabel> projectLabels = projectLabelRepository.findAllByProjectId(project.getId());
+
+        return projectLabels.stream()
+                .map(projectLabel -> new GetSubProjectResponseDto.LabelDto(
+                        projectLabel.getId(),
+                        projectLabel.getName(),
+                        projectLabel.getColor()
+                ))
+                .toList();
     }
 }

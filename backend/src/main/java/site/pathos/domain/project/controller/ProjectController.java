@@ -34,20 +34,6 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
-    @Operation(
-            summary = "서브 프로젝트를 조회합니다.",
-            description = "해당 projectId를 기반으로 연결된 서브 프로젝트 정보를 반환합니다."
-    )
-    @GetMapping("/annotation/{projectId}")
-    public ResponseEntity<GetSubProjectResponseDto> getSubProject(
-            @Parameter(description = "조회할 프로젝트 ID", example = "1")
-            @PathVariable Long projectId
-    ) {
-        GetSubProjectResponseDto response = projectService.getSubProject(projectId);
-        return ResponseEntity.ok(response);
-    }
-
-
     @Operation(summary = "프로젝트를 생성합니다.")
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Void> createProject(

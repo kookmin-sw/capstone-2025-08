@@ -31,13 +31,11 @@ import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.Slide
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.SlideSummaryDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto.GetProjectsResponseModelsDto;
-import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.enums.ModelProcessStatusType;
 import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.subProject.dto.request.SubProjectTilingRequestDto;
-import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.subProject.repository.SubProjectRepository;
 import site.pathos.domain.user.entity.User;
@@ -65,24 +63,6 @@ public class ProjectService {
     private static final int PROJECTS_PAGE_SIZE = 9;
     private final ProjectModelRepository projectModelRepository;
     private final ProjectLabelRepository projectLabelRepository;
-
-    @Transactional(readOnly = true)
-    public GetSubProjectResponseDto getSubProject(Long projectId){
-        Long userId = 1L;   // TODO
-        Project project = getProject(projectId, userId);
-        List<SubProjectSummaryDto> subProjects = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
-
-        boolean hasIncompleteUploads = subProjectRepository.existsByProjectIdAndIsUploadCompleteFalse(projectId);
-        if (hasIncompleteUploads) {
-            throw new BusinessException(ErrorCode.SUB_PROJECT_NOT_READY);
-        }
-
-        return new GetSubProjectResponseDto(
-                projectId,
-                project.getTitle(),
-                subProjects
-        );
-    }
 
     @Transactional
     public void createProject(CreateProjectRequestDto requestDto, List<MultipartFile> files) {
