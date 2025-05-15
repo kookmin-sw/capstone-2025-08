@@ -1,6 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 
 interface PoliciesInfoCardProps {
@@ -8,6 +7,7 @@ interface PoliciesInfoCardProps {
   title: string;
   description: string;
   haveButton?: boolean;
+  onClick?: () => void;
 }
 
 export default function PoliciesInfoCard({
@@ -15,6 +15,7 @@ export default function PoliciesInfoCard({
   title,
   description,
   haveButton = false,
+  onClick,
 }: PoliciesInfoCardProps) {
   return (
     <Card className="border border-gray-100 shadow-sm">
@@ -26,8 +27,8 @@ export default function PoliciesInfoCard({
           <h3 className="mb-2 font-semibold">{title}</h3>
           <p className="mb-4 text-sm text-gray-600">{description}</p>
           {haveButton && (
-            <Button asChild size="sm">
-              <Link href="/main/docs-help">Contact Us</Link>
+            <Button size="sm" onClick={onClick}>
+              Contact Us
             </Button>
           )}
         </div>

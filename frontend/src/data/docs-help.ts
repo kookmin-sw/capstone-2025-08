@@ -36,18 +36,18 @@ export const docCategories = [
     description:
       'Learn the basics of navigating the platform and setting up your first project',
     icon: Book,
-    link: '/docs/getting-started',
+    link: '/main',
   },
   {
     title: 'User Guide',
     description: 'Comprehensive documentation for using PathOs features',
     icon: FileText,
-    link: '/docs/user-guide',
+    link: '/main',
   },
   {
     title: 'Video Tutorials',
     description: 'Visual guides for learning PathOs features',
     icon: Video,
-    link: '/docs/videos',
+    link: '/main',
   },
 ];

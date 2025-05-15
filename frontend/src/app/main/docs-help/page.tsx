@@ -101,8 +101,8 @@ export default function DocsHelpPage() {
                   Our support team is available to assist you with any questions
                   or issues you may have.
                 </p>
-                <Button asChild>
-                  <Link href="/docs/contact">Contact Support</Link>
+                <Button onClick={() => console.log('contact support')}>
+                  Contact Support
                 </Button>
               </div>
             </div>

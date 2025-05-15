@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Card,
   CardContent,
@@ -6,15 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Shield,
-  FileText,
-  Lock,
-  Users,
-  CheckCircle,
-  Clock,
-  HelpCircle,
-} from 'lucide-react';
+import { Shield, FileText, Lock, Users } from 'lucide-react';
 import { policiesTermsData, policyInfoCardData } from '@/data/policies-terms';
 import PageTitle from '@/components/common/page-title';
 import PoliciesInfoCard from '@/components/policies-terms/policies-info-card';
@@ -82,7 +76,11 @@ export default function PoliciesTermsPage() {
 
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
           {policyInfoCardData.map((card, index) => (
-            <PoliciesInfoCard key={index} {...card} />
+            <PoliciesInfoCard
+              key={index}
+              {...card}
+              onClick={() => console.log('contact us')}
+            />
           ))}
         </div>
       </div>
