@@ -16,7 +16,6 @@ interface ImageUploadModalProps {
   open: boolean;
   onClose: () => void;
   mode: 'create' | 'append';
-  onUpload?: (files: File[]) => void;
   onPrevious?: () => void;
   onCreateSubmit?: (files: File[]) => void;
   onAppendSubmit?: (files: File[]) => void;
@@ -28,7 +27,6 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
   open,
   onClose,
   mode,
-  onUpload,
   onPrevious,
   onCreateSubmit,
   onAppendSubmit,
@@ -136,28 +134,22 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
 
     if (allComplete) {
       setUploadComplete(true);
-      const validFiles = files.filter(
-        (file) => uploadStatus[file.name] === 'done',
-      );
-      if (onUpload) onUpload(validFiles);
     }
-  }, [uploadStatus, files, onUpload]);
+  }, [uploadStatus, files]);
 
-  const handleCreateSubmit = () => {
+  const handleSubmit = () => {
     const validFiles = files.filter(
       (file) => uploadStatus[file.name] === 'done',
     );
-    if (onUpload) onUpload(validFiles);
-    if (onCreateSubmit) onCreateSubmit(validFiles);
-    onClose();
-  };
 
-  const handleAppendSubmit = () => {
-    const validFiles = files.filter(
-      (file) => uploadStatus[file.name] === 'done',
-    );
-    if (onUpload) onUpload(validFiles);
-    if (onAppendSubmit) onAppendSubmit(validFiles);
+    if (mode === 'create') {
+      if (onCreateSubmit) {
+        onCreateSubmit(validFiles);
+      }
+    } else if (mode === 'append') {
+      if (onAppendSubmit) onAppendSubmit(validFiles);
+    }
+
     onClose();
   };
 
@@ -260,9 +252,7 @@ const ImageUploadModal: React.FC<ImageUploadModalProps> = ({
             </Button>
           )}
           <Button
-            onClick={
-              mode === 'create' ? handleCreateSubmit : handleAppendSubmit
-            }
+            onClick={handleSubmit}
             className="min-w-[80px]"
             disabled={!uploadComplete}
           >

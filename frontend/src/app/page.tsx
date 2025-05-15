@@ -1,12 +1,39 @@
-import { Button } from '@/components/ui/button';
-import { Home } from 'lucide-react';
+'use client';
+
+import { useAutoRotateFeatures } from '@/hooks/use-auto-rotate-features';
+import { useScrollState } from '@/hooks/use-scroll-state';
+import { useMousePosition } from '@/hooks/use-mouse-position';
+import LandingHeader from '@/components/landing/landing-header';
+import LandingFooter from '@/components/landing/landing-footer';
+import HeroSection from '@/components/landing/hero-section';
+import FeaturesSection from '@/components/landing/features-section';
+import WorkflowSection from '@/components/landing/workflow-section';
+import AboutSection from '@/components/landing/about-section';
+import { features, workflowSteps, aboutHighlights } from '@/data/landing-data';
 
 export default function Main() {
+  const { activeFeature, setActiveFeature } = useAutoRotateFeatures(
+    features.length,
+  );
+  const scrolled = useScrollState();
+  const mousePosition = useMousePosition();
+
   return (
-    <div>
-      <Button>
-        <Home color="white" /> test button
-      </Button>
+    <div className="flex min-h-screen flex-col overflow-hidden">
+      <LandingHeader scrolled={scrolled} />
+      <HeroSection
+        features={features}
+        activeFeature={activeFeature}
+        mousePosition={mousePosition}
+      />
+      <FeaturesSection
+        features={features}
+        activeFeature={activeFeature}
+        setActiveFeature={setActiveFeature} // 필요시
+      />
+      <WorkflowSection workflowSteps={workflowSteps} />
+      <AboutSection aboutHighlights={aboutHighlights} />
+      <LandingFooter />
     </div>
   );
 }

@@ -18,8 +18,8 @@ export default function ProjectInfoCard({
   iconBgColor?: string;
   iconColor?: string;
   label: string;
-  value: string | number;
-  subText?: string;
+  value: React.ReactNode;
+  subText: React.ReactNode;
   progress?: number;
   rightElement?: ReactNode;
 }) {

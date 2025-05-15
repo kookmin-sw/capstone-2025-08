@@ -16,23 +16,27 @@ import {
 } from 'recharts';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-
-type EpochMetric = {
-  epoch: number;
-  loss: number;
-  iou: number;
-};
+import type { AnalyticsDto } from '@/generated-api';
 
 interface ModelTrainingMetricsChartProps {
-  data: EpochMetric[];
+  data: AnalyticsDto;
   f1Score: number;
+}
+
+function prepareChartData(analytics: AnalyticsDto) {
+  const { epochs = [], loss = [], iou = [] } = analytics;
+  return epochs.map((epoch, index) => ({
+    epoch,
+    loss: loss[index] ?? null,
+    iou: iou[index] ?? null,
+  }));
 }
 
 export default function ModelTrainingMetricsChart({
   data,
   f1Score,
 }: ModelTrainingMetricsChartProps) {
-  // TODO: AI 팀이랑 협의 후, 차트 디자인 변경
+  const chartData = prepareChartData(data);
 
   return (
     <div className="flex flex-col gap-10">
@@ -47,20 +51,26 @@ export default function ModelTrainingMetricsChart({
         </div>
         <Card>
           <CardContent className="h-60 pt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data}>
-                <XAxis dataKey="epoch" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="loss"
-                  stroke="#ef4444"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <XAxis dataKey="epoch" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="loss"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
+                No loss data available.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -76,20 +86,26 @@ export default function ModelTrainingMetricsChart({
         </div>
         <Card>
           <CardContent className="h-60 pt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
-                <XAxis dataKey="epoch" />
-                <YAxis domain={[0, 1]} />
-                <CartesianGrid strokeDasharray="3 3" />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="iou"
-                  stroke="#3b82f6"
-                  fill="#dbeafe"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData}>
+                  <XAxis dataKey="epoch" />
+                  <YAxis domain={[0, 1]} />
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="iou"
+                    stroke="#3b82f6"
+                    fill="#dbeafe"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
+                No IoU data available.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -105,27 +121,33 @@ export default function ModelTrainingMetricsChart({
         </div>
         <Card>
           <CardContent className="h-60 pt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart
-                cx="50%"
-                cy="50%"
-                innerRadius="70%"
-                outerRadius="90%"
-                barSize={12}
-                data={[{ name: 'F1 Score', value: f1Score, fill: '#10b981' }]}
-                startAngle={180}
-                endAngle={-180}
-              >
-                <RadialBar background dataKey="value" cornerRadius={5} />
-                <Legend
-                  iconSize={10}
-                  layout="vertical"
-                  verticalAlign="middle"
-                  align="center"
-                  formatter={() => `F1: ${(f1Score * 100).toFixed(1)}%`}
-                />
-              </RadialBarChart>
-            </ResponsiveContainer>
+            {f1Score > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <RadialBarChart
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="70%"
+                  outerRadius="90%"
+                  barSize={12}
+                  data={[{ name: 'F1 Score', value: f1Score, fill: '#10b981' }]}
+                  startAngle={180}
+                  endAngle={-180}
+                >
+                  <RadialBar background dataKey="value" cornerRadius={5} />
+                  <Legend
+                    iconSize={10}
+                    layout="vertical"
+                    verticalAlign="middle"
+                    align="center"
+                    formatter={() => `F1: ${(f1Score * 100).toFixed(1)}%`}
+                  />
+                </RadialBarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="text-muted-foreground flex h-full items-center justify-center text-sm">
+                No F1 score available.
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

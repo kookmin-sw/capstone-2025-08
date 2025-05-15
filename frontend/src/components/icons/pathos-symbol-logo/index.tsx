@@ -16,8 +16,8 @@ export const PathosSymbolLogo = (props: React.SVGProps<SVGSVGElement>) => (
         y2="100%"
         gradientUnits="userSpaceOnUse"
       >
-        <stop offset="0%" stopColor="#B8D4FD" />
-        <stop offset="100%" stopColor="#E1CDFF" />
+        <stop offset="0%" stopColor="#60A5FA" />
+        <stop offset="100%" stopColor="#A78BFA" />
         <animateTransform
           attributeName="gradientTransform"
           type="translate"

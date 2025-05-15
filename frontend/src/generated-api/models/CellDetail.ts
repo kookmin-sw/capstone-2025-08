@@ -13,24 +13,38 @@
  */
 
 import { mapValues } from '../runtime';
+import type { PolygonDto } from './PolygonDto';
+import {
+    PolygonDtoFromJSON,
+    PolygonDtoFromJSONTyped,
+    PolygonDtoToJSON,
+    PolygonDtoToJSONTyped,
+} from './PolygonDto';
+
 /**
- * 
+ * 세포 어노테이션 정보
  * @export
  * @interface CellDetail
  */
 export interface CellDetail {
     /**
-     * 
+     * 세포 클래스 인덱스
      * @type {number}
      * @memberof CellDetail
      */
-    x?: number;
+    classIndex?: number;
+    /**
+     * 세포 색상 (Hex)
+     * @type {string}
+     * @memberof CellDetail
+     */
+    color?: string;
     /**
      * 
-     * @type {number}
+     * @type {PolygonDto}
      * @memberof CellDetail
      */
-    y?: number;
+    polygon?: PolygonDto;
 }
 
 /**
@@ -50,8 +64,9 @@ export function CellDetailFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     }
     return {
         
-        'x': json['x'] == null ? undefined : json['x'],
-        'y': json['y'] == null ? undefined : json['y'],
+        'classIndex': json['classIndex'] == null ? undefined : json['classIndex'],
+        'color': json['color'] == null ? undefined : json['color'],
+        'polygon': json['polygon'] == null ? undefined : PolygonDtoFromJSON(json['polygon']),
     };
 }
 
@@ -66,8 +81,9 @@ export function CellDetailToJSONTyped(value?: CellDetail | null, ignoreDiscrimin
 
     return {
         
-        'x': value['x'],
-        'y': value['y'],
+        'classIndex': value['classIndex'],
+        'color': value['color'],
+        'polygon': PolygonDtoToJSON(value['polygon']),
     };
 }
 

@@ -29,11 +29,17 @@ import {
 } from './RoiResponseDto';
 
 /**
- * 
+ * ROI 데이터 목록
  * @export
  * @interface RoiResponsePayload
  */
 export interface RoiResponsePayload {
+    /**
+     * ROI의 표시 순서
+     * @type {number}
+     * @memberof RoiResponsePayload
+     */
+    displayOrder?: number;
     /**
      * 
      * @type {RoiResponseDto}
@@ -41,13 +47,13 @@ export interface RoiResponsePayload {
      */
     detail?: RoiResponseDto;
     /**
-     * 
+     * 조직 주석 이미지 경로 목록
      * @type {Array<string>}
      * @memberof RoiResponsePayload
      */
     tissuePath?: Array<string>;
     /**
-     * 
+     * 세포 위치 정보 목록
      * @type {Array<CellDetail>}
      * @memberof RoiResponsePayload
      */
@@ -71,6 +77,7 @@ export function RoiResponsePayloadFromJSONTyped(json: any, ignoreDiscriminator: 
     }
     return {
         
+        'displayOrder': json['displayOrder'] == null ? undefined : json['displayOrder'],
         'detail': json['detail'] == null ? undefined : RoiResponseDtoFromJSON(json['detail']),
         'tissuePath': json['tissue_path'] == null ? undefined : json['tissue_path'],
         'cell': json['cell'] == null ? undefined : ((json['cell'] as Array<any>).map(CellDetailFromJSON)),
@@ -88,6 +95,7 @@ export function RoiResponsePayloadToJSONTyped(value?: RoiResponsePayload | null,
 
     return {
         
+        'displayOrder': value['displayOrder'],
         'detail': RoiResponseDtoToJSON(value['detail']),
         'tissue_path': value['tissuePath'],
         'cell': value['cell'] == null ? undefined : ((value['cell'] as Array<any>).map(CellDetailToJSON)),

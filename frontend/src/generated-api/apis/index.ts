@@ -1,7 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
-export * from './AnnotationHistoryControllerApi';
-export * from './ModelServerControllerApi';
-export * from './ProjectControllerApi';
-export * from './RoiControllerApi';
-export * from './SubProjectControllerApi';
+export * from './AnnotationHistoryAPIApi';
+export * from './ModelServerAPIApi';
+export * from './ProjectAPIApi';
+export * from './ROIAPIApi';
+export * from './SubProjectAPIApi';

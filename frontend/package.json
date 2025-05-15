@@ -39,6 +39,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.5.0",
     "eslint-plugin-tailwindcss": "3.12.1",
+    "framer-motion": "^12.11.3",
     "geotiff-tilesource": "^2.1.0",
     "lucide-react": "^0.483.0",
     "next": "15.2.2",

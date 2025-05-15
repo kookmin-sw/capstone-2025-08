@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * ROI 정보 리스트
  * @export
  * @interface RoiSaveRequestDto
  */
