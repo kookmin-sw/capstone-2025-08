@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.project.service.AnnotationService;
 import site.pathos.domain.roi.dto.request.RoiLabelSaveRequestDto;
+import site.pathos.global.annotation.FormDataRequestBody;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class AnnotationController {
             consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
     )
     @Operation(summary = "ROI, 이미지, 라벨 업로드", description = "특정 SubProject와 AnnotationHistory에 ROI, 관련 이미지, 라벨 정보를 업로드합니다.")
+    @FormDataRequestBody
     public ResponseEntity<Void> uploadRois(
             @Parameter(description = "서브 프로젝트 ID", required = true)
             @PathVariable Long subProjectId,
