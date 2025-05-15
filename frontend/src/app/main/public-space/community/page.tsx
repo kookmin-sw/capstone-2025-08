@@ -83,7 +83,9 @@ export default function PublicSpaceCommunityPage() {
         icon={<Plus />}
         buttonName="Share My Project"
         buttonSize="154px"
-        onButtonClick={() => router.push('/main/public-space/upload')}
+        onButtonClick={() =>
+          router.push('/main/public-space/shared-model/upload')
+        }
         showDivider={false}
       />
 
