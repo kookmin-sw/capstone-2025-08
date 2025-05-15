@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import site.pathos.domain.subProject.dto.request.SubProjectTilingRequestDto;
+import site.pathos.domain.project.dto.request.SubProjectTilingRequestDto;
 import site.pathos.global.aws.config.AwsProperty;
 import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 import site.pathos.global.util.image.ImageUtils;
@@ -222,12 +222,10 @@ public class S3Service {
                 futures.add(future);
             }
 
-            // 모든 파트 업로드 완료 대기
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             completedParts.sort(Comparator.comparingInt(CompletedPart::partNumber));
 
-            // 업로드 완료
             CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
                     .bucket(bucket)
                     .key(key)
