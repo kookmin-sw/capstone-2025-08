@@ -54,7 +54,7 @@ export default function AnnotationSubProjectSlider({
         open={showUploadModal}
         onClose={() => setShowUploadModal(false)}
         mode="append"
-        onUpload={(files) => {
+        onAppendSubmit={(files) => {
           console.log('업로드된 파일:', files);
         }}
       />

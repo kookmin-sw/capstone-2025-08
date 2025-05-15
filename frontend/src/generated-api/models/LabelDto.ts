@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * 라벨 정보 리스트
  * @export
  * @interface LabelDto
  */
 export interface LabelDto {
     /**
-     * 
+     * 라벨 ID. 생성 시 null, 수정 시 값 필요
      * @type {number}
      * @memberof LabelDto
      */
     id?: number;
     /**
-     * 
+     * 라벨 이름
      * @type {string}
      * @memberof LabelDto
      */
     name?: string;
     /**
-     * 
+     * 라벨 색상 (HEX 코드)
      * @type {string}
      * @memberof LabelDto
      */

@@ -20,13 +20,6 @@ import {
     RoiResponsePayloadToJSON,
     RoiResponsePayloadToJSONTyped,
 } from './RoiResponsePayload';
-import type { LabelDto } from './LabelDto';
-import {
-    LabelDtoFromJSON,
-    LabelDtoFromJSONTyped,
-    LabelDtoToJSON,
-    LabelDtoToJSONTyped,
-} from './LabelDto';
 
 /**
  * 
@@ -35,29 +28,17 @@ import {
  */
 export interface AnnotationHistoryResponseDto {
     /**
-     * 
+     * Annotation History의 ID
      * @type {number}
      * @memberof AnnotationHistoryResponseDto
      */
     id?: number;
     /**
-     * 
-     * @type {string}
-     * @memberof AnnotationHistoryResponseDto
-     */
-    modelName?: string;
-    /**
-     * 
+     * ROI 데이터 목록
      * @type {Array<RoiResponsePayload>}
      * @memberof AnnotationHistoryResponseDto
      */
     roiPayloads?: Array<RoiResponsePayload>;
-    /**
-     * 
-     * @type {Array<LabelDto>}
-     * @memberof AnnotationHistoryResponseDto
-     */
-    labels?: Array<LabelDto>;
 }
 
 /**
@@ -78,9 +59,7 @@ export function AnnotationHistoryResponseDtoFromJSONTyped(json: any, ignoreDiscr
     return {
         
         'id': json['id'] == null ? undefined : json['id'],
-        'modelName': json['modelName'] == null ? undefined : json['modelName'],
         'roiPayloads': json['roiPayloads'] == null ? undefined : ((json['roiPayloads'] as Array<any>).map(RoiResponsePayloadFromJSON)),
-        'labels': json['labels'] == null ? undefined : ((json['labels'] as Array<any>).map(LabelDtoFromJSON)),
     };
 }
 
@@ -96,9 +75,7 @@ export function AnnotationHistoryResponseDtoToJSONTyped(value?: AnnotationHistor
     return {
         
         'id': value['id'],
-        'modelName': value['modelName'],
         'roiPayloads': value['roiPayloads'] == null ? undefined : ((value['roiPayloads'] as Array<any>).map(RoiResponsePayloadToJSON)),
-        'labels': value['labels'] == null ? undefined : ((value['labels'] as Array<any>).map(LabelDtoToJSON)),
     };
 }
 

@@ -20,43 +20,49 @@ import { mapValues } from '../runtime';
  */
 export interface GetProjectsResponseDetailDto {
     /**
-     * 
+     * 프로젝트 id
      * @type {number}
      * @memberof GetProjectsResponseDetailDto
      */
     projectId?: number;
     /**
-     * 
+     * 프로젝트명
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     title?: string;
     /**
-     * 
+     * 프로젝트 설명
+     * @type {string}
+     * @memberof GetProjectsResponseDetailDto
+     */
+    description?: string;
+    /**
+     * 프로젝트 생성일
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     createdAt?: string;
     /**
-     * 
+     * 프로젝트 수정일
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     updatedAt?: string;
     /**
-     * 
+     * 모델 타입
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     modelType?: GetProjectsResponseDetailDtoModelTypeEnum;
     /**
-     * 
+     * 모델명
      * @type {string}
      * @memberof GetProjectsResponseDetailDto
      */
     modelName?: string;
     /**
-     * 
+     * 썸네일 이미지 url
      * @type {Array<string>}
      * @memberof GetProjectsResponseDetailDto
      */
@@ -94,6 +100,7 @@ export function GetProjectsResponseDetailDtoFromJSONTyped(json: any, ignoreDiscr
         
         'projectId': json['projectId'] == null ? undefined : json['projectId'],
         'title': json['title'] == null ? undefined : json['title'],
+        'description': json['description'] == null ? undefined : json['description'],
         'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
         'updatedAt': json['updatedAt'] == null ? undefined : json['updatedAt'],
         'modelType': json['modelType'] == null ? undefined : json['modelType'],
@@ -115,6 +122,7 @@ export function GetProjectsResponseDetailDtoToJSONTyped(value?: GetProjectsRespo
         
         'projectId': value['projectId'],
         'title': value['title'],
+        'description': value['description'],
         'createdAt': value['createdAt'],
         'updatedAt': value['updatedAt'],
         'modelType': value['modelType'],

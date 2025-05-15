@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,28 +18,62 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import {
+  GetProjectsResponseModelsDto,
+  GetProjectsResponseModelsDtoModelTypeEnum,
+} from '@/generated-api';
+import { toast } from 'sonner';
 
 interface ProjectCreateModalProps {
+  models: GetProjectsResponseModelsDto[];
   open: boolean;
   onClose: () => void;
-  onNext: () => void;
+  onNext: (info: {
+    title: string;
+    description: string;
+    modelId: number;
+  }) => void;
 }
 
 const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
+  models,
   open,
   onClose,
   onNext,
 }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [modelType, setModelType] = useState('Cell');
+  const [modelType, setModelType] =
+    useState<GetProjectsResponseModelsDtoModelTypeEnum>('CELL');
   const [modelName, setModelName] = useState('none');
 
+  useEffect(() => {
+    if (!open) {
+      setTitle('');
+      setDescription('');
+      setModelType('CELL');
+      setModelName('none');
+    }
+  }, [open]);
+
   const isFormValid =
-    title.trim() !== '' &&
-    description.trim() !== '' &&
-    modelType !== '' &&
-    modelName !== 'null';
+    title.trim() !== '' && description.trim() !== '' && modelName !== 'none';
+
+  const handleNext = () => {
+    const selectedModel = models.find((m) => m.modelName === modelName);
+    const modelId = selectedModel?.modelId;
+
+    if (!modelId) {
+      toast.error('Model not selected or invalid.');
+      return;
+    }
+
+    onNext({
+      title,
+      description,
+      modelId,
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -70,14 +104,27 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
           <div className="flex flex-col gap-2">
             <Label>Model</Label>
             <div className="flex gap-2">
-              <Select value={modelType} onValueChange={setModelType}>
+              <Select
+                value={modelType}
+                onValueChange={(value) => {
+                  setModelType(
+                    value as GetProjectsResponseModelsDtoModelTypeEnum,
+                  );
+                  setModelName('none'); // 타입 변경 시 모델명 초기화
+                }}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select model type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cell">Cell</SelectItem>
-                  <SelectItem value="Tissue">Tissue</SelectItem>
-                  <SelectItem value="Multi">Multi</SelectItem>
+                  {Object.values(GetProjectsResponseModelsDtoModelTypeEnum).map(
+                    (type) => (
+                      <SelectItem key={type} value={type}>
+                        {type.charAt(0).toUpperCase() +
+                          type.slice(1).toLowerCase()}
+                      </SelectItem>
+                    ),
+                  )}
                 </SelectContent>
               </Select>
 
@@ -86,9 +133,17 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
                   <SelectValue placeholder="Select model name" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="resnet50">ResNet-50</SelectItem>
-                  <SelectItem value="unet">UNet</SelectItem>
-                  <SelectItem value="none">선택없음</SelectItem>
+                  <SelectItem value="none">Not Selected</SelectItem>
+                  {models.length > 0 &&
+                    models.map((model) => (
+                      <SelectItem
+                        key={model.modelId}
+                        value={model.modelName || ''}
+                        disabled={model.modelType !== modelType}
+                      >
+                        {model.modelName}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -100,7 +155,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
             Cancel
           </Button>
           <Button
-            onClick={onNext}
+            onClick={handleNext}
             className="min-w-[80px]"
             disabled={!isFormValid}
           >

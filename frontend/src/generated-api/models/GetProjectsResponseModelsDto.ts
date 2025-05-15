@@ -20,19 +20,19 @@ import { mapValues } from '../runtime';
  */
 export interface GetProjectsResponseModelsDto {
     /**
-     * 
+     * 모델 id
      * @type {number}
      * @memberof GetProjectsResponseModelsDto
      */
     modelId?: number;
     /**
-     * 
+     * 모델 타입
      * @type {string}
      * @memberof GetProjectsResponseModelsDto
      */
     modelType?: GetProjectsResponseModelsDtoModelTypeEnum;
     /**
-     * 
+     * 모델명
      * @type {string}
      * @memberof GetProjectsResponseModelsDto
      */

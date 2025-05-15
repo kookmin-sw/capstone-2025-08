@@ -14,43 +14,43 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * ROI의 위치 및 크기 정보
  * @export
  * @interface RoiResponseDto
  */
 export interface RoiResponseDto {
     /**
-     * 
+     * ROI ID
      * @type {number}
      * @memberof RoiResponseDto
      */
     id?: number;
     /**
-     * 
+     * ROI의 X 좌표
      * @type {number}
      * @memberof RoiResponseDto
      */
     x?: number;
     /**
-     * 
+     * ROI의 Y 좌표
      * @type {number}
      * @memberof RoiResponseDto
      */
     y?: number;
     /**
-     * 
+     * ROI의 너비
      * @type {number}
      * @memberof RoiResponseDto
      */
     width?: number;
     /**
-     * 
+     * ROI의 높이
      * @type {number}
      * @memberof RoiResponseDto
      */
     height?: number;
     /**
-     * 
+     * ROI의 결함 백분율 19
      * @type {number}
      * @memberof RoiResponseDto
      */

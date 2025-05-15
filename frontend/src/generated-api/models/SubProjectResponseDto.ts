@@ -29,37 +29,37 @@ import {
 } from './ModelSummaryDto';
 
 /**
- * 
+ * 서브 프로젝트 상세 응답 DTO
  * @export
  * @interface SubProjectResponseDto
  */
 export interface SubProjectResponseDto {
     /**
-     * 
+     * 서브 프로젝트 ID
      * @type {number}
      * @memberof SubProjectResponseDto
      */
     subProjectId?: number;
     /**
-     * 
+     * 어노테이션 히스토리 요약 정보 리스트
      * @type {Array<AnnotationHistorySummaryDto>}
      * @memberof SubProjectResponseDto
      */
     annotationHistories?: Array<AnnotationHistorySummaryDto>;
     /**
-     * 
+     * 가장 최근의 어노테이션 히스토리 ID
      * @type {number}
      * @memberof SubProjectResponseDto
      */
     latestAnnotationHistoryId?: number;
     /**
-     * 
+     * 선택 가능한 모델 리스트
      * @type {Array<ModelSummaryDto>}
      * @memberof SubProjectResponseDto
      */
     availableModels?: Array<ModelSummaryDto>;
     /**
-     * 
+     * 모델 타입
      * @type {string}
      * @memberof SubProjectResponseDto
      */
