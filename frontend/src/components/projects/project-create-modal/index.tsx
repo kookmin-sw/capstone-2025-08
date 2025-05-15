@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
+  CreateProjectRequestDtoModelTypeEnum,
   GetProjectsResponseModelsDto,
   GetProjectsResponseModelsDtoModelTypeEnum,
 } from '@/generated-api';
@@ -31,6 +32,7 @@ interface ProjectCreateModalProps {
     title: string;
     description: string;
     modelId: number | undefined;
+    modelType: CreateProjectRequestDtoModelTypeEnum;
   }) => void;
 }
 
@@ -65,6 +67,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
       title,
       description,
       modelId: modelId ?? undefined,
+      modelType: modelType as CreateProjectRequestDtoModelTypeEnum,
     });
   };
 
