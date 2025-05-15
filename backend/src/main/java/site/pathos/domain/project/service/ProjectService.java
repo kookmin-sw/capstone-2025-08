@@ -5,7 +5,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -137,9 +136,9 @@ public class ProjectService {
 
         Page<Project> projectPage;
         if (search != null && !search.isBlank()) {
-            projectPage = projectRepository.findByTitleContainingIgnoreCaseOrderByUpdatedAtDesc(search, pageable);
+            projectPage = projectRepository.findByTitleContainingIgnoreCase(search, pageable);
         } else {
-            projectPage = projectRepository.findAllByOrderByUpdatedAtDesc(pageable);
+            projectPage = projectRepository.findAll(pageable);
         }
         return projectPage;
     }
