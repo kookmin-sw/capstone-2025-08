@@ -10,11 +10,6 @@ import site.pathos.domain.project.entity.SubProject;
 
 public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
 
-    @Query("SELECT new site.pathos.domain.subProject.dto.response.SubProjectSummaryDto(sp.id, sp.thumbnailPath, sp.isUploadComplete) " +
-            "FROM SubProject sp " +
-            "WHERE sp.project.id = :projectId")
-    List<SubProjectSummaryDto> findSubProjectIdAndThumbnailByProjectId(@Param("projectId") Long projectId);
-
     @Query("""
         SELECT sp FROM SubProject sp
         LEFT JOIN FETCH sp.annotationHistories ah

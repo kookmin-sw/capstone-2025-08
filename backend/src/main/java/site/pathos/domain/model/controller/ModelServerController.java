@@ -30,7 +30,7 @@ public class ModelServerController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/porjects/{projectId}/training/result")
+    @PostMapping("/projects/{projectId}/training/result")
     @Operation(summary = "모델 학습 결과 수신", description = "모델 서버가 학습 결과를 서버에 전달합니다.")
     public ResponseEntity<Void> responseTraining(
             @Parameter(description = "어노테이션 히스토리 ID") @PathVariable Long projectId,
