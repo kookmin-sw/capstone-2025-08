@@ -2,7 +2,6 @@ package site.pathos.domain.project.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import site.pathos.domain.model.entity.ModelType;
-import site.pathos.domain.roi.dto.response.RoiResponseDto;
 import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
 
 import java.util.List;
@@ -86,6 +85,26 @@ public record GetProjectAnnotationResponseDto(
 
                 @Schema(description = "세포 위치 정보 목록")
                 List<CellDetail> cell
+        ) {}
+
+        public record RoiResponseDto(
+                @Schema(description = "ROI ID", example = "1")
+                Long id,
+
+                @Schema(description = "ROI의 X 좌표", example = "100")
+                int x,
+
+                @Schema(description = "ROI의 Y 좌표", example = "200")
+                int y,
+
+                @Schema(description = "ROI의 너비", example = "512")
+                int width,
+
+                @Schema(description = "ROI의 높이", example = "512")
+                int height,
+
+                @Schema(description = "ROI의 결함 백분율 19", example = "19")
+                int faulty
         ) {}
 
         @Schema(description = "세포 어노테이션 정보")

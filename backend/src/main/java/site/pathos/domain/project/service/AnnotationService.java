@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import site.pathos.domain.annotation.cellAnnotation.dto.CellDetail;
-import site.pathos.domain.annotation.cellAnnotation.dto.PolygonDto;
 import site.pathos.domain.annotation.cellAnnotation.entity.CellAnnotation;
 import site.pathos.domain.annotation.cellAnnotation.repository.CellAnnotationRepository;
 import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
@@ -23,7 +21,6 @@ import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.roi.dto.request.RoiLabelSaveRequestDto;
 import site.pathos.domain.roi.dto.response.RoiResponseDto;
-import site.pathos.domain.roi.dto.response.RoiResponsePayload;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
 import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
@@ -235,23 +232,23 @@ public class AnnotationService {
 
         List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(history.getId());
 
-        List<RoiResponsePayload> roiPayloads = rois.stream()
+        List<GetProjectAnnotationResponseDto.RoiResponsePayload> roiPayloads = rois.stream()
                 .map(roi -> {
                     List<CellAnnotation> cellAnnotations = cellAnnotationRepository.findAllByRoiId(roi.getId());
 
-                    List<CellDetail> cellDetails = cellAnnotations.stream()
-                            .map(ca -> new CellDetail(
+                    List<GetProjectAnnotationResponseDto.CellDetail> cellDetails = cellAnnotations.stream()
+                            .map(ca -> new GetProjectAnnotationResponseDto.CellDetail(
                                     ca.getClassIndex(),
                                     ca.getColor(),
-                                    new PolygonDto(
+                                    new GetProjectAnnotationResponseDto.PolygonDto(
                                             ca.getPolygon().stream()
-                                                    .map(p -> new PolygonDto.PointDto(p.getX(), p.getY()))
+                                                    .map(p -> new GetProjectAnnotationResponseDto.PointDto(p.getX(), p.getY()))
                                                     .toList()
                                     )
                             ))
                             .toList();
 
-                    RoiResponseDto detail = new RoiResponseDto(
+                    GetProjectAnnotationResponseDto.RoiResponseDto detail = new GetProjectAnnotationResponseDto.RoiResponseDto(
                             roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
 
                     List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
@@ -259,7 +256,7 @@ public class AnnotationService {
                             .map(s3Service::getPresignedUrl)
                             .toList();
 
-                    return new RoiResponsePayload(roi.getDisplayOrder(), detail, presignedTissuePaths, cellDetails);
+                    return new GetProjectAnnotationResponseDto.RoiResponsePayload(roi.getDisplayOrder(), detail, presignedTissuePaths, cellDetails);
                 })
                 .toList();
 
