@@ -58,7 +58,7 @@ export default function DocsHelpPage() {
               <Card className="h-full border border-gray-100 shadow-sm hover:shadow-md">
                 <CardContent className="h-full">
                   <div className="flex h-full flex-col">
-                    <div className="bg-primary/10 border-primary/5 mb-4 flex h-12 w-12 items-center justify-center rounded-xl border p-3 shadow-sm">
+                    <div className="bg-primary/5 border-primary/5 mb-4 flex h-12 w-12 items-center justify-center rounded-xl border p-3 shadow-sm">
                       <category.icon className="text-primary h-6 w-6" />
                     </div>
 

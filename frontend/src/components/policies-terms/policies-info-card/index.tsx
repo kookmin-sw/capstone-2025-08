@@ -20,7 +20,7 @@ export default function PoliciesInfoCard({
     <Card className="border border-gray-100 shadow-sm">
       <CardContent className="p-6">
         <div className="flex flex-col items-center text-center">
-          <div className="bg-primary/10 mb-4 rounded-full p-3">
+          <div className="bg-primary/5 mb-4 rounded-full p-3">
             <Icon className="text-primary h-6 w-6" />
           </div>
           <h3 className="mb-2 font-semibold">{title}</h3>
