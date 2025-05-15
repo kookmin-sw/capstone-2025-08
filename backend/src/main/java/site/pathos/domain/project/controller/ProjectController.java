@@ -22,7 +22,6 @@ import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
-import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
 import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.service.ProjectService;
 

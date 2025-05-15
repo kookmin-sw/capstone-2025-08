@@ -4,6 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.annotation.cellAnnotation.dto.CellDetail;
+import site.pathos.domain.annotation.cellAnnotation.dto.PolygonDto;
+import site.pathos.domain.annotation.cellAnnotation.entity.CellAnnotation;
+import site.pathos.domain.annotation.cellAnnotation.repository.CellAnnotationRepository;
+import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
 import site.pathos.domain.annotation.tissueAnnotation.service.TissueAnnotationService;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
@@ -17,11 +22,14 @@ import site.pathos.domain.project.dto.response.GetProjectAnnotationResponseDto;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.roi.dto.request.RoiLabelSaveRequestDto;
+import site.pathos.domain.roi.dto.response.RoiResponseDto;
+import site.pathos.domain.roi.dto.response.RoiResponsePayload;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
 import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.subProject.repository.SubProjectRepository;
+import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 
@@ -38,8 +46,9 @@ public class AnnotationService {
     private final ProjectLabelRepository projectLabelRepository;
     private final LabelRepository labelRepository;
     private final SubProjectRepository subProjectRepository;
-    private final ProjectService projectService;
     private final ProjectModelRepository projectModelRepository;
+    private final CellAnnotationRepository cellAnnotationRepository;
+    private final S3Service s3Service;
 
     @Transactional
     public void saveWithAnnotations(Long subProjectId, Long annotationHistoryId,
@@ -137,7 +146,7 @@ public class AnnotationService {
     public GetProjectAnnotationResponseDto getProjectAnnotation(Long projectId){
         Long userId = 1L;   // TODO
         Project project = getProject(projectId, userId);
-        List<SubProjectSummaryDto> subProjects = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
+        List<SubProjectSummaryDto> subProjectsDto = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
 
         boolean hasIncompleteUploads = subProjectRepository.existsByProjectIdAndIsUploadCompleteFalse(projectId);
         if (hasIncompleteUploads) {
@@ -157,12 +166,27 @@ public class AnnotationService {
 
         List<GetProjectAnnotationResponseDto.LabelDto> labelDtos = getProjectLabels(project);
 
+        SubProject firstSubProject = getFirstSubProject(projectId);
+
+        Long latestHistoryId = getLatestAnnotationHistoryId(firstSubProject);
+
+        GetProjectAnnotationResponseDto.AnnotationHistoryResponseDto annotationHistoryResponseDto
+                = getAnnotationHistory(latestHistoryId);
+
+        GetProjectAnnotationResponseDto.FirstSubProjectLatestAnnotation firstSubProjectLatestAnnotation
+                = new GetProjectAnnotationResponseDto.FirstSubProjectLatestAnnotation(
+                        firstSubProject.getId(),
+                        annotationHistoryResponseDto
+        );
+
+
         return new GetProjectAnnotationResponseDto(
                 projectId,
                 project.getTitle(),
                 modelsDto,
                 labelDtos,
-                subProjects
+                subProjectsDto,
+                firstSubProjectLatestAnnotation
         );
     }
 
@@ -203,5 +227,62 @@ public class AnnotationService {
                         projectLabel.getColor()
                 ))
                 .toList();
+    }
+
+    private GetProjectAnnotationResponseDto.AnnotationHistoryResponseDto getAnnotationHistory(Long historyId) {
+        AnnotationHistory history = annotationHistoryRepository.findWithSubProjectAndModelById(historyId)
+                .orElseThrow(() -> new RuntimeException("AnnotationHistory not found"));
+
+        List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(history.getId());
+
+        List<RoiResponsePayload> roiPayloads = rois.stream()
+                .map(roi -> {
+                    List<CellAnnotation> cellAnnotations = cellAnnotationRepository.findAllByRoiId(roi.getId());
+
+                    List<CellDetail> cellDetails = cellAnnotations.stream()
+                            .map(ca -> new CellDetail(
+                                    ca.getClassIndex(),
+                                    ca.getColor(),
+                                    new PolygonDto(
+                                            ca.getPolygon().stream()
+                                                    .map(p -> new PolygonDto.PointDto(p.getX(), p.getY()))
+                                                    .toList()
+                                    )
+                            ))
+                            .toList();
+
+                    RoiResponseDto detail = new RoiResponseDto(
+                            roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
+
+                    List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
+                            .map(TissueAnnotation::getAnnotationImagePath)
+                            .map(s3Service::getPresignedUrl)
+                            .toList();
+
+                    return new RoiResponsePayload(roi.getDisplayOrder(), detail, presignedTissuePaths, cellDetails);
+                })
+                .toList();
+
+        return new GetProjectAnnotationResponseDto.AnnotationHistoryResponseDto(
+                history.getId(),
+                roiPayloads
+        );
+    }
+
+    private SubProject getFirstSubProject(Long projectId){
+        List<SubProject> subProjects = subProjectRepository.findByProjectIdOrderByCreatedAtAsc(projectId);
+        if (subProjects.isEmpty()) {
+            throw new BusinessException(ErrorCode.SUB_PROJECT_NOT_FOUND);
+        }
+
+        return subProjects.get(0);
+    }
+
+    private Long getLatestAnnotationHistoryId(SubProject subProject){
+        AnnotationHistory latestHistory = annotationHistoryRepository
+                .findFirstBySubProjectIdOrderByUpdatedAtDesc(subProject.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOTATION_HISTORY_NOT_FOUND));
+
+        return latestHistory.getId();
     }
 }

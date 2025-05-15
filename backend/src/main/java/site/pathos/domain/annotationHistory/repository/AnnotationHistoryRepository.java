@@ -37,4 +37,6 @@ public interface AnnotationHistoryRepository extends JpaRepository<AnnotationHis
     ORDER BY ah.updatedAt DESC
 """)
     Optional<AnnotationHistory> findLatestBySubProjectId(@Param("subProjectId") Long subProjectId);
+
+    Optional<AnnotationHistory> findFirstBySubProjectIdOrderByUpdatedAtDesc(Long subProjectId);
 }

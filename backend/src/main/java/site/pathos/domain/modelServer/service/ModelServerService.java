@@ -117,7 +117,7 @@ public class ModelServerService {
         return subProjects.stream()
                 .map(subProject -> {
                     AnnotationHistory latestHistory = annotationHistoryRepository
-                            .findLatestBySubProjectId(subProject.getId())
+                            .findFirstBySubProjectIdOrderByUpdatedAtDesc(subProject.getId())
                             .orElseThrow(() -> new BusinessException(ErrorCode.ANNOTATION_HISTORY_NOT_FOUND));
 
                     List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(latestHistory.getId());
