@@ -25,6 +25,7 @@ import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
 import site.pathos.domain.project.dto.response.GetSubProjectResponseDto;
 import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.service.ProjectService;
+import site.pathos.global.annotation.FormDataRequestBody;
 
 @Tag(name = "Project API", description = "프로젝트 기능 API")
 @RestController
@@ -50,6 +51,7 @@ public class ProjectController {
 
     @Operation(summary = "프로젝트를 생성합니다.")
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
+    @FormDataRequestBody
     public ResponseEntity<Void> createProject(
             @RequestPart CreateProjectRequestDto requestDto,
             @RequestPart List<MultipartFile> files
