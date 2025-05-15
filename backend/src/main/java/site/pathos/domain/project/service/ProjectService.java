@@ -19,6 +19,7 @@ import site.pathos.domain.label.repository.ProjectLabelRepository;
 import site.pathos.domain.model.Repository.ModelRepository;
 import site.pathos.domain.model.Repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.model.entity.ModelType;
 import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
@@ -67,16 +68,41 @@ public class ProjectService {
     public void createProject(CreateProjectRequestDto requestDto, List<MultipartFile> files) {
         User user = userRepository.findById(1L) //TODO
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        Model model = modelRepository.findById(requestDto.modelId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
+
+        Model model;
+        if (requestDto.modelId() == null) {
+            if (requestDto.modelType() == ModelType.TISSUE) {
+                model = modelRepository.findFirstByTrainingHistoryIsNullAndModelTypeAndTissueModelPathIsNotNullAndCellModelPathIsNullOrderByTrainedAtDesc(ModelType.TISSUE)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
+            } else if (requestDto.modelType() == ModelType.CELL) {
+                model = modelRepository.findFirstByTrainingHistoryIsNullAndModelTypeAndCellModelPathIsNotNullAndTissueModelPathIsNullOrderByTrainedAtDesc(ModelType.CELL)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
+            } else if (requestDto.modelType() == ModelType.MULTI) {
+                model = modelRepository.findFirstByTrainingHistoryIsNullAndModelTypeAndCellModelPathIsNotNullAndTissueModelPathIsNotNullOrderByTrainedAtDesc(ModelType.MULTI)
+                        .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
+            } else {
+                throw new BusinessException(ErrorCode.INTERNAL_ERROR); // 잘못된 modelType 처리
+            }
+        } else {
+            model = modelRepository.findById(requestDto.modelId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
+        }
 
         Project project = Project.builder()
                 .user(user)
                 .title(requestDto.title())
                 .description(requestDto.description())
-                .modelType(model.getModelType())
+                .modelType(requestDto.modelType())
                 .build();
         projectRepository.save(project);
+
+        ProjectModel projectModel = ProjectModel.builder()
+                .name(model.getName())
+                .project(project)
+                .model(model)
+                .isInitial(true)
+                .build();
+        projectModelRepository.save(projectModel);
 
         List<S3UploadFileDto> uploadFiles = new ArrayList<>();
         for (MultipartFile file : files) {
