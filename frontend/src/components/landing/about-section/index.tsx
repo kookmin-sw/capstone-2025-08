@@ -1,32 +1,15 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Shield, BookOpen, Users } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { AboutHighlight } from '@/types/landing';
 
-export default function AboutSection() {
-  const highlights = [
-    {
-      title: 'Security',
-      description:
-        'Protect your research and patient data with enterprise-level security, built for medical environments.',
-      icon: Shield,
-    },
-    {
-      title: 'Documentation',
-      description:
-        'Access step-by-step documentation and practical resources designed for real-world pathology workflows.',
-      icon: BookOpen,
-    },
-    {
-      title: 'Support',
-      description:
-        'Our dedicated team supports you every step of the way—from onboarding to advanced implementation.',
-      icon: Users,
-    },
-  ];
+interface AboutSectionProps {
+  aboutHighlights: AboutHighlight[];
+}
 
+export default function AboutSection({ aboutHighlights }: AboutSectionProps) {
   return (
     <section
       id="about"
@@ -50,7 +33,7 @@ export default function AboutSection() {
         </motion.div>
 
         <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-3">
-          {highlights.map((item, index) => (
+          {aboutHighlights.map((item, index) => (
             <motion.div
               key={index}
               className="relative rounded-xl p-[2px] shadow-xl backdrop-blur-sm"

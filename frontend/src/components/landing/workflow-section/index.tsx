@@ -1,34 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Database, PenLine, BarChart } from 'lucide-react';
+import { WorkflowStep } from '@/types/landing';
 import { useEffect, useState } from 'react';
 
-const steps = [
-  {
-    step: '1',
-    title: 'Image Upload & Management',
-    description:
-      'Start your workflow by uploading and organizing whole slide images into structured projects.',
-    icon: Database,
-  },
-  {
-    step: '2',
-    title: 'AI-Powered Annotation & Training',
-    description:
-      'Leverage AI-assisted tools to annotate slides and train custom models with minimal effort.',
-    icon: PenLine,
-  },
-  {
-    step: '3',
-    title: 'Analytics & Collaboration',
-    description:
-      'Unlock insights with advanced analytics and share your results to accelerate research.',
-    icon: BarChart,
-  },
-];
+interface WorkflowSectionProps {
+  workflowSteps: WorkflowStep[];
+}
 
-export default function WorkflowSection() {
+export default function WorkflowSection({
+  workflowSteps,
+}: WorkflowSectionProps) {
   const [particleData, setParticleData] = useState<
     { x: number; y: number; delay: number }[]
   >([]);
@@ -81,7 +63,7 @@ export default function WorkflowSection() {
         </motion.div>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-          {steps.map((item, index) => (
+          {workflowSteps.map((item, index) => (
             <motion.div
               key={index}
               className="relative rounded-xl border border-gray-800 bg-gray-900/60 p-8 shadow-xl backdrop-blur-sm"

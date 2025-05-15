@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Feature } from '@/app/page';
+import { Feature } from '@/types/landing';
 import { Sparkles } from 'lucide-react';
 
 interface FeaturesSectionProps {

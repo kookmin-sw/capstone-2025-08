@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { Feature } from '@/app/page';
+import { Feature } from '@/types/landing';
 import { useEffect, useState } from 'react';
 
 interface HeroSectionProps {
