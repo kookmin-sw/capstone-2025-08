@@ -1,4 +1,4 @@
-package site.pathos.domain.label.entity;
+package site.pathos.domain.annotation.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
