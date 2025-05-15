@@ -1,5 +1,4 @@
 import {
-  BarChart,
   Brain,
   Earth,
   Layers,
