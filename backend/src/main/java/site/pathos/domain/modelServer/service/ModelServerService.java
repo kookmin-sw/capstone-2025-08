@@ -3,13 +3,14 @@ package site.pathos.domain.modelServer.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import site.pathos.domain.annotation.cellAnnotation.entity.CellAnnotation;
-import site.pathos.domain.annotation.cellAnnotation.repository.CellAnnotationRepository;
-import site.pathos.domain.annotation.tissueAnnotation.entity.AnnotationType;
-import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
-import site.pathos.domain.annotation.tissueAnnotation.repository.TissueAnnotationRepository;
-import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
-import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
+import site.pathos.domain.annotation.entity.CellAnnotation;
+import site.pathos.domain.annotation.repository.CellAnnotationRepository;
+import site.pathos.domain.annotation.enums.AnnotationType;
+import site.pathos.domain.annotation.entity.TissueAnnotation;
+import site.pathos.domain.annotations.tissueAnnotation.repository.TissueAnnotationRepository;
+import site.pathos.domain.annotation.entity.AnnotationHistory;
+import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
+import site.pathos.domain.annotations.tissueAnnotation.service.TissueAnnotationService;
 import site.pathos.domain.inferenceHistory.entity.InferenceHistory;
 import site.pathos.domain.inferenceHistory.entity.TrainingHistory;
 import site.pathos.domain.inferenceHistory.repository.InferenceHistoryRepository;
@@ -26,7 +27,7 @@ import site.pathos.domain.modelServer.dto.request.TrainingRequestDto;
 import site.pathos.domain.modelServer.dto.request.TrainingResultRequestDto;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
-import site.pathos.domain.roi.entity.Roi;
+import site.pathos.domain.annotation.entity.Roi;
 import site.pathos.domain.modelServer.dto.request.TrainingRequestMessageDto;
 import site.pathos.domain.roi.repository.RoiRepository;
 import site.pathos.domain.subProject.entity.SubProject;
@@ -58,6 +59,7 @@ public class ModelServerService {
     private final ModelProjectLabelRepository modelProjectLabelRepository;
     private final RoiRepository roiRepository;
     private final TrainingHistoryService trainingHistoryService;
+    private final TissueAnnotationService tissueAnnotationService;
 
     @Transactional
     public void requestTraining(Long projectId, TrainingRequestDto trainingRequestDto) {
@@ -247,12 +249,7 @@ public class ModelServerService {
                         .toList();
                 cellAnnotationRepository.saveAll(cellAnnotations);
 
-                TissueAnnotation tissueAnnotation = TissueAnnotation.builder()
-                        .roi(roi)
-                        .annotationType(AnnotationType.RESULT)
-                        .annotationImagePath(roiDto.tissue_path())
-                        .build();
-                tissueAnnotationRepository.save(tissueAnnotation);
+                tissueAnnotationService.saveResultAnnotation(roi, roiDto.tissue_path());
             }
         }
     }
