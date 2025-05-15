@@ -1,6 +1,7 @@
 import {
   BarChart,
   Brain,
+  Earth,
   Layers,
   Microscope,
   PenLine,
@@ -37,30 +38,33 @@ export const featureSectionData = [
   },
 ];
 
-//
+// 기능 카드 데이터
 export const quickActionData = [
   {
     title: 'New Project',
     description: 'Start a new analysis project with our AI-powered tools',
     icon: PlusCircle,
-    href: 'main/projects',
+    actionType: 'openModal',
   },
   {
     title: 'Annotation',
     description: 'Powerful tools for precise annotation of pathology images',
     icon: PenLine,
-    href: 'main/projects',
+    actionType: 'route',
+    actionPayload: '/main/projects',
   },
   {
     title: 'Public Space',
     description: 'Explore and share models with the pathology community',
-    icon: Share2,
-    href: 'main/public-space/community',
+    icon: Earth,
+    actionType: 'route',
+    actionPayload: '/main/public-space/community',
   },
   {
-    title: 'Analysis',
-    description: 'Run advanced AI analysis on your pathology data',
-    icon: BarChart,
-    href: 'main/projects',
+    title: 'Share My Model',
+    description: 'Share your project to the Public Space for others to explore',
+    icon: Share2,
+    actionType: 'route',
+    actionPayload: '/main/public-space/shared-model/upload',
   },
 ];

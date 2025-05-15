@@ -1,15 +1,33 @@
 'use client';
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Brain, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import Image from 'next/image';
-import { featureSectionData, quickActionData } from '@/data/main';
+import { Brain, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { featureSectionData, quickActionData } from '@/data/main';
+import ProjectCreateModal from '@/components/projects/project-create-modal';
+import ImageUploadModal from '@/components/projects/image-upload-modal';
 
 export default function Main() {
+  const router = useRouter();
+  const [projectCreatModalOpen, setProjectCreatModalOpen] = useState(false);
+  const [imageUploadModalOpen, setImageUploadModalOpen] = useState(false);
+
+  const handleClick = (actionType: string, payload?: string) => {
+    switch (actionType) {
+      case 'openModal':
+        setProjectCreatModalOpen(true);
+        break;
+      case 'route':
+        if (payload) router.push(payload);
+        break;
+    }
+  };
+
   // 애니메이션 변수
   const container = {
     hidden: { opacity: 0 },
@@ -106,19 +124,20 @@ export default function Main() {
                       </p>
 
                       <Button
-                        asChild
                         variant="outline"
                         className="translate-y-1 transition-all duration-300 group-hover:translate-y-0"
                       >
-                        <Link
-                          href={action.href}
+                        <div
+                          onClick={() =>
+                            handleClick(action.actionType, action.actionPayload)
+                          }
                           className="flex w-full items-center justify-between"
                         >
                           <span>Get Started</span>
                           <span className="bg-primary/10 rounded-full p-1 transition-transform duration-300 group-hover:translate-x-1">
                             <ChevronRight className="text-primary h-4 w-4" />
                           </span>
-                        </Link>
+                        </div>
                       </Button>
                     </div>
                   </CardContent>
@@ -205,6 +224,28 @@ export default function Main() {
           </div>
         </motion.div>
       </div>
+
+      <ProjectCreateModal
+        open={projectCreatModalOpen}
+        onClose={() => setProjectCreatModalOpen(false)}
+        onNext={() => {
+          setProjectCreatModalOpen(false);
+          setImageUploadModalOpen(true);
+        }}
+      />
+
+      <ImageUploadModal
+        open={imageUploadModalOpen}
+        onClose={() => setImageUploadModalOpen(false)}
+        mode="create"
+        onUpload={(files) => {
+          console.log('업로드된 파일 목록:', files);
+        }}
+        onPrevious={() => {
+          setImageUploadModalOpen(false);
+          setProjectCreatModalOpen(true);
+        }}
+      />
     </div>
   );
 }
