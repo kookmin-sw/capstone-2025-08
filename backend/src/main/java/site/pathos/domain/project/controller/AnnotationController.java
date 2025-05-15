@@ -8,9 +8,12 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.annotationHistory.dto.response.AnnotationHistoryResponseDto;
+import site.pathos.domain.project.dto.response.GetProjectAnnotationResponseDto;
 import site.pathos.domain.project.service.AnnotationService;
 import site.pathos.domain.roi.dto.request.RoiLabelSaveRequestDto;
 import site.pathos.global.annotation.FormDataRequestBody;
+import site.pathos.domain.subProject.dto.response.SubProjectResponseDto;
 
 import java.util.List;
 
@@ -44,4 +47,40 @@ public class AnnotationController {
         annotationService.saveWithAnnotations(subProjectId, annotationHistoryId, roiLabelSaveRequestDto.rois(), images, roiLabelSaveRequestDto.labels());
         return ResponseEntity.ok().build();
     }
+
+    @Operation(
+            summary = "프로젝트 어노테이션 페이지를 조회합니다.",
+            description = "해당 projectId를 기반으로 프로젝트 단위 정보들과 서브프로젝트들을 반환합니다."
+    )
+    @GetMapping("/projects/{projectId}")
+    public ResponseEntity<GetProjectAnnotationResponseDto> getProject(
+            @Parameter(description = "조회할 프로젝트 ID", example = "1")
+            @PathVariable Long projectId
+    ) {
+        GetProjectAnnotationResponseDto response = annotationService.getProjectAnnotation(projectId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "서브 프로젝트 상세 조회",
+            description = "서브 프로젝트 ID로 해당 서브 프로젝트의 상세 정보를 조회합니다.")
+    @GetMapping("/sub-projects/{subProjectId}")
+    public ResponseEntity<SubProjectResponseDto> getSubProject(
+            @Parameter(description = "조회할 서브 프로젝트의 ID", example = "1")
+            @PathVariable("subProjectId") Long subProjectId
+    ) {
+        SubProjectResponseDto response = annotationService.getSubProject(subProjectId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Annotation History 상세 조회",
+            description = "특정 Annotation History의 상세 정보를 조회합니다.")
+    @GetMapping("/annotation-histories/{annotationHistoryId}")
+    public ResponseEntity<AnnotationHistoryResponseDto> getAnnotationHistory(
+            @Parameter(description = "Annotation History ID", example = "1")
+            @PathVariable("annotationHistoryId") Long annotationHistoryId) {
+        AnnotationHistoryResponseDto response = annotationService.getAnnotationHistory(annotationHistoryId);
+        return ResponseEntity.ok(response);
+    }
 }
+
+

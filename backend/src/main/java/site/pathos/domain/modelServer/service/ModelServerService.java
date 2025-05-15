@@ -16,7 +16,7 @@ import site.pathos.domain.inferenceHistory.repository.InferenceHistoryRepository
 import site.pathos.domain.inferenceHistory.repository.TrainingHistoryRepository;
 import site.pathos.domain.inferenceHistory.service.InferenceHistoryService;
 import site.pathos.domain.inferenceHistory.service.TrainingHistoryService;
-import site.pathos.domain.label.entity.ModelProjectLabel;
+import site.pathos.domain.label.entity.ModelLabel;
 import site.pathos.domain.label.repository.ModelProjectLabelRepository;
 import site.pathos.domain.model.Repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
@@ -99,10 +99,10 @@ public class ModelServerService {
     }
 
     private List<TrainingRequestMessageDto.LabelInfo> getLabelInfos(Long modelId, Long projectId) {
-        List<ModelProjectLabel> modelProjectLabels = modelProjectLabelRepository
+        List<ModelLabel> modelLabels = modelProjectLabelRepository
                 .findByModelIdAndProjectId(modelId, projectId);
 
-        return modelProjectLabels.stream()
+        return modelLabels.stream()
                 .map(ml -> new TrainingRequestMessageDto.LabelInfo(
                         ml.getClassIndex(),
                         ml.getProjectLabel().getName(),
@@ -117,7 +117,7 @@ public class ModelServerService {
         return subProjects.stream()
                 .map(subProject -> {
                     AnnotationHistory latestHistory = annotationHistoryRepository
-                            .findLatestBySubProjectId(subProject.getId())
+                            .findFirstBySubProjectIdOrderByUpdatedAtDesc(subProject.getId())
                             .orElseThrow(() -> new BusinessException(ErrorCode.ANNOTATION_HISTORY_NOT_FOUND));
 
                     List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(latestHistory.getId());
@@ -206,6 +206,7 @@ public class ModelServerService {
         );
 
         ProjectModel projectModel = ProjectModel.builder()
+                .name(resultRequestDto.modelName())
                 .project(project)
                 .model(newModel)
                 .isInitial(false)

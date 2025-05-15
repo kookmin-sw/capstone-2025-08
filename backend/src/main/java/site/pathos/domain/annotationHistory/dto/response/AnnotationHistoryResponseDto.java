@@ -7,7 +7,7 @@ import java.util.List;
 
 public record AnnotationHistoryResponseDto(
         @Schema(description = "Annotation History의 ID", example = "1")
-        Long id,
+        Long annotationHistoryId,
 
         @Schema(description = "ROI 데이터 목록")
         List<RoiResponsePayload> roiPayloads

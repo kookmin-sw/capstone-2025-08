@@ -11,7 +11,7 @@ import site.pathos.domain.model.entity.Model;
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ModelProjectLabel {
+public class ModelLabel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +29,7 @@ public class ModelProjectLabel {
     private Integer classIndex;
 
     @Builder
-    public ModelProjectLabel(Model model, ProjectLabel projectLabel, Integer classIndex){
+    public ModelLabel(Model model, ProjectLabel projectLabel, Integer classIndex){
         this.model = model;
         this.projectLabel = projectLabel;
         this.classIndex = classIndex;

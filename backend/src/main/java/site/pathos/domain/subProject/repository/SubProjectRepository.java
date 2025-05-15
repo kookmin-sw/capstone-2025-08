@@ -9,6 +9,7 @@ import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.subProject.entity.SubProject;
 
 public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
+
     @Query("SELECT new site.pathos.domain.subProject.dto.response.SubProjectSummaryDto(sp.id, sp.thumbnailPath, sp.isUploadComplete) " +
             "FROM SubProject sp " +
             "WHERE sp.project.id = :projectId")
@@ -32,4 +33,6 @@ public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
     boolean existsByProjectIdAndIsUploadCompleteFalse(Long projectId);
 
     List<SubProject> findAllByProjectId(Long projectId);
+
+    List<SubProject> findByProjectIdOrderByCreatedAtAsc(Long projectId);
 }
