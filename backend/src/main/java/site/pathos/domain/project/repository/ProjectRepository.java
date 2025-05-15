@@ -13,8 +13,8 @@ import site.pathos.domain.project.entity.Project;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-    Page<Project> findAllByOrderByUpdatedAtDesc(Pageable pageable);
-    Page<Project> findByTitleContainingIgnoreCaseOrderByUpdatedAtDesc(String title, Pageable pageable);
+    Page<Project> findAll(Pageable pageable);
+    Page<Project> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 
     @Query("""
         SELECT DISTINCT p FROM Project p
