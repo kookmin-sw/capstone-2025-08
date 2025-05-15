@@ -246,28 +246,21 @@ export class ProjectAPIApi extends runtime.BaseAPI {
     requestParameters: GetProjectsRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<GetProjectsResponseDto>> {
-    const queryParameters: any = {};
-
-    if (requestParameters['search'] != null) {
-      queryParameters['search'] = requestParameters['search'];
-    }
-
-    if (requestParameters['sort'] != null) {
-      queryParameters['sort'] = requestParameters['sort'];
-    }
-
-    if (requestParameters['page'] != null) {
-      queryParameters['page'] = requestParameters['page'];
-    }
+    const searchParams = new URLSearchParams();
+    if (requestParameters['search'])
+      searchParams.append('search', requestParameters['search']);
+    if (requestParameters['sort'])
+      searchParams.append('sort', requestParameters['sort']);
+    if (requestParameters['page'] !== undefined)
+      searchParams.append('page', requestParameters['page'].toString());
 
     const headerParameters: runtime.HTTPHeaders = {};
 
     const response = await this.request(
       {
-        path: `/api/projects`,
+        path: `/api/projects?${searchParams.toString().replace(/\+/g, '%20')}`,
         method: 'GET',
         headers: headerParameters,
-        query: queryParameters,
       },
       initOverrides,
     );

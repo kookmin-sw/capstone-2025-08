@@ -19,6 +19,7 @@ import {
   ProjectAPIApi,
   GetProjectsResponseDetailDto,
   GetProjectsResponseModelsDto,
+  CreateProjectRequestDto,
 } from '@/generated-api';
 import { toast } from 'sonner';
 import ProjectCardSkeleton from '@/components/projects/project-card-skeleton';
@@ -31,7 +32,6 @@ const sortOptions = [
 ];
 
 export default function ProjectsPage() {
-  // TODO: 서버 500에러 테스트 필요함
   const projectApi = useMemo(() => new ProjectAPIApi(), []);
 
   const [projects, setProjects] = useState<GetProjectsResponseDetailDto[]>([]);
@@ -44,11 +44,9 @@ export default function ProjectsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [newProjectInfo, setNewProjectInfo] = useState<{
-    title: string;
-    description: string;
-    modelId: number;
-  } | null>(null);
+  const [newProjectInfo, setNewProjectInfo] =
+    useState<CreateProjectRequestDto | null>(null);
+
   const estimatedItemCount = projects.length || 6;
 
   const fetchProjects = useCallback(
@@ -91,27 +89,37 @@ export default function ProjectsPage() {
       return;
     }
 
+    const title = newProjectInfo.title;
+    const toastId = toast.loading(`Uploading '${title}'... Please wait.`);
+
     try {
       await projectApi.createProject({
         requestDto: {
           title: newProjectInfo.title,
           description: newProjectInfo.description,
-          modelId: newProjectInfo.modelId,
+          modelId: newProjectInfo.modelId || undefined,
         },
         files: files,
       });
-      toast.success('The project has been created successfully.');
+
+      toast.success(
+        `'${title}' has been created successfully. Processing may take up to 30 minutes.`,
+        { id: toastId },
+      );
+
       setIsUploadOpen(false);
       await fetchProjects();
       setCurrentPage(1);
     } catch (error) {
-      toast.error('Failed to create the project. Please try again.');
+      toast.error(`Failed to create '${title}'. Please try again.`, {
+        id: toastId,
+      });
     }
   };
 
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+  }, [fetchProjects, sort, searchTerm, currentPage]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);

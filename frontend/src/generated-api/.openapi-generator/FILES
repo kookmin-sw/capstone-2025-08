@@ -1,7 +1,7 @@
 apis/AnnotationHistoryAPIApi.ts
 apis/ModelServerAPIApi.ts
 apis/ProjectAPIApi.ts
-apis/ROIAPIApi.ts
+apis/ProjectAnnotationAPIApi.ts
 apis/SubProjectAPIApi.ts
 apis/index.ts
 index.ts
@@ -10,6 +10,7 @@ models/AnnotationHistoryResponseDto.ts
 models/AnnotationHistorySummaryDto.ts
 models/Cell.ts
 models/CellDetail.ts
+models/CellDto.ts
 models/CreateProjectRequestDto.ts
 models/GetProjectDetailResponseDto.ts
 models/GetProjectsResponseDetailDto.ts
