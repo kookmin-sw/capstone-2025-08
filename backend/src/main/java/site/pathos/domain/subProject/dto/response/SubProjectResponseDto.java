@@ -2,7 +2,6 @@ package site.pathos.domain.subProject.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import site.pathos.domain.annotationHistory.dto.response.AnnotationHistorySummaryDto;
-import site.pathos.domain.model.ModelSummaryDto;
 import site.pathos.domain.model.entity.ModelType;
 
 import java.util.List;
@@ -24,4 +23,14 @@ public record SubProjectResponseDto(
         @Schema(description = "모델 타입", example = "CELL")
         ModelType modelType
 ) {
+        @Schema(description = "사용 가능한 모델 요약 정보 DTO")
+        public record ModelSummaryDto(
+
+                @Schema(description = "모델 ID", example = "1")
+                Long id,
+
+                @Schema(description = "모델 이름", example = "TissueNet V2")
+                String name
+        ) {
+        }
 }

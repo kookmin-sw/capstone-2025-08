@@ -15,14 +15,4 @@ import site.pathos.domain.annotationHistory.service.AnnotationHistoryService;
 @Tag(name = "Annotation History API", description = "어노테이션 히스토리 관리 API")
 public class AnnotationHistoryController {
 
-    private final AnnotationHistoryService annotationHistoryService;
-
-    @Operation(summary = "Annotation History 상세 조회", description = "특정 Annotation History의 상세 정보를 조회합니다.")
-    @GetMapping("/{annotationHistoryId}")
-    public ResponseEntity<AnnotationHistoryResponseDto> getAnnotationHistory(
-            @Parameter(description = "Annotation History ID", example = "1")
-            @PathVariable("annotationHistoryId") Long annotationHistoryId) {
-        AnnotationHistoryResponseDto response = annotationHistoryService.getAnnotationHistory(annotationHistoryId);
-        return ResponseEntity.ok(response);
-    }
 }

@@ -4,16 +4,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.annotation.cellAnnotation.dto.CellDetail;
+import site.pathos.domain.annotation.cellAnnotation.dto.PolygonDto;
 import site.pathos.domain.annotation.cellAnnotation.entity.CellAnnotation;
 import site.pathos.domain.annotation.cellAnnotation.repository.CellAnnotationRepository;
 import site.pathos.domain.annotation.tissueAnnotation.entity.TissueAnnotation;
 import site.pathos.domain.annotation.tissueAnnotation.service.TissueAnnotationService;
+import site.pathos.domain.annotationHistory.dto.response.AnnotationHistoryResponseDto;
+import site.pathos.domain.annotationHistory.dto.response.AnnotationHistorySummaryDto;
 import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
 import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
 import site.pathos.domain.label.entity.Label;
 import site.pathos.domain.label.entity.ProjectLabel;
 import site.pathos.domain.label.repository.LabelRepository;
 import site.pathos.domain.label.repository.ProjectLabelRepository;
+import site.pathos.domain.model.ModelSummaryDto;
 import site.pathos.domain.model.Repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.project.dto.response.GetProjectAnnotationResponseDto;
@@ -21,8 +26,10 @@ import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.roi.dto.request.RoiLabelSaveRequestDto;
 import site.pathos.domain.roi.dto.response.RoiResponseDto;
+import site.pathos.domain.roi.dto.response.RoiResponsePayload;
 import site.pathos.domain.roi.entity.Roi;
 import site.pathos.domain.roi.repository.RoiRepository;
+import site.pathos.domain.subProject.dto.response.SubProjectResponseDto;
 import site.pathos.domain.subProject.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.subProject.entity.SubProject;
 import site.pathos.domain.subProject.repository.SubProjectRepository;
@@ -30,7 +37,9 @@ import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -143,21 +152,21 @@ public class AnnotationService {
     public GetProjectAnnotationResponseDto getProjectAnnotation(Long projectId){
         Long userId = 1L;   // TODO
         Project project = getProject(projectId, userId);
-        List<SubProjectSummaryDto> subProjectsDto = subProjectRepository.findSubProjectIdAndThumbnailByProjectId(projectId);
+        List<SubProject> subProjects = subProjectRepository.findAllByProjectId(projectId);
+
+        List<SubProjectSummaryDto> subProjectsDto = subProjects.stream()
+                .map(sp -> new SubProjectSummaryDto(
+                        sp.getId(),
+                        s3Service.getPresignedUrl(sp.getThumbnailPath()),
+                        sp.isUploadComplete()
+                ))
+                .toList();
+
 
         boolean hasIncompleteUploads = subProjectRepository.existsByProjectIdAndIsUploadCompleteFalse(projectId);
         if (hasIncompleteUploads) {
             throw new BusinessException(ErrorCode.SUB_PROJECT_NOT_READY);
         }
-
-        List<ProjectModel> projectModels = projectModelRepository.findByProjectIdOrderByCreatedAt(projectId);
-
-        List<GetProjectAnnotationResponseDto.ProjectModelsDto> dtos = projectModels.stream()
-                .map(pm -> new GetProjectAnnotationResponseDto.ProjectModelsDto(
-                        pm.getId(),
-                        pm.getModel().getName()
-                ))
-                .toList();
 
         GetProjectAnnotationResponseDto.ModelsDto modelsDto = getProjectModels(project);
 
@@ -165,25 +174,13 @@ public class AnnotationService {
 
         SubProject firstSubProject = getFirstSubProject(projectId);
 
-        Long latestHistoryId = getLatestAnnotationHistoryId(firstSubProject);
-
-        GetProjectAnnotationResponseDto.AnnotationHistoryResponseDto annotationHistoryResponseDto
-                = getAnnotationHistory(latestHistoryId);
-
-        GetProjectAnnotationResponseDto.FirstSubProjectLatestAnnotation firstSubProjectLatestAnnotation
-                = new GetProjectAnnotationResponseDto.FirstSubProjectLatestAnnotation(
-                        firstSubProject.getId(),
-                        annotationHistoryResponseDto
-        );
-
-
         return new GetProjectAnnotationResponseDto(
                 projectId,
                 project.getTitle(),
                 modelsDto,
                 labelDtos,
                 subProjectsDto,
-                firstSubProjectLatestAnnotation
+                firstSubProject.getId()
         );
     }
 
@@ -226,29 +223,29 @@ public class AnnotationService {
                 .toList();
     }
 
-    private GetProjectAnnotationResponseDto.AnnotationHistoryResponseDto getAnnotationHistory(Long historyId) {
+    public AnnotationHistoryResponseDto getAnnotationHistory(Long historyId) {
         AnnotationHistory history = annotationHistoryRepository.findWithSubProjectAndModelById(historyId)
                 .orElseThrow(() -> new RuntimeException("AnnotationHistory not found"));
 
         List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(history.getId());
 
-        List<GetProjectAnnotationResponseDto.RoiResponsePayload> roiPayloads = rois.stream()
+        List<RoiResponsePayload> roiPayloads = rois.stream()
                 .map(roi -> {
                     List<CellAnnotation> cellAnnotations = cellAnnotationRepository.findAllByRoiId(roi.getId());
 
-                    List<GetProjectAnnotationResponseDto.CellDetail> cellDetails = cellAnnotations.stream()
-                            .map(ca -> new GetProjectAnnotationResponseDto.CellDetail(
+                    List<CellDetail> cellDetails = cellAnnotations.stream()
+                            .map(ca -> new CellDetail(
                                     ca.getClassIndex(),
                                     ca.getColor(),
-                                    new GetProjectAnnotationResponseDto.PolygonDto(
+                                    new PolygonDto(
                                             ca.getPolygon().stream()
-                                                    .map(p -> new GetProjectAnnotationResponseDto.PointDto(p.getX(), p.getY()))
+                                                    .map(p -> new PolygonDto.PointDto(p.getX(), p.getY()))
                                                     .toList()
                                     )
                             ))
                             .toList();
 
-                    GetProjectAnnotationResponseDto.RoiResponseDto detail = new GetProjectAnnotationResponseDto.RoiResponseDto(
+                    RoiResponseDto detail = new RoiResponseDto(
                             roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
 
                     List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
@@ -256,11 +253,11 @@ public class AnnotationService {
                             .map(s3Service::getPresignedUrl)
                             .toList();
 
-                    return new GetProjectAnnotationResponseDto.RoiResponsePayload(roi.getDisplayOrder(), detail, presignedTissuePaths, cellDetails);
+                    return new RoiResponsePayload(roi.getDisplayOrder(), detail, presignedTissuePaths, cellDetails);
                 })
                 .toList();
 
-        return new GetProjectAnnotationResponseDto.AnnotationHistoryResponseDto(
+        return new AnnotationHistoryResponseDto(
                 history.getId(),
                 roiPayloads
         );
@@ -275,11 +272,64 @@ public class AnnotationService {
         return subProjects.get(0);
     }
 
-    private Long getLatestAnnotationHistoryId(SubProject subProject){
-        AnnotationHistory latestHistory = annotationHistoryRepository
-                .findFirstBySubProjectIdOrderByUpdatedAtDesc(subProject.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOTATION_HISTORY_NOT_FOUND));
+    @Transactional(readOnly = true)
+    public SubProjectResponseDto getSubProject(Long subProjectId){
+        //TODO 추후에 메서드 분리 필요
+        List<AnnotationHistory> histories = annotationHistoryRepository
+                .findAllBySubProjectId(subProjectId)
+                .stream()
+                .sorted(Comparator.comparing(AnnotationHistory::getCreatedAt)) // startedAt 기준 정렬
+                .toList();
 
-        return latestHistory.getId();
+        List<AnnotationHistorySummaryDto> historyDtos = IntStream.range(0, histories.size())
+                .mapToObj(i -> {
+                    AnnotationHistory h = histories.get(i);
+                    return new AnnotationHistorySummaryDto(
+                            h.getId(),
+                            i+1,
+                            h.getCreatedAt(),
+                            h.getCompletedAt()// 1번부터 시작
+                    );
+                })
+                .toList();
+
+        Long latestAnnotationHistoryId = histories.isEmpty()
+                ? null
+                : histories.get(histories.size() - 1).getId();
+
+        //TODO 나중에 실제 userId로 변경 필요
+        Long userId =  1L;
+
+        Project project = getProjectBySubProjectId(subProjectId, userId);
+
+        List<ProjectModel> projectModels = projectModelRepository.findByProjectIdOrderByCreatedAt(project.getId());
+
+        List<SubProjectResponseDto.ModelSummaryDto> modelsDto = projectModels.stream()
+                .map(pm -> new SubProjectResponseDto.ModelSummaryDto(
+                        pm.getModel().getId(),   // 모델 ID
+                        pm.getModel().getName()  // 모델 이름
+                ))
+                .toList();
+
+        return new SubProjectResponseDto(
+                subProjectId,
+                historyDtos,
+                latestAnnotationHistoryId,
+                modelsDto,
+                project.getModelType()
+        );
+    }
+
+    private Project getProjectBySubProjectId(Long subProjectId, Long userId) {
+        SubProject subProject = subProjectRepository.findById(subProjectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SUB_PROJECT_NOT_FOUND));
+
+        Project project = projectRepository.findProjectWithUserBySubProjectId(subProjectId);
+
+        if (!project.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_PROJECT_ACCESS);
+        }
+
+        return project;
     }
 }
