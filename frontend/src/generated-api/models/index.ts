@@ -5,6 +5,7 @@ export * from './AnnotationHistoryResponseDto';
 export * from './AnnotationHistorySummaryDto';
 export * from './Cell';
 export * from './CellDetail';
+export * from './CellDto';
 export * from './CreateProjectRequestDto';
 export * from './GetProjectDetailResponseDto';
 export * from './GetProjectsResponseDetailDto';
