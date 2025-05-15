@@ -5,12 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, Variants } from 'framer-motion';
 
 interface SignUpFormProps {
+  containerVariants: Variants;
+  itemVariants: Variants;
   onSwitch?: () => void;
 }
 
-export function SignUpForm({ onSwitch }: SignUpFormProps) {
+export function SignUpForm({
+  containerVariants,
+  itemVariants,
+  onSwitch,
+}: SignUpFormProps) {
   // TODO: 인증 정보 연결, 회원가입 API 연동
 
   const [agreed, setAgreed] = useState(false);
@@ -27,12 +34,23 @@ export function SignUpForm({ onSwitch }: SignUpFormProps) {
   };
 
   return (
-    <div className="flex flex-col items-center gap-6 text-center">
-      <h1 className="text-xl font-semibold text-white">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="flex flex-col items-center gap-6 text-center"
+    >
+      <motion.h1
+        variants={itemVariants}
+        className="text-xl font-semibold text-white"
+      >
         Confirm Your Account Info
-      </h1>
+      </motion.h1>
 
-      <div className="flex w-full items-center gap-3 rounded-lg border bg-white px-4 py-3">
+      <motion.div
+        variants={itemVariants}
+        className="flex w-full items-center gap-3 rounded-lg border bg-white px-4 py-3"
+      >
         <div className="bg-border flex h-10 w-10 items-center justify-center rounded-full">
           <svg
             viewBox="0 0 24 24"
@@ -46,9 +64,12 @@ export function SignUpForm({ onSwitch }: SignUpFormProps) {
           <div className="text-sm font-medium">{user.name}</div>
           <div className="text-muted-foreground text-xs">{user.email}</div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="flex w-full items-center gap-2 text-sm">
+      <motion.div
+        variants={itemVariants}
+        className="flex w-full items-center gap-2 text-sm"
+      >
         <Checkbox
           id="terms"
           checked={agreed}
@@ -69,9 +90,12 @@ export function SignUpForm({ onSwitch }: SignUpFormProps) {
             Privacy Policy
           </a>
         </Label>
-      </div>
+      </motion.div>
 
-      <div className="flex w-full justify-between gap-2 pt-2">
+      <motion.div
+        variants={itemVariants}
+        className="flex w-full justify-between gap-2 pt-2"
+      >
         <Button variant="link" className="text-white" onClick={onSwitch}>
           <ChevronLeft />
           Cancel
@@ -85,7 +109,7 @@ export function SignUpForm({ onSwitch }: SignUpFormProps) {
           Continue
           <ChevronRight />
         </Button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
