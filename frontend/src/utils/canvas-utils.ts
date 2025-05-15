@@ -1,8 +1,12 @@
 import OpenSeadragon from 'openseadragon';
 import React from 'react';
-import { Stroke, LoadedROI, Polygon, Point } from '@/types/annotation';
+import { LoadedROI, Polygon, Point, RenderItem } from '@/types/annotation';
 import { drawStroke } from '@/utils/canvas-drawing-utils';
-import { drawPolygon } from '@/utils/canvas-ploygon-utils';
+import {
+  drawCellInferencePoints,
+  drawCellPolygons,
+  drawPolygon,
+} from '@/utils/canvas-ploygon-utils';
 
 /**
  * 뷰어와 캔버스 동기화
@@ -39,9 +43,7 @@ export const redrawCanvas = (
   viewerInstance: any,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
   loadedROIs: LoadedROI[],
-  strokes: Stroke[],
-  currentStroke: Stroke | null,
-  polygons: Polygon[],
+  renderQueue: RenderItem[],
   currentPolygon: Polygon | null,
   mousePosition?: Point | null,
 ) => {
@@ -71,7 +73,9 @@ export const redrawCanvas = (
   }
 
   /* ========= 1. 모든 ROI의 PNG 타일만 표시 ========= */
-  loadedROIs.forEach(({ tiles }) =>
+  loadedROIs.forEach(({ tiles }) => {
+    if (!tiles || tiles.length === 0) return;
+
     tiles.forEach(({ img, x, y, w, h }) => {
       const tlImg = new OpenSeadragon.Point(x, y);
       const brImg = new OpenSeadragon.Point(x + w, y + h);
@@ -83,44 +87,32 @@ export const redrawCanvas = (
       ctx.save();
       ctx.drawImage(img, p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
       ctx.restore();
-    }),
-  );
-
-  /* ========= 2. 지우개 stroke로 PNG에 구멍 내기 ========= */
-  [...strokes, ...(currentStroke ? [currentStroke] : [])]
-    .filter((s) => s.isEraser)
-    .forEach((stroke) => {
-      ctx.save();
-      ctx.globalCompositeOperation = 'destination-out';
-      drawStroke(stroke, viewerInstance, ctx);
-      ctx.restore();
     });
+  });
 
-  /* ========= 3. 일반 펜 stroke ========= */
-  [...strokes, ...(currentStroke ? [currentStroke] : [])]
-    .filter((s) => !s.isEraser)
-    .forEach((stroke) => {
-      ctx.save();
+  /* ========= 2. 드로잉, 폴리곤, 지우개를 하나의 큐로 렌더링 ========= */
+  renderQueue.forEach((item) => {
+    ctx.save();
+    if (item.type === 'polygon') {
       ctx.globalCompositeOperation = 'source-over';
-      drawStroke(stroke, viewerInstance, ctx);
-      ctx.restore();
-    });
-
-  // 완성된 폴리곤들 먼저 그리기
-  polygons.forEach((polygon) => {
-    if (polygon.closed) {
       drawPolygon(
         viewerInstance,
         ctx,
-        polygon.points,
+        item.polygon.points,
         null,
-        polygon.color,
+        item.polygon.color,
         true,
       );
+    } else {
+      ctx.globalCompositeOperation = item.stroke.isEraser
+        ? 'destination-out'
+        : 'source-over';
+      drawStroke(item.stroke, viewerInstance, ctx);
     }
+    ctx.restore();
   });
 
-  // 지금 그리는 중인 미완성 폴리곤 그리기
+  /* ========= 3. 지금 그리는 중인 일반 폴리곤 ========= */
   if (currentPolygon) {
     drawPolygon(
       viewerInstance,
@@ -131,4 +123,35 @@ export const redrawCanvas = (
       false,
     );
   }
+};
+
+/**
+ * 캔버스 다시 그리기 (Cell 전용)
+ */
+export const redrawCellCanvas = (
+  viewer: OpenSeadragon.Viewer,
+  canvas: HTMLCanvasElement,
+  cellPolygons: Polygon[],
+  current: Polygon | null,
+  mouse: Point | null,
+  isInsideAnyROI: (point: Point) => boolean,
+  loadedROIs: LoadedROI[],
+) => {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const ratio = window.devicePixelRatio || 1;
+  const rect = viewer.container.getBoundingClientRect();
+  canvas.width = rect.width * ratio;
+  canvas.height = rect.height * ratio;
+  canvas.style.width = `${rect.width}px`;
+  canvas.style.height = `${rect.height}px`;
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.scale(ratio, ratio);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawCellPolygons(viewer, ctx, cellPolygons, current, mouse, isInsideAnyROI);
+
+  drawCellInferencePoints(viewer, ctx, loadedROIs);
 };

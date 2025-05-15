@@ -33,38 +33,38 @@ export const dummyAnnotationHistory: AnnotationHistory[] = [
 export const dummyProjects: Project[] = [
   {
     id: 1,
-    title: 'Alpha Analysis',
+    title: 'Cell Test',
     description: 'Initial tissue analysis project.',
     userId: 1,
     modelId: 1,
     createdAt: '2025-03-01T09:00:00Z',
     updatedAt: '2025-03-01T12:00:00Z',
     history: dummyAnnotationHistory,
-    modelType: 'TISSUE',
+    modelType: 'CELL',
     modelNameList: ['PathOs-v1', 'PathOs-v2', 'CustomModel-A'],
   },
   {
     id: 2,
-    title: 'Beta Segmentation',
+    title: 'Tissue Test',
     description: 'Multi-region segmentation project.',
     userId: 2,
     modelId: 2,
     createdAt: '2025-03-02T10:00:00Z',
     updatedAt: '2025-03-02T13:30:00Z',
     history: dummyAnnotationHistory,
-    modelType: 'MULTI',
-    modelNameList: [],
+    modelType: 'TISSUE',
+    modelNameList: ['PathOs-v1', 'PathOs-v2', 'CustomModel-A'],
   },
   {
     id: 3,
-    title: 'Gamma Classification',
+    title: 'Multi Test',
     description: 'Cell classification benchmark.',
     userId: 3,
     modelId: 3,
     createdAt: '2025-03-03T11:00:00Z',
     updatedAt: '2025-03-03T15:00:00Z',
     history: dummyAnnotationHistory,
-    modelType: 'CELL',
+    modelType: 'MULTI',
     modelNameList: [],
   },
   {
@@ -301,7 +301,7 @@ export const dummySubProject: SubProject[] = [
   },
   {
     id: 45,
-    projectId: '1',
+    projectId: '2',
     svsPath: '/svs_example.svs',
     thumbnail: '/subproject-thumbnail.png',
     size: 1.5,
@@ -309,7 +309,7 @@ export const dummySubProject: SubProject[] = [
   },
   {
     id: 46,
-    projectId: '1',
+    projectId: '2',
     svsPath: '/svs_example.svs',
     thumbnail: '/subproject-thumbnail.png',
     size: 1.3,
@@ -317,7 +317,7 @@ export const dummySubProject: SubProject[] = [
   },
   {
     id: 47,
-    projectId: '1',
+    projectId: '2',
     svsPath: '/svs_example.svs',
     thumbnail: '/subproject-thumbnail.png',
     size: 1.6,
@@ -325,7 +325,7 @@ export const dummySubProject: SubProject[] = [
   },
   {
     id: 48,
-    projectId: '1',
+    projectId: '3',
     svsPath: '/svs_example.svs',
     thumbnail: '/subproject-thumbnail.png',
     size: 1.5,
@@ -333,7 +333,7 @@ export const dummySubProject: SubProject[] = [
   },
   {
     id: 49,
-    projectId: '1',
+    projectId: '3',
     svsPath: '/svs_example.svs',
     thumbnail: '/subproject-thumbnail.png',
     size: 1.3,
@@ -341,55 +341,7 @@ export const dummySubProject: SubProject[] = [
   },
   {
     id: 50,
-    projectId: '1',
-    svsPath: '/svs_example.svs',
-    thumbnail: '/subproject-thumbnail.png',
-    size: 1.6,
-    uploadedOn: '2025-04-02T14:00:00Z',
-  },
-  {
-    id: 51,
-    projectId: '1',
-    svsPath: '/svs_example.svs',
-    thumbnail: '/subproject-thumbnail.png',
-    size: 1.5,
-    uploadedOn: '2025-03-31T12:30:00Z',
-  },
-  {
-    id: 52,
-    projectId: '1',
-    svsPath: '/svs_example.svs',
-    thumbnail: '/subproject-thumbnail.png',
-    size: 1.3,
-    uploadedOn: '2025-04-01T13:00:00Z',
-  },
-  {
-    id: 53,
-    projectId: '1',
-    svsPath: '/svs_example.svs',
-    thumbnail: '/subproject-thumbnail.png',
-    size: 1.6,
-    uploadedOn: '2025-04-02T14:00:00Z',
-  },
-  {
-    id: 54,
-    projectId: '1',
-    svsPath: '/svs_example.svs',
-    thumbnail: '/subproject-thumbnail.png',
-    size: 1.5,
-    uploadedOn: '2025-03-31T12:30:00Z',
-  },
-  {
-    id: 55,
-    projectId: '1',
-    svsPath: '/svs_example.svs',
-    thumbnail: '/subproject-thumbnail.png',
-    size: 1.3,
-    uploadedOn: '2025-04-01T13:00:00Z',
-  },
-  {
-    id: 56,
-    projectId: '1',
+    projectId: '3',
     svsPath: '/svs_example.svs',
     thumbnail: '/subproject-thumbnail.png',
     size: 1.6,
@@ -397,73 +349,77 @@ export const dummySubProject: SubProject[] = [
   },
 ];
 
-// 인퍼런스 히스토리 더미 데이터
-export const dummyInferenceHistory: InferenceHistory = {
-  id: 12,
-  accuracy: 0.9375,
-  loss: 0.1642,
-  loopPerformance: 0.82,
-};
-
-// 모델 더미 데이터
-export const dummyModel: Model = {
-  id: 5,
-  annotationHistoryId: 88,
-  name: 'Example Model',
-  modelType: 'CELL' as ModelType,
-  modelVersion: 'v1.0',
-  trainedAt: '2025-03-30T10:00:00Z',
-};
-
-// ROI 더미 데이터 (추후 어노테이션 및 export 기능에 활용)
-export const dummyROI: ROI = {
-  id: 101,
-  annotationHistoryId: 88,
-  x: 120,
-  y: 85,
-  width: 200,
-  height: 200,
-};
-
-// Tissue Annotation 더미 데이터
-export const dummyTissueAnnotation: TissueAnnotation = {
-  id: 1,
-  roiId: 101,
-  imagePath: 'tissue_annotation_image.png',
-};
-
-// Cell Annotation 더미 데이터
-export const dummyCellAnnotation: CellAnnotation = {
-  id: 1,
-  roiId: 101,
-  x: 150,
-  y: 100,
-  radius: 15,
-  color: '#ff0000',
-  label: 'Cell A',
-};
-
 // 모델 추론 결과 응답 더미 데이터
-export const dummyInferenceResults = [
+export const dummyCellInferenceResults = [
   {
-    inferenceId: 12,
+    id: 1,
+    modelName: 'Cell Model',
     annotationHistoryId: 88,
     subProjectId: 42,
     modelId: 5,
-    metrics: {
-      accuracy: 0.9375,
-      loss: 0.1642,
-      loopPerformance: 0.82,
-    },
-    completedAt: '2025-04-01T03:14:00Z',
-    results: [
+    roiPayloads: [
       {
-        roiId: 101,
-        x: 63465,
-        y: 11220,
-        width: 31248,
-        height: 27978,
-        maskUrl: [
+        displayOrder: 1,
+        detail: {
+          id: 101,
+          x: 63465,
+          y: 11220,
+          width: 31248,
+          height: 27978,
+          faulty: 0.15,
+        },
+        tissue_path: [],
+        cell: [
+          {
+            color: '#FFFF00',
+            points: [
+              { x: 83640.66, y: 21111.9 },
+              { x: 80579.89, y: 22688.66 },
+              { x: 80626.26, y: 26213.18 },
+              { x: 83779.78, y: 27418.94 },
+              { x: 85727.55, y: 25192.93 },
+            ],
+          },
+          {
+            color: '#0000FF',
+            points: [
+              { x: 69496.19, y: 20509.02 },
+              { x: 66991.93, y: 22271.28 },
+              { x: 67084.68, y: 25146.55 },
+              { x: 70423.7, y: 27140.69 },
+              { x: 72556.96, y: 24126.3 },
+              { x: 71675.83, y: 21761.16 },
+            ],
+          },
+        ],
+      },
+    ],
+    labels: [
+      { id: 1, name: 'Test A', color: '#FFFF00' },
+      { id: 2, name: 'Test B', color: '#0000FF' },
+    ],
+  },
+];
+
+export const dummyTissueInferenceResults = [
+  {
+    id: 1,
+    modelName: 'Tissue Model',
+    annotationHistoryId: 88,
+    subProjectId: 45,
+    modelId: 5,
+    roiPayloads: [
+      {
+        displayOrder: 1,
+        detail: {
+          id: 101,
+          x: 63465,
+          y: 11220,
+          width: 31248,
+          height: 27978,
+          faulty: 0.15,
+        },
+        tissue_path: [
           '/0_0.png',
           '/0_1.png',
           '/0_2.png',
@@ -471,7 +427,68 @@ export const dummyInferenceResults = [
           '/1_1.png',
           '/1_2.png',
         ],
+        cell: [],
       },
+    ],
+    labels: [{ id: 1, name: 'Test C', color: '#FF0000' }],
+  },
+];
+
+export const dummyMultiInferenceResults = [
+  {
+    id: 1,
+    modelName: 'Tissue Model',
+    annotationHistoryId: 88,
+    subProjectId: 48,
+    modelId: 5,
+    roiPayloads: [
+      {
+        displayOrder: 1,
+        detail: {
+          id: 101,
+          x: 63465,
+          y: 11220,
+          width: 31248,
+          height: 27978,
+          faulty: 0.15,
+        },
+        tissue_path: [
+          '/0_0.png',
+          '/0_1.png',
+          '/0_2.png',
+          '/1_0.png',
+          '/1_1.png',
+          '/1_2.png',
+        ],
+        cell: [
+          {
+            color: '#FFFF00',
+            points: [
+              { x: 83640.66, y: 21111.9 },
+              { x: 80579.89, y: 22688.66 },
+              { x: 80626.26, y: 26213.18 },
+              { x: 83779.78, y: 27418.94 },
+              { x: 85727.55, y: 25192.93 },
+            ],
+          },
+          {
+            color: '#0000FF',
+            points: [
+              { x: 69496.19, y: 20509.02 },
+              { x: 66991.93, y: 22271.28 },
+              { x: 67084.68, y: 25146.55 },
+              { x: 70423.7, y: 27140.69 },
+              { x: 72556.96, y: 24126.3 },
+              { x: 71675.83, y: 21761.16 },
+            ],
+          },
+        ],
+      },
+    ],
+    labels: [
+      { id: 1, name: 'Test A', color: '#FFFF00' },
+      { id: 2, name: 'Test B', color: '#0000FF' },
+      { id: 3, name: 'Test C', color: '#FF0000' },
     ],
   },
 ];

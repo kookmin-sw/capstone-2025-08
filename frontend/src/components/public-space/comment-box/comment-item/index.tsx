@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { CommentType } from '@/types/comment';
+import { CommentType } from '@/types/public-space-comment';
 import ReplyInput from '@/components/public-space/comment-box/reply-input';
 import { Badge } from '@/components/ui/badge';
 

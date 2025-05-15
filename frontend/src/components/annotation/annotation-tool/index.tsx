@@ -6,6 +6,7 @@ import {
   Eraser,
   Palette,
   SlidersHorizontal,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { HexColorPicker } from 'react-colorful';
@@ -14,8 +15,10 @@ import { Slider } from '@/components/ui/slider';
 interface AnnotationToolProps {
   modelType: string;
   isActive: boolean;
-  activeTool: 'circle' | 'polygon' | 'paintbrush' | 'eraser' | null;
-  onSelectTool: (tool: 'circle' | 'polygon' | 'paintbrush' | 'eraser') => void;
+  activeTool: 'point' | 'polygon' | 'paintbrush' | 'eraser' | 'delete' | null;
+  onSelectTool: (
+    tool: 'point' | 'polygon' | 'paintbrush' | 'eraser' | 'delete',
+  ) => void;
   penColor: string;
   penSize: number;
   onChangePenColor: (color: string) => void;
@@ -68,24 +71,66 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
     switch (modelType) {
       case 'CELL':
         return (
-          <Button
-            variant={'ghost'}
-            size={'icon'}
-            onClick={() => onSelectTool('circle')}
-            className={activeTool === 'circle' ? 'bg-primary text-white' : ''}
-          >
-            <CircleDot />
-          </Button>
+          <>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('point')}
+              className={activeTool === 'point' ? 'bg-primary text-white' : ''}
+            >
+              <CircleDot />
+            </Button>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('delete')}
+              className={activeTool === 'delete' ? 'bg-primary text-white' : ''}
+            >
+              <XCircle />
+            </Button>
+          </>
         );
       case 'TISSUE':
+        return (
+          <>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('polygon')}
+              className={
+                activeTool === 'polygon' ? 'bg-primary text-white' : ''
+              }
+            >
+              <Waypoints />
+            </Button>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('paintbrush')}
+              className={
+                activeTool === 'paintbrush' ? 'bg-primary text-white' : ''
+              }
+            >
+              <Paintbrush />
+            </Button>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('eraser')}
+              className={activeTool === 'eraser' ? 'bg-primary text-white' : ''}
+            >
+              <Eraser />
+            </Button>
+          </>
+        );
       case 'MULTI':
         return (
           <>
             <Button
               variant={'ghost'}
               size={'icon'}
-              onClick={() => onSelectTool('circle')}
-              className={activeTool === 'circle' ? 'bg-primary text-white' : ''}
+              onClick={() => onSelectTool('point')}
+              className={activeTool === 'point' ? 'bg-primary text-white' : ''}
             >
               <CircleDot />
             </Button>
@@ -108,6 +153,14 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
               }
             >
               <Paintbrush />
+            </Button>
+            <Button
+              variant={'ghost'}
+              size={'icon'}
+              onClick={() => onSelectTool('delete')}
+              className={activeTool === 'delete' ? 'bg-primary text-white' : ''}
+            >
+              <XCircle />
             </Button>
             <Button
               variant={'ghost'}
@@ -155,32 +208,36 @@ const AnnotationTool: React.FC<AnnotationToolProps> = ({
         )}
       </div>
 
-      {/* 펜 크기 선택 */}
-      <Button
-        ref={sizeButtonRef}
-        variant="ghost"
-        size="icon"
-        onClick={() => setPenSizeMenuOpen((prev) => !prev)}
-      >
-        <SlidersHorizontal />
-      </Button>
+      {modelType !== 'CELL' && (
+        <>
+          {/* 펜 크기 선택 */}
+          <Button
+            ref={sizeButtonRef}
+            variant="ghost"
+            size="icon"
+            onClick={() => setPenSizeMenuOpen((prev) => !prev)}
+          >
+            <SlidersHorizontal />
+          </Button>
 
-      {/* 펜 크기 Slider */}
-      {penSizeMenuOpen && (
-        <div
-          ref={sizeMenuRef}
-          className="absolute bottom-0 left-full z-50 ml-2 flex flex-col items-center gap-3 rounded-lg bg-white p-4 shadow"
-        >
-          <Slider
-            orientation="vertical"
-            min={5}
-            max={50}
-            step={1}
-            value={[penSize]}
-            onValueChange={([val]) => onChangePenSize(val)}
-            className="h-32 w-4"
-          />
-        </div>
+          {/* 펜 크기 Slider */}
+          {penSizeMenuOpen && (
+            <div
+              ref={sizeMenuRef}
+              className="absolute bottom-0 left-full z-50 ml-2 flex flex-col items-center gap-3 rounded-lg bg-white p-4 shadow"
+            >
+              <Slider
+                orientation="vertical"
+                min={5}
+                max={50}
+                step={1}
+                value={[penSize]}
+                onValueChange={([val]) => onChangePenSize(val)}
+                className="h-32 w-4"
+              />
+            </div>
+          )}
+        </>
       )}
     </div>
   );

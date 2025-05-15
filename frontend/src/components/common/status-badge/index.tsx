@@ -3,32 +3,36 @@
 import { CircleCheck, Loader, CircleX, CirclePause } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type StatusType = 'completed' | 'progress' | 'failed' | 'pending';
+export type StatusType = 'Completed' | 'Progress' | 'Failed' | 'Pending';
 
 const statusStyles: Record<
   StatusType,
   { icon: React.ReactNode; text: string }
 > = {
-  completed: {
+  Completed: {
     icon: <CircleCheck className="h-4 w-4 text-green-600" />,
     text: 'Completed',
   },
-  progress: {
+  Progress: {
     icon: <Loader className="h-4 w-4 text-sky-600" />,
     text: 'Progress',
   },
-  failed: {
+  Failed: {
     icon: <CircleX className="text-destructive h-4 w-4" />,
     text: 'Failed',
   },
-  pending: {
+  Pending: {
     icon: <CirclePause className="text-muted-foreground h-4 w-4" />,
     text: 'Pending',
   },
 };
 
 export function StatusBadge({ status }: { status: StatusType }) {
-  const { icon, text } = statusStyles[status];
+  const fallback = {
+    icon: <CirclePause className="text-muted-foreground h-4 w-4" />,
+    text: 'Pending',
+  };
+  const { icon, text } = statusStyles[status] ?? fallback;
 
   return (
     <div

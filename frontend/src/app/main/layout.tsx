@@ -16,12 +16,15 @@ export default function MainLayout({
 
   const iconSidebar = !/^\/main\/public-space\/\d+$/.test(pathname);
 
+  const hasPadding =
+    pathname !== '/main' && !/^\/main\/public-space\/\d+$/.test(pathname);
+
   return hideSidebar ? (
     <main>{children}</main>
   ) : (
     <SidebarProvider open={iconSidebar}>
       <AppSidebar />
-      <main className={`w-screen ${iconSidebar ? 'px-16 py-12' : ''}`}>
+      <main className={`w-screen ${hasPadding ? 'px-16 py-12' : ''}`}>
         {children}
       </main>
     </SidebarProvider>

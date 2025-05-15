@@ -33,5 +33,19 @@ export interface MaskTile {
 
 export interface LoadedROI {
   bbox: { x: number; y: number; w: number; h: number };
-  tiles: MaskTile[];
+  tiles?: MaskTile[];
+  points?: { x: number; y: number }[];
+  label?: string;
+  color?: string;
+  cells?: Polygon[];
 }
+
+export type RenderItem =
+  | { type: 'stroke'; stroke: Stroke }
+  | { type: 'polygon'; polygon: Polygon };
+
+export type RenderSnapshot = {
+  renderQueue: RenderItem[];
+  strokes: Stroke[];
+  polygons: Polygon[];
+};
