@@ -11,9 +11,9 @@ import {PathosLogoHorizontal} from "@/components/pathos-logo-horizontal";
 
 const navItems = [
   { name: "Intro", href: "/" },
-  { name: "Features", href: "/features.html" },
-  { name: "Docs", href: "/docs.html" },
-  { name: "Team", href: "/team.html" },
+  { name: "Features", href: "/features" },
+  { name: "Docs", href: "/docs" },
+  { name: "Team", href: "/team" },
 ]
 
 export default function Navbar() {
