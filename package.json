@@ -1,12 +1,13 @@
 {
+  "homepage": "https://kookmin-sw.github.io/capstone-2025-08/",
   "name": "my-v0-project",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "export": "next export",
-    "deploy": "pnpm build && pnpm export && gh-pages -d out",
+    "predeploy": "pnpm run build",
+    "deploy": "gh-pages -d build",
     "start": "next start",
     "lint": "next lint"
   },
