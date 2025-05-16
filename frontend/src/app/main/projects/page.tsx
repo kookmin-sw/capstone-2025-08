@@ -98,6 +98,7 @@ export default function ProjectsPage() {
           title: newProjectInfo.title,
           description: newProjectInfo.description,
           modelId: newProjectInfo.modelId || undefined,
+          modelType: newProjectInfo.modelType,
         },
         files: files,
       });
