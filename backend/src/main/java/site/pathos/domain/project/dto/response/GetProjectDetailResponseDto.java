@@ -2,7 +2,7 @@ package site.pathos.domain.project.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
-import site.pathos.domain.model.entity.ModelType;
+import site.pathos.domain.model.enums.ModelType;
 
 public record GetProjectDetailResponseDto(
         @Schema(description = "프로젝트 id", example = "1")

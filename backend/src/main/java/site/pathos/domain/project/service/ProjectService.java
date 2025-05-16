@@ -3,8 +3,8 @@ package site.pathos.domain.project.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,14 +12,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
-import site.pathos.domain.annotationHistory.repository.AnnotationHistoryRepository;
-import site.pathos.domain.label.entity.ProjectLabel;
-import site.pathos.domain.label.repository.ProjectLabelRepository;
-import site.pathos.domain.model.Repository.ModelRepository;
-import site.pathos.domain.model.Repository.ProjectModelRepository;
+import site.pathos.domain.annotation.entity.AnnotationHistory;
+import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
+import site.pathos.domain.project.entity.ProjectLabel;
+import site.pathos.domain.annotation.repository.ProjectLabelRepository;
+import site.pathos.domain.model.repository.ModelRepository;
+import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
-import site.pathos.domain.model.entity.ModelType;
+import site.pathos.domain.model.enums.ModelType;
 import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
@@ -35,12 +35,12 @@ import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.enums.ModelProcessStatusType;
 import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.repository.ProjectRepository;
-import site.pathos.domain.subProject.dto.request.SubProjectTilingRequestDto;
-import site.pathos.domain.subProject.entity.SubProject;
-import site.pathos.domain.subProject.repository.SubProjectRepository;
+import site.pathos.domain.project.dto.request.SubProjectTilingRequestDto;
+import site.pathos.domain.project.entity.SubProject;
+import site.pathos.domain.project.repository.SubProjectRepository;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
-import site.pathos.domain.userModel.repository.UserModelRepository;
+import site.pathos.domain.model.repository.UserModelRepository;
 import site.pathos.global.aws.ec2.Ec2Service;
 import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.aws.s3.dto.S3UploadFileDto;
@@ -117,7 +117,6 @@ public class ProjectService {
 
             AnnotationHistory annotationHistory = AnnotationHistory.builder()
                     .subProject(subProject)
-                    .model(model)
                     .build();
             annotationHistoryRepository.save(annotationHistory);
         }
@@ -181,11 +180,11 @@ public class ProjectService {
                 continue;
             }
 
-            String modelName = subProjects.get(subProjects.size() - 1).getAnnotationHistories().stream()
-                    .max(Comparator.comparing(AnnotationHistory::getCreatedAt))
-                    .map(AnnotationHistory::getModel)
-                    .map(Model::getName)
-                    .orElse("");
+            Model model = projectModelRepository.findLatestByProjectIdWithModel(project.getId())
+                    .stream()
+                    .findFirst()
+                    .map(ProjectModel::getModel)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_MODEL_NOT_FOUND));
 
             List<String> thumbnailUrls = subProjects.stream()
                     .map(SubProject::getThumbnailPath)
@@ -201,7 +200,7 @@ public class ProjectService {
                     DateTimeUtils.dateTimeToStringFormat(project.getCreatedAt()),
                     DateTimeUtils.dateTimeToStringFormat(project.getUpdatedAt()),
                     project.getModelType(),
-                    modelName,
+                    model.getName(),
                     thumbnailUrls
             ));
         }
@@ -213,15 +212,18 @@ public class ProjectService {
      * N+1 문제를 방지하고, MultipleBagFetchException을 피하기 위해 쿼리를 분리해 실행합니다.
      */
     private void prefetchProjectRelations(Page<Project> projectPage) {
-        List<Long> projectIds = projectPage.getContent().stream().map(Project::getId).toList();
+        List<Long> projectIds = projectPage.getContent().stream()
+                .map(Project::getId)
+                .toList();
 
         List<Project> fetchedProjects = projectRepository.fetchProjectsWithSubProjectsByIds(projectIds);
 
+        // 서브프로젝트의 어노테이션 히스토리 및 모델까지 미리 로딩
         List<SubProject> subProjects = fetchedProjects.stream()
                 .flatMap(p -> p.getSubProjects().stream())
                 .toList();
 
-        subProjectRepository.fetchWithAnnotationHistoriesAndModels(subProjects);
+        subProjectRepository.fetchWithAnnotationHistories(subProjects);
     }
 
     @Transactional

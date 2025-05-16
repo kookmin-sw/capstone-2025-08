@@ -19,8 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLRestriction;
-import site.pathos.domain.model.entity.ModelType;
-import site.pathos.domain.subProject.entity.SubProject;
+import site.pathos.domain.model.enums.ModelType;
 import site.pathos.domain.user.entity.User;
 
 @Entity

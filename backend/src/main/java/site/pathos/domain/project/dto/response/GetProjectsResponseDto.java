@@ -2,7 +2,7 @@ package site.pathos.domain.project.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
-import site.pathos.domain.model.entity.ModelType;
+import site.pathos.domain.model.enums.ModelType;
 import site.pathos.global.common.PaginationResponse;
 
 public record GetProjectsResponseDto(

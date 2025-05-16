@@ -1,7 +1,7 @@
 package site.pathos.domain.project.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import site.pathos.domain.model.entity.ModelType;
+import site.pathos.domain.model.enums.ModelType;
 
 public record CreateProjectRequestDto(
         @Schema(description = "프로젝트명", example = "Upsilon Viz")

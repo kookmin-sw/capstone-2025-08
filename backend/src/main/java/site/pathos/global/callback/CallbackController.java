@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import site.pathos.domain.subProject.service.SubProjectService;
+import site.pathos.domain.project.service.SubProjectService;
 import site.pathos.global.callback.dto.request.TilingCallbackRequestDto;
 
 @Hidden
