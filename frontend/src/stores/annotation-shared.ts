@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { ROI, LoadedROI, Polygon } from '@/types/annotation';
-import { LabelDto } from '@/generated-api';
+import { LabelDto, SubProjectResponseDto } from '@/generated-api';
 
 interface AnnotationSharedState {
   viewer: OpenSeadragon.Viewer | null;
@@ -9,12 +9,15 @@ interface AnnotationSharedState {
   userDefinedROIs: ROI[];
   cellPolygons: Polygon[];
   labels: LabelDto[];
+  selectedSubProject: SubProjectResponseDto | null;
+
   setViewer: (viewer: OpenSeadragon.Viewer | null) => void;
   setCanvas: (canvas: HTMLCanvasElement | null) => void;
   setLoadedROIs: (rois: LoadedROI[]) => void;
   setUserDefinedROIs: (rois: ROI[]) => void;
   setCellPolygons: (polygons: Polygon[]) => void;
   setLabels: (labels: LabelDto[]) => void;
+  setSelectedSubProject: (subProject: SubProjectResponseDto | null) => void;
 }
 
 export const useAnnotationSharedStore = create<AnnotationSharedState>(
@@ -25,11 +28,15 @@ export const useAnnotationSharedStore = create<AnnotationSharedState>(
     userDefinedROIs: [],
     cellPolygons: [],
     labels: [],
+    selectedSubProject: [],
+
     setViewer: (viewer) => set({ viewer }),
     setCanvas: (canvas) => set({ canvas }),
     setLoadedROIs: (rois) => set({ loadedROIs: rois }),
     setUserDefinedROIs: (rois) => set({ userDefinedROIs: rois }),
     setCellPolygons: (polygons) => set({ cellPolygons: polygons }),
     setLabels: (labels) => set({ labels }),
+    setSelectedSubProject: (subProject) =>
+      set({ selectedSubProject: subProject }),
   }),
 );

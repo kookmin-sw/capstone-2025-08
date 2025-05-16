@@ -28,6 +28,7 @@ export default function AnnotationHeader() {
   const [project, setProject] =
     useState<GetProjectAnnotationResponseDto | null>(null);
   const [selectedModelName, setSelectedModelName] = useState('none');
+  const { selectedSubProject } = useAnnotationSharedStore();
 
   useEffect(() => {
     if (!id) return;
@@ -36,11 +37,10 @@ export default function AnnotationHeader() {
       try {
         const projectId = Number(id);
 
-        // 1. 프로젝트 및 서브프로젝트 목록 가져오기
         const projectRes = await ProjectAnnotationApi.getProject({ projectId });
         setProject(projectRes);
 
-        // 2. 모델 이름 설정
+        // 모델 이름 설정
         const firstModelName =
           projectRes.modelsDto?.projectModels?.[0]?.name ?? 'none';
         setSelectedModelName(firstModelName);
@@ -57,15 +57,11 @@ export default function AnnotationHeader() {
     return <div className="p-4">Project not found</div>;
   }
 
-  // 가장 최근 버전 기록 찾기 (startedAt 기준 내림차순 정렬 후 첫 번째)
-  const latestHistory = project?.history
-    ?.slice()
-    .sort(
-      (a, b) =>
-        new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime(),
-    )[0];
+  // 가장 최근 버전 기록 찾기
+  const latestHistory =
+    selectedSubProject?.latestAnnotationHistoryId?.toString();
 
-  const modelType = project?.modelType?.toLowerCase() as
+  const modelType = project?.modelsDto?.modelType?.toLowerCase() as
     | 'cell'
     | 'tissue'
     | 'multi'
@@ -129,41 +125,50 @@ export default function AnnotationHeader() {
       {/* 오른쪽: 모델 정보 */}
       <div className="flex flex-row items-center gap-4">
         {/* 모델 버전 기록 (가장 최근 히스토리) */}
-        <Select value={latestHistory?.id.toString()} onValueChange={() => {}}>
+        <Select
+          value={latestHistory}
+          onValueChange={(val) => {
+            console.log('선택된 히스토리 ID:', val);
+          }}
+        >
           <SelectTrigger>
-            <SelectValue>
-              {latestHistory
-                ? (() => {
-                    const { full, time } = formatDateTime(
-                      latestHistory.startedAt,
-                    );
-                    return (
-                      <div className="flex flex-row items-center gap-2">
-                        <span>Version {latestHistory.id}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {full} {time}
-                        </span>
-                      </div>
-                    );
-                  })()
-                : 'Version Select'}
+            <SelectValue placeholder="Version Select">
+              {(() => {
+                const latest = selectedSubProject?.annotationHistories?.find(
+                  (h) => h.id === selectedSubProject?.latestAnnotationHistoryId,
+                );
+                if (!latest) return 'Version Select';
+                const { full, time } = formatDateTime(
+                  (latest?.startedAt as Date).toISOString(),
+                );
+                return (
+                  <div className="flex flex-row items-center gap-2">
+                    <span>Version {latest.id}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {full} {time}
+                    </span>
+                  </div>
+                );
+              })()}
             </SelectValue>
           </SelectTrigger>
 
           <SelectContent>
-            {project?.history
-              ?.slice() // 원본 보호
+            {(selectedSubProject?.annotationHistories ?? [])
+              .slice()
               .sort(
                 (a, b) =>
-                  new Date(b.startedAt).getTime() -
-                  new Date(a.startedAt).getTime(),
+                  new Date(b.startedAt!).getTime() -
+                  new Date(a.startedAt!).getTime(),
               )
-              .map((h) => {
-                const { full, time } = formatDateTime(h.startedAt);
+              .map((history) => {
+                const { full, time } = formatDateTime(
+                  (history?.startedAt as Date).toISOString(),
+                );
                 return (
-                  <SelectItem key={h.id} value={h.id.toString()}>
+                  <SelectItem key={history.id} value={history.id!.toString()}>
                     <div className="flex flex-col">
-                      <span>Version {h.id}</span>
+                      <span>Version {history.id}</span>
                       <span className="text-muted-foreground text-xs">
                         {full} {time}
                       </span>
@@ -175,7 +180,7 @@ export default function AnnotationHeader() {
         </Select>
         {/* 모델 타입 */}
         <Select
-          value={project.modelsDto?.modelType.toLowerCase()}
+          value={project.modelsDto?.modelType?.toLowerCase()}
           onValueChange={() => {}}
         >
           <SelectTrigger className="w-36">
@@ -199,9 +204,9 @@ export default function AnnotationHeader() {
             <SelectValue placeholder="Select Model Name" />
           </SelectTrigger>
           <SelectContent>
-            {project?.modelNameList?.map((name: string) => (
-              <SelectItem key={name} value={name}>
-                {name}
+            {project?.modelsDto?.projectModels?.map((model, index) => (
+              <SelectItem key={model.modelId} value={model.name || ''}>
+                {model.name}
               </SelectItem>
             ))}
 
@@ -211,14 +216,14 @@ export default function AnnotationHeader() {
         </Select>
 
         {/* 버튼 */}
-        <Button variant="secondary">Train</Button>
+        <Button variant="secondary" onClick={() => setIsExportModalOpen(true)}>
+          Train
+        </Button>
         <Button variant="secondary">Run</Button>
         <Button variant="secondary" onClick={handleSave}>
           Save
         </Button>
-        <Button variant="secondary" onClick={() => setIsExportModalOpen(true)}>
-          Export
-        </Button>
+
         <AnnotationModelExportModal
           open={isExportModalOpen}
           onClose={() => setIsExportModalOpen(false)}
