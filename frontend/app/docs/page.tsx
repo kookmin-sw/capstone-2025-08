@@ -1,9 +1,12 @@
 "use client"
 
+import { useRouter } from 'next/router'
 import Link from "next/link"
 import { ArrowRight, BookOpen, FileText, Video, Download, ExternalLink } from "lucide-react"
 
 export default function DocsPage() {
+  const { basePath } = useRouter();
+
   return (
       <div className="space-y-20">
         {/* Hero Section */}
@@ -37,7 +40,7 @@ export default function DocsPage() {
             </div>
             <div className="flex justify-center mt-6">
               <img
-                  src="/pathos-poster.svg"
+                  src={`${basePath}/pathos-poster.svg`}
                   alt="포스터"
                   className="w-2/3 h-auto"
               />

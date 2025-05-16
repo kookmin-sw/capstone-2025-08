@@ -20,10 +20,13 @@ const orbitron = Orbitron({
 })
 
 export const metadata: Metadata = {
-  title: "PathOs - 노코드 병리 AI 서비스",
+  title: "PathOs",
   description:
     "병리학자가 WSI에서 원하는 세포 및 조직을 빠르게 학습·추론할수 있도록 돕는 Human-in-the-loop 기반의 노코드 병리 AI 서비스",
-    generator: 'v0.dev'
+    generator: 'v0.dev',
+  icons: {
+    icon: '/capstone-2025-08/favicon.ico',
+  },
 }
 
 export default function RootLayout({

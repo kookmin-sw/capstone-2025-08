@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from 'next/router'
 import { useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -8,6 +9,7 @@ import { motion, useInView } from "framer-motion"
 import MicroscopeView from "@/components/microscope-view"
 
 export default function FeaturesPage() {
+  const { basePath } = useRouter();
   const heroRef = useRef<HTMLDivElement>(null)
   const mainFeaturesRef = useRef<HTMLDivElement>(null)
   const dualBranchRef = useRef<HTMLDivElement>(null)
@@ -126,7 +128,7 @@ export default function FeaturesPage() {
                   className="relative aspect-square md:aspect-auto md:h-[400px] rounded-2xl overflow-hidden border border-border/40 backdrop-blur-sm bg-background/30"
               >
                 <Image
-                    src="/gland.jpg"
+                    src={`${basePath}/gland.jpg`}
                     alt="Dual-Branch 아키텍처"
                     fill
                     className="object-cover mix-blend-luminosity z-10"
