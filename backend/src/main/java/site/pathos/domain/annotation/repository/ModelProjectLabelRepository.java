@@ -3,7 +3,7 @@ package site.pathos.domain.annotation.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import site.pathos.domain.annotation.entity.ModelLabel;
+import site.pathos.domain.model.entity.ModelLabel;
 
 import java.util.List;
 

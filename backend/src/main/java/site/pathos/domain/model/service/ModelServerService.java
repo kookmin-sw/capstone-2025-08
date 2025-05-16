@@ -15,7 +15,7 @@ import site.pathos.domain.model.entity.InferenceHistory;
 import site.pathos.domain.model.entity.TrainingHistory;
 import site.pathos.domain.model.repository.InferenceHistoryRepository;
 import site.pathos.domain.model.repository.TrainingHistoryRepository;
-import site.pathos.domain.annotation.entity.ModelLabel;
+import site.pathos.domain.model.entity.ModelLabel;
 import site.pathos.domain.annotation.repository.ModelProjectLabelRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;

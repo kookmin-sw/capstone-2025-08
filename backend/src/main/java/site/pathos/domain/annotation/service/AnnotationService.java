@@ -14,7 +14,7 @@ import site.pathos.domain.annotation.dto.response.AnnotationHistorySummaryDto;
 import site.pathos.domain.annotation.entity.AnnotationHistory;
 import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
 import site.pathos.domain.annotation.entity.Label;
-import site.pathos.domain.annotation.entity.ProjectLabel;
+import site.pathos.domain.project.entity.ProjectLabel;
 import site.pathos.domain.annotation.repository.LabelRepository;
 import site.pathos.domain.annotation.repository.ProjectLabelRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;

@@ -1,8 +1,8 @@
-package site.pathos.domain.annotation.entity;
+package site.pathos.domain.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.project.entity.ProjectLabel;
 
 @Entity
 @Table(

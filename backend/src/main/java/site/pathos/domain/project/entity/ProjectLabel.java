@@ -1,11 +1,11 @@
-package site.pathos.domain.annotation.entity;
+package site.pathos.domain.project.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import site.pathos.domain.project.entity.Project;
+import site.pathos.domain.annotation.entity.Label;
 
 @Entity
 @Table(

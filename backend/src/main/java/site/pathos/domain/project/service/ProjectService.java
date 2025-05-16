@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.entity.AnnotationHistory;
 import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
-import site.pathos.domain.annotation.entity.ProjectLabel;
+import site.pathos.domain.project.entity.ProjectLabel;
 import site.pathos.domain.annotation.repository.ProjectLabelRepository;
 import site.pathos.domain.model.repository.ModelRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;

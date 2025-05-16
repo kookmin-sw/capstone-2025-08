@@ -1,7 +1,7 @@
 package site.pathos.domain.annotation.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import site.pathos.domain.annotation.entity.ProjectLabel;
+import site.pathos.domain.project.entity.ProjectLabel;
 
 import java.util.List;
 import java.util.Optional;
