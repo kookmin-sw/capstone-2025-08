@@ -46,13 +46,16 @@ export default function AiBrain() {
 
       // Calculate distances to all other nodes
       const distances = nodes
-        .map((otherNode, j) => {
-          if (i === j) return Number.POSITIVE_INFINITY
-          const dx = node.x - otherNode.x
-          const dy = node.y - otherNode.y
-          return { index: j, distance: Math.sqrt(dx * dx + dy * dy) }
-        })
-        .sort((a, b) => a.distance - b.distance)
+          .map((otherNode, j) => {
+            if (i === j) {
+              return { index: j, distance: Number.POSITIVE_INFINITY }
+            }
+            const dx = node.x - otherNode.x
+            const dy = node.y - otherNode.y
+            return { index: j, distance: Math.sqrt(dx * dx + dy * dy) }
+          })
+          .sort((a, b) => a.distance - b.distance)
+
 
       // Connect to closest nodes
       for (let j = 0; j < Math.min(connectionCount, distances.length); j++) {

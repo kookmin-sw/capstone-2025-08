@@ -1,4 +1,6 @@
-import {Github, Mail} from "lucide-react"
+"use client"
+
+import {Github} from "lucide-react"
 
 export default function Footer() {
   return (
