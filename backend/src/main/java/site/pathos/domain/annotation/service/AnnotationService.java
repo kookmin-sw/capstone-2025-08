@@ -156,6 +156,7 @@ public class AnnotationService {
                 .map(sp -> new SubProjectSummaryDto(
                         sp.getId(),
                         s3Service.getPresignedUrl(sp.getThumbnailPath()),
+                        s3Service.getPresignedUrl(sp.getTileImagePath()),
                         sp.isUploadComplete()
                 ))
                 .toList();
