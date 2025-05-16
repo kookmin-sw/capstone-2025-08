@@ -33,42 +33,6 @@ def get_config(nr_type, mode):
                     "net": {
                         "desc": lambda: create_model(
                             input_ch=3, nr_types=nr_type, 
-                            freeze=True, mode=mode
-                        ),
-                        "optimizer": [
-                            optim.Adam,
-                            {  # should match keyword for parameters within the optimizer
-                                "lr": 1.0e-4,  # initial learning rate,
-                                "betas": (0.9, 0.999),
-                            },
-                        ],
-                        # learning rate scheduler
-                        "lr_scheduler": lambda x: optim.lr_scheduler.StepLR(x, 25),
-                        "extra_info": {
-                            "loss": {
-                                "np": {"bce": 1, "dice": 1},
-                                "hv": {"mse": 1, "msge": 1},
-                                "tp": {"bce": 1, "dice": 1},
-                            },
-                        },
-                        # path to load, -1 to auto load checkpoint from previous phase,
-                        # None to start from scratch
-                        # "pretrained": "../pretrained/ImageNet-ResNet50-Preact_pytorch.tar",
-                        'pretrained': None,
-                    },
-                },
-                "target_info": {"gen": (gen_targets, {}), "viz": (prep_sample, {})},
-                "batch_size": {"train": 2, "valid": 2,},  # Adjusted for small dataset size
-                "nr_epochs": 1, # Set to 1 epoch for quick testing
-            },
-# ... existing code ...
-
-            {
-                "run_info": {
-                    # may need more dynamic for each network
-                    "net": {
-                        "desc": lambda: create_model(
-                            input_ch=3, nr_types=nr_type, 
                             freeze=False, mode=mode
                         ),
                         "optimizer": [
@@ -89,12 +53,12 @@ def get_config(nr_type, mode):
                         },
                         # path to load, -1 to auto load checkpoint from previous phase,
                         # None to start from scratch
-                        "pretrained": -1,
+                        "pretrained": None,
                     },
                 },
                 "target_info": {"gen": (gen_targets, {}), "viz": (prep_sample, {})},
-                "batch_size": {"train": 2, "valid": 2,}, # Adjusted for small dataset size
-                "nr_epochs": 1, # Set to 1 epoch for quick testing (if both phases should run for 1 epoch)
+                "batch_size": {"train": 2, "valid": 2,},  # Adjusted for small dataset size
+                "nr_epochs": 5,
             },
         ],
         # ------------------------------------------------------------------
