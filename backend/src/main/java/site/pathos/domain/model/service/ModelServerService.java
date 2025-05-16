@@ -250,7 +250,7 @@ public class ModelServerService {
                         .toList();
                 cellAnnotationRepository.saveAll(cellAnnotations);
 
-                tissueAnnotationService.saveResultAnnotation(roi, roiDto.tissue_path());
+                tissueAnnotationService.saveResultAnnotation(roi, roiDto.tissuePath());
             }
         }
     }

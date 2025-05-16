@@ -76,7 +76,7 @@ public record TrainingResultRequestDto(
                 int faulty,
 
                 @Schema(description = "조직 이미지 경로 (merged)", example = "s3://my-bucket/sub-project/101/roi-1/merged.jpg")
-                String tissue_path,
+                String tissuePath,
 
                 @Schema(description = "셀 정보 목록")
                 List<Cell> cells
