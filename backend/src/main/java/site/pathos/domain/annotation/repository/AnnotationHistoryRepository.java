@@ -11,15 +11,6 @@ import java.util.Optional;
 
 @Repository
 public interface AnnotationHistoryRepository extends JpaRepository<AnnotationHistory, Long> {
-    @Query("""
-        SELECT ah
-        FROM AnnotationHistory ah
-        JOIN FETCH ah.subProject
-        JOIN FETCH ah.model
-        WHERE ah.id = :id
-    """)
-    Optional<AnnotationHistory> findWithSubProjectAndModelById(@Param("id") Long id);
-
     List<AnnotationHistory> findAllBySubProjectId(Long subProjectId);
 
     @Query("""

@@ -30,10 +30,6 @@ public class AnnotationHistory {
     @JoinColumn(name = "training_history_id")
     private TrainingHistory trainingHistory;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_id")
-    private Model model;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -46,9 +42,8 @@ public class AnnotationHistory {
     private LocalDateTime completedAt;
 
     @Builder
-    public AnnotationHistory(SubProject subProject, Model model, TrainingHistory trainingHistory) {
+    public AnnotationHistory(SubProject subProject,TrainingHistory trainingHistory) {
         this.subProject = subProject;
-        this.model = model;
         this.trainingHistory = trainingHistory;
     }
 

@@ -1,9 +1,8 @@
-package site.pathos.domain.model.Repository;
+package site.pathos.domain.model.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.model.entity.ProjectModel;
 
 import java.util.List;

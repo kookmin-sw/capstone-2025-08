@@ -13,11 +13,11 @@ import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
 import site.pathos.domain.annotation.service.TissueAnnotationService;
 import site.pathos.domain.model.entity.InferenceHistory;
 import site.pathos.domain.model.entity.TrainingHistory;
-import site.pathos.domain.model.Repository.InferenceHistoryRepository;
-import site.pathos.domain.model.Repository.TrainingHistoryRepository;
+import site.pathos.domain.model.repository.InferenceHistoryRepository;
+import site.pathos.domain.model.repository.TrainingHistoryRepository;
 import site.pathos.domain.annotation.entity.ModelLabel;
 import site.pathos.domain.annotation.repository.ModelProjectLabelRepository;
-import site.pathos.domain.model.Repository.ProjectModelRepository;
+import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.model.dto.TrainingRequestDto;
@@ -218,7 +218,6 @@ public class ModelServerService {
 
             AnnotationHistory newHistory = AnnotationHistory.builder()
                     .subProject(subProject)
-                    .model(newModel)
                     .trainingHistory(trainingHistory)
                     .build();
             annotationHistoryRepository.save(newHistory);

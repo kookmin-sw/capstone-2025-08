@@ -13,10 +13,9 @@ public interface SubProjectRepository extends JpaRepository<SubProject, Long> {
     @Query("""
         SELECT sp FROM SubProject sp
         LEFT JOIN FETCH sp.annotationHistories ah
-        LEFT JOIN FETCH ah.model
         WHERE sp IN :subProjects
     """)
-    List<SubProject> fetchWithAnnotationHistoriesAndModels(@Param("subProjects") List<SubProject> subProjects);
+    List<SubProject> fetchWithAnnotationHistories(@Param("subProjects") List<SubProject> subProjects);
 
     @Query("""
             SELECT DISTINCT sp FROM SubProject sp

@@ -17,7 +17,7 @@ import site.pathos.domain.annotation.entity.Label;
 import site.pathos.domain.annotation.entity.ProjectLabel;
 import site.pathos.domain.annotation.repository.LabelRepository;
 import site.pathos.domain.annotation.repository.ProjectLabelRepository;
-import site.pathos.domain.model.Repository.ProjectModelRepository;
+import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.annotation.dto.response.GetProjectAnnotationResponseDto;
 import site.pathos.domain.project.entity.Project;
@@ -222,8 +222,8 @@ public class AnnotationService {
     }
 
     public AnnotationHistoryResponseDto getAnnotationHistory(Long historyId) {
-        AnnotationHistory history = annotationHistoryRepository.findWithSubProjectAndModelById(historyId)
-                .orElseThrow(() -> new RuntimeException("AnnotationHistory not found"));
+        AnnotationHistory history = annotationHistoryRepository.findById(historyId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOTATION_HISTORY_NOT_FOUND));
 
         List<Roi> rois = roiRepository.findAllByAnnotationHistoryId(history.getId());
 

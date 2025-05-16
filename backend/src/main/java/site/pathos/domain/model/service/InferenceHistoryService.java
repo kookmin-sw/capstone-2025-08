@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.pathos.domain.model.entity.InferenceHistory;
-import site.pathos.domain.model.Repository.InferenceHistoryRepository;
+import site.pathos.domain.model.repository.InferenceHistoryRepository;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.project.entity.Project;
 
