@@ -19,10 +19,10 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import {
+  CreateProjectRequestDtoModelTypeEnum,
   GetProjectsResponseModelsDto,
   GetProjectsResponseModelsDtoModelTypeEnum,
 } from '@/generated-api';
-import { toast } from 'sonner';
 
 interface ProjectCreateModalProps {
   models: GetProjectsResponseModelsDto[];
@@ -31,7 +31,8 @@ interface ProjectCreateModalProps {
   onNext: (info: {
     title: string;
     description: string;
-    modelId: number;
+    modelId: number | undefined;
+    modelType: CreateProjectRequestDtoModelTypeEnum;
   }) => void;
 }
 
@@ -56,22 +57,17 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
     }
   }, [open]);
 
-  const isFormValid =
-    title.trim() !== '' && description.trim() !== '' && modelName !== 'none';
+  const isFormValid = title.trim() !== '' && description.trim() !== '';
 
   const handleNext = () => {
     const selectedModel = models.find((m) => m.modelName === modelName);
     const modelId = selectedModel?.modelId;
 
-    if (!modelId) {
-      toast.error('Model not selected or invalid.');
-      return;
-    }
-
     onNext({
       title,
       description,
-      modelId,
+      modelId: modelId ?? undefined,
+      modelType: modelType as CreateProjectRequestDtoModelTypeEnum,
     });
   };
 

@@ -17,7 +17,6 @@ import type {
   CreateProjectRequestDto,
   GetProjectDetailResponseDto,
   GetProjectsResponseDto,
-  GetSubProjectResponseDto,
   UpdateProjectRequestDto,
 } from '../models/index';
 import {
@@ -27,8 +26,6 @@ import {
   GetProjectDetailResponseDtoToJSON,
   GetProjectsResponseDtoFromJSON,
   GetProjectsResponseDtoToJSON,
-  GetSubProjectResponseDtoFromJSON,
-  GetSubProjectResponseDtoToJSON,
   UpdateProjectRequestDtoFromJSON,
   UpdateProjectRequestDtoToJSON,
 } from '../models/index';
@@ -50,10 +47,6 @@ export interface GetProjectsRequest {
   search?: string;
   sort?: string;
   page?: number;
-}
-
-export interface GetSubProject1Request {
-  projectId: number;
 }
 
 export interface UpdateProjectRequest {
@@ -246,28 +239,21 @@ export class ProjectAPIApi extends runtime.BaseAPI {
     requestParameters: GetProjectsRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<GetProjectsResponseDto>> {
-    const queryParameters: any = {};
-
-    if (requestParameters['search'] != null) {
-      queryParameters['search'] = requestParameters['search'];
-    }
-
-    if (requestParameters['sort'] != null) {
-      queryParameters['sort'] = requestParameters['sort'];
-    }
-
-    if (requestParameters['page'] != null) {
-      queryParameters['page'] = requestParameters['page'];
-    }
+    const searchParams = new URLSearchParams();
+    if (requestParameters['search'])
+      searchParams.append('search', requestParameters['search']);
+    if (requestParameters['sort'])
+      searchParams.append('sort', requestParameters['sort']);
+    if (requestParameters['page'] !== undefined)
+      searchParams.append('page', requestParameters['page'].toString());
 
     const headerParameters: runtime.HTTPHeaders = {};
 
     const response = await this.request(
       {
-        path: `/api/projects`,
+        path: `/api/projects?${searchParams.toString().replace(/\+/g, '%20')}`,
         method: 'GET',
         headers: headerParameters,
-        query: queryParameters,
       },
       initOverrides,
     );
@@ -285,58 +271,6 @@ export class ProjectAPIApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<GetProjectsResponseDto> {
     const response = await this.getProjectsRaw(
-      requestParameters,
-      initOverrides,
-    );
-    return await response.value();
-  }
-
-  /**
-   * 해당 projectId를 기반으로 연결된 서브 프로젝트 정보를 반환합니다.
-   * 서브 프로젝트를 조회합니다.
-   */
-  async getSubProject1Raw(
-    requestParameters: GetSubProject1Request,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<GetSubProjectResponseDto>> {
-    if (requestParameters['projectId'] == null) {
-      throw new runtime.RequiredError(
-        'projectId',
-        'Required parameter "projectId" was null or undefined when calling getSubProject1().',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    const response = await this.request(
-      {
-        path: `/api/projects/annotation/{projectId}`.replace(
-          `{${'projectId'}}`,
-          encodeURIComponent(String(requestParameters['projectId'])),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      GetSubProjectResponseDtoFromJSON(jsonValue),
-    );
-  }
-
-  /**
-   * 해당 projectId를 기반으로 연결된 서브 프로젝트 정보를 반환합니다.
-   * 서브 프로젝트를 조회합니다.
-   */
-  async getSubProject1(
-    requestParameters: GetSubProject1Request,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<GetSubProjectResponseDto> {
-    const response = await this.getSubProject1Raw(
       requestParameters,
       initOverrides,
     );

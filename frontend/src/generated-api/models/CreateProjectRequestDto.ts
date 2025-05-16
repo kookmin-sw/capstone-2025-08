@@ -37,7 +37,25 @@ export interface CreateProjectRequestDto {
      * @memberof CreateProjectRequestDto
      */
     modelId?: number;
+    /**
+     * 모델 타입
+     * @type {string}
+     * @memberof CreateProjectRequestDto
+     */
+    modelType?: CreateProjectRequestDtoModelTypeEnum;
 }
+
+
+/**
+ * @export
+ */
+export const CreateProjectRequestDtoModelTypeEnum = {
+    Tissue: 'TISSUE',
+    Cell: 'CELL',
+    Multi: 'MULTI'
+} as const;
+export type CreateProjectRequestDtoModelTypeEnum = typeof CreateProjectRequestDtoModelTypeEnum[keyof typeof CreateProjectRequestDtoModelTypeEnum];
+
 
 /**
  * Check if a given object implements the CreateProjectRequestDto interface.
@@ -59,6 +77,7 @@ export function CreateProjectRequestDtoFromJSONTyped(json: any, ignoreDiscrimina
         'title': json['title'] == null ? undefined : json['title'],
         'description': json['description'] == null ? undefined : json['description'],
         'modelId': json['modelId'] == null ? undefined : json['modelId'],
+        'modelType': json['modelType'] == null ? undefined : json['modelType'],
     };
 }
 
@@ -76,6 +95,7 @@ export function CreateProjectRequestDtoToJSONTyped(value?: CreateProjectRequestD
         'title': value['title'],
         'description': value['description'],
         'modelId': value['modelId'],
+        'modelType': value['modelType'],
     };
 }
 

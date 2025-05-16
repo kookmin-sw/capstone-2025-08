@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { CellDto } from './CellDto';
+import {
+    CellDtoFromJSON,
+    CellDtoFromJSONTyped,
+    CellDtoToJSON,
+    CellDtoToJSONTyped,
+} from './CellDto';
+
 /**
  * ROI 정보 리스트
  * @export
@@ -55,6 +63,12 @@ export interface RoiSaveRequestDto {
      * @memberof RoiSaveRequestDto
      */
     imageNames?: Array<string>;
+    /**
+     * CellAnnotation 정보 리스트
+     * @type {Array<CellDto>}
+     * @memberof RoiSaveRequestDto
+     */
+    cells?: Array<CellDto>;
 }
 
 /**
@@ -80,6 +94,7 @@ export function RoiSaveRequestDtoFromJSONTyped(json: any, ignoreDiscriminator: b
         'width': json['width'] == null ? undefined : json['width'],
         'height': json['height'] == null ? undefined : json['height'],
         'imageNames': json['imageNames'] == null ? undefined : json['imageNames'],
+        'cells': json['cells'] == null ? undefined : ((json['cells'] as Array<any>).map(CellDtoFromJSON)),
     };
 }
 
@@ -100,6 +115,7 @@ export function RoiSaveRequestDtoToJSONTyped(value?: RoiSaveRequestDto | null, i
         'width': value['width'],
         'height': value['height'],
         'imageNames': value['imageNames'],
+        'cells': value['cells'] == null ? undefined : ((value['cells'] as Array<any>).map(CellDtoToJSON)),
     };
 }
 

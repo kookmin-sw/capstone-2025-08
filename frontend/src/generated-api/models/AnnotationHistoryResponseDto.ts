@@ -32,7 +32,7 @@ export interface AnnotationHistoryResponseDto {
      * @type {number}
      * @memberof AnnotationHistoryResponseDto
      */
-    id?: number;
+    annotationHistoryId?: number;
     /**
      * ROI 데이터 목록
      * @type {Array<RoiResponsePayload>}
@@ -58,7 +58,7 @@ export function AnnotationHistoryResponseDtoFromJSONTyped(json: any, ignoreDiscr
     }
     return {
         
-        'id': json['id'] == null ? undefined : json['id'],
+        'annotationHistoryId': json['annotationHistoryId'] == null ? undefined : json['annotationHistoryId'],
         'roiPayloads': json['roiPayloads'] == null ? undefined : ((json['roiPayloads'] as Array<any>).map(RoiResponsePayloadFromJSON)),
     };
 }
@@ -74,7 +74,7 @@ export function AnnotationHistoryResponseDtoToJSONTyped(value?: AnnotationHistor
 
     return {
         
-        'id': value['id'],
+        'annotationHistoryId': value['annotationHistoryId'],
         'roiPayloads': value['roiPayloads'] == null ? undefined : ((value['roiPayloads'] as Array<any>).map(RoiResponsePayloadToJSON)),
     };
 }
