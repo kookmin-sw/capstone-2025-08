@@ -24,5 +24,5 @@ public interface ProjectModelRepository extends JpaRepository<ProjectModel, Long
     WHERE pm.project.id = :projectId
     ORDER BY pm.createdAt DESC
 """)
-    Optional<ProjectModel> findLatestByProjectIdWithModel(@Param("projectId") Long projectId);
+    List<ProjectModel> findByProjectIdWithModelOrderByCreatedAtDesc(@Param("projectId") Long projectId);
 }

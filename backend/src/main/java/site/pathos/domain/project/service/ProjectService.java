@@ -180,11 +180,13 @@ public class ProjectService {
                 continue;
             }
 
-            Model model = projectModelRepository.findLatestByProjectIdWithModel(project.getId())
-                    .stream()
-                    .findFirst()
-                    .map(ProjectModel::getModel)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_MODEL_NOT_FOUND));
+            List<ProjectModel> projectModels = projectModelRepository.findByProjectIdWithModelOrderByCreatedAtDesc(project.getId());
+
+            if (projectModels.isEmpty()) {
+                throw new BusinessException(ErrorCode.PROJECT_MODEL_NOT_FOUND);
+            }
+
+            Model model = projectModels.get(0).getModel();
 
             List<String> thumbnailUrls = subProjects.stream()
                     .map(SubProject::getThumbnailPath)
@@ -296,9 +298,9 @@ public class ProjectService {
     }
 
     private Model getRecentModel(Project project) {
-        return projectModelRepository.findLatestByProjectIdWithModel(project.getId())
-                .map(ProjectModel::getModel)
-                .orElse(null); // 혹은 orElseThrow(...)로 바꿔도 됨
+        return projectModelRepository
+                .findByProjectIdWithModelOrderByCreatedAtDesc(project.getId())
+                .get(0).getModel();
     }
 
     private List<LabelDto> getLabelDtos(Long projectId) {

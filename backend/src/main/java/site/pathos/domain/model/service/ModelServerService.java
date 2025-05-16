@@ -63,8 +63,13 @@ public class ModelServerService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
-        ProjectModel projectModel = projectModelRepository.findLatestByProjectIdWithModel(project.getId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.MODEL_NOT_FOUND));
+        List<ProjectModel> projectModels = projectModelRepository.findByProjectIdWithModelOrderByCreatedAtDesc(project.getId());
+
+        if (projectModels.isEmpty()) {
+            throw new BusinessException(ErrorCode.PROJECT_MODEL_NOT_FOUND);
+        }
+
+        ProjectModel projectModel = projectModels.get(0);
 
         TrainingHistory trainingHistory = trainingHistoryService.createTrainingHistory(project, projectModel.getModel());
         InferenceHistory inferenceHistory = inferenceHistoryService.createInferenceHistory(project, projectModel.getModel());
