@@ -14,6 +14,7 @@ import site.pathos.domain.annotation.dto.response.AnnotationHistorySummaryDto;
 import site.pathos.domain.annotation.entity.AnnotationHistory;
 import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
 import site.pathos.domain.annotation.entity.Label;
+import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto;
 import site.pathos.domain.project.entity.ProjectLabel;
 import site.pathos.domain.annotation.repository.LabelRepository;
 import site.pathos.domain.annotation.repository.ProjectLabelRepository;
@@ -55,7 +56,7 @@ public class AnnotationService {
     private final S3Service s3Service;
 
     @Transactional
-    public void saveWithAnnotations(Long subProjectId, Long annotationHistoryId,
+    public AnnotationHistoryResponseDto saveWithAnnotations(Long subProjectId, Long annotationHistoryId,
                                     List<RoiLabelSaveRequestDto.RoiSaveRequestDto> rois, List<MultipartFile> images, List<RoiLabelSaveRequestDto.LabelDto> labels) {
         AnnotationHistory history = annotationHistoryRepository.findById(annotationHistoryId)
                 .orElseThrow(() -> new IllegalArgumentException("AnnotationHistory not found"));
@@ -95,6 +96,8 @@ public class AnnotationService {
                         roi.getId(), matchedImages);
             }
         }
+
+        return getAnnotationHistory(history.getId());
     }
 
     private Roi updateRoi(RoiLabelSaveRequestDto.RoiSaveRequestDto roiDto) {
@@ -124,7 +127,7 @@ public class AnnotationService {
         return roiRepository.save(roi);
     }
 
-    private ProjectLabel createLabel(Project project, RoiLabelSaveRequestDto.LabelDto labelDto){
+    private ProjectLabel createLabel(Project project, RoiLabelSaveRequestDto.LabelDto labelDto) {
         Label label = Label.create();
         labelRepository.save(label);
 
@@ -133,7 +136,10 @@ public class AnnotationService {
                 .label(label)
                 .name(labelDto.name())
                 .color(labelDto.color())
+                .displayOrder(labelDto.displayOrder())
+                .createdAt(labelDto.createdAt())
                 .build();
+
         return projectLabelRepository.save(projectLabel);
     }
 
@@ -141,7 +147,7 @@ public class AnnotationService {
         ProjectLabel projectLabel = projectLabelRepository.findByProjectIdAndLabelId(project.getId(), labelDto.id())
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_LABEL_NOT_FUND));
 
-        projectLabel.changeLabel(labelDto.color(), labelDto.name());
+        projectLabel.changeLabel(labelDto.color(), labelDto.name(), labelDto.displayOrder());
 
         return projectLabel;
     }
@@ -169,7 +175,7 @@ public class AnnotationService {
 
         GetProjectAnnotationResponseDto.ModelsDto modelsDto = getProjectModels(project);
 
-        List<GetProjectAnnotationResponseDto.LabelDto> labelDtos = getProjectLabels(project);
+        List<GetProjectAnnotationResponseDto.ProjectLabelDto> labelDtos = getProjectLabels(project);
 
         SubProject firstSubProject = getFirstSubProject(projectId);
 
@@ -210,14 +216,16 @@ public class AnnotationService {
         );
     }
 
-    private List<GetProjectAnnotationResponseDto.LabelDto> getProjectLabels(Project project){
+    private List<GetProjectAnnotationResponseDto.ProjectLabelDto> getProjectLabels(Project project){
         List<ProjectLabel> projectLabels = projectLabelRepository.findAllByProjectId(project.getId());
 
         return projectLabels.stream()
-                .map(projectLabel -> new GetProjectAnnotationResponseDto.LabelDto(
+                .map(projectLabel -> new GetProjectAnnotationResponseDto.ProjectLabelDto(
                         projectLabel.getId(),
                         projectLabel.getName(),
-                        projectLabel.getColor()
+                        projectLabel.getColor(),
+                        projectLabel.getDisplayOrder(),
+                        projectLabel.getCreatedAt()
                 ))
                 .toList();
     }
@@ -256,9 +264,12 @@ public class AnnotationService {
                 })
                 .toList();
 
+        List<RoiLabelSaveRequestDto.LabelDto> projectLabels = getProjectLabelsByAnnotationHistoryId(historyId);
+
         return new AnnotationHistoryResponseDto(
                 history.getId(),
-                roiPayloads
+                roiPayloads,
+                projectLabels
         );
     }
 
@@ -330,5 +341,18 @@ public class AnnotationService {
         }
 
         return project;
+    }
+
+    private List<RoiLabelSaveRequestDto.LabelDto> getProjectLabelsByAnnotationHistoryId(Long annotationHistoryId) {
+        AnnotationHistory history = annotationHistoryRepository.findWithProjectById(annotationHistoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOTATION_HISTORY_NOT_FOUND));
+
+        Long projectId = history.getSubProject().getProject().getId();
+        List<ProjectLabel> projectLabels = projectLabelRepository.findAllByProjectId(projectId);
+
+        return projectLabels.stream()
+                .map(pl -> new RoiLabelSaveRequestDto.LabelDto(pl.getId(), pl.getName(),
+                        pl.getColor(), pl.getDisplayOrder(), pl.getCreatedAt()))
+                .toList();
     }
 }

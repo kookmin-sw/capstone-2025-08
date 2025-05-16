@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import site.pathos.domain.model.enums.ModelType;
 import site.pathos.domain.project.dto.response.SubProjectSummaryDto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Schema(description = "프로젝트 어노테이션 화면을 조회할 때 사용하는 응답 DTO")
@@ -19,7 +20,7 @@ public record GetProjectAnnotationResponseDto(
         ModelsDto modelsDto,
 
         @Schema(description = "프로젝트 라벨 리스트")
-        List<LabelDto> labels,
+        List<ProjectLabelDto> labels,
 
         @Schema(description = "서브 프로젝트 요약 정보 리스트")
         List<SubProjectSummaryDto> subProjects,
@@ -46,7 +47,7 @@ public record GetProjectAnnotationResponseDto(
         ) {}
 
         @Schema(description = "프로젝트에서 사용되는 라벨 정보 DTO")
-        public record LabelDto(
+        public record ProjectLabelDto(
                 @Schema(description = "라벨 ID", example = "2")
                 Long labelId,
 
@@ -54,6 +55,13 @@ public record GetProjectAnnotationResponseDto(
                 String name,
 
                 @Schema(description = "라벨 색상 (HEX 코드)", example = "#FF5733")
-                String color
+                String color,
+
+                @Schema(description = "정렬 순서", example = "2")
+                int displayOrder,
+
+                @Schema(description = "생성 일자")
+                LocalDateTime createdAt
+
         ) {}
 }

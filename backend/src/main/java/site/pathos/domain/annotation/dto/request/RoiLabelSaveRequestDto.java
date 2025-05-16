@@ -2,6 +2,7 @@ package site.pathos.domain.annotation.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record RoiLabelSaveRequestDto(
@@ -47,7 +48,13 @@ public record RoiLabelSaveRequestDto(
                 String name,
 
                 @Schema(description = "라벨 색상 (HEX 코드)", example = "#FF5733")
-                String color
+                String color,
+
+                @Schema(description = "정렬 순서", example = "2")
+                int displayOrder,
+
+                @Schema(description = "생성 일자")
+                LocalDateTime createdAt
         ) {
         }
 }
