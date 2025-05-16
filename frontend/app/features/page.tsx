@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Layers, Zap, Database, Brain, Workflow, LineChart } from "lucide-react"
+import { ArrowRight, Layers, Zap, Database, Brain, RefreshCcwDot, LineChart } from "lucide-react"
 import { motion, useInView } from "framer-motion"
 import MicroscopeView from "@/components/microscope-view"
 
@@ -230,7 +230,7 @@ export default function FeaturesPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
-                icon: <Workflow className="h-6 w-6" />,
+                icon: <RefreshCcwDot className="h-6 w-6" />,
                 title: "Human-in-the-Loop 피드백",
                 description: "사용자의 피드백을 지속적으로 반영하여 모델의 정확도를 향상시킵니다.",
                 delay: 0.1,

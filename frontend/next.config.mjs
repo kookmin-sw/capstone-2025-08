@@ -9,6 +9,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  basePath: '/capstone-2025-08',
+  assetPrefix: '/capstone-2025-08/',
 }
 
 export default nextConfig
