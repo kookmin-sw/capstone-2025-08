@@ -15,12 +15,33 @@
 
 import * as runtime from '../runtime';
 import type {
+  AnnotationHistoryResponseDto,
+  GetProjectAnnotationResponseDto,
   RoiLabelSaveRequestDto,
+  SubProjectResponseDto,
 } from '../models/index';
 import {
+    AnnotationHistoryResponseDtoFromJSON,
+    AnnotationHistoryResponseDtoToJSON,
+    GetProjectAnnotationResponseDtoFromJSON,
+    GetProjectAnnotationResponseDtoToJSON,
     RoiLabelSaveRequestDtoFromJSON,
     RoiLabelSaveRequestDtoToJSON,
+    SubProjectResponseDtoFromJSON,
+    SubProjectResponseDtoToJSON,
 } from '../models/index';
+
+export interface GetAnnotationHistoryRequest {
+    annotationHistoryId: number;
+}
+
+export interface GetProjectRequest {
+    projectId: number;
+}
+
+export interface GetSubProjectRequest {
+    subProjectId: number;
+}
 
 export interface UploadRoisRequest {
     subProjectId: number;
@@ -33,6 +54,111 @@ export interface UploadRoisRequest {
  * 
  */
 export class ProjectAnnotationAPIApi extends runtime.BaseAPI {
+
+    /**
+     * 특정 Annotation History의 상세 정보를 조회합니다.
+     * Annotation History 상세 조회
+     */
+    async getAnnotationHistoryRaw(requestParameters: GetAnnotationHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AnnotationHistoryResponseDto>> {
+        if (requestParameters['annotationHistoryId'] == null) {
+            throw new runtime.RequiredError(
+                'annotationHistoryId',
+                'Required parameter "annotationHistoryId" was null or undefined when calling getAnnotationHistory().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/annotation/annotation-histories/{annotationHistoryId}`.replace(`{${"annotationHistoryId"}}`, encodeURIComponent(String(requestParameters['annotationHistoryId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => AnnotationHistoryResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * 특정 Annotation History의 상세 정보를 조회합니다.
+     * Annotation History 상세 조회
+     */
+    async getAnnotationHistory(requestParameters: GetAnnotationHistoryRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AnnotationHistoryResponseDto> {
+        const response = await this.getAnnotationHistoryRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * 해당 projectId를 기반으로 프로젝트 단위 정보들과 서브프로젝트들을 반환합니다.
+     * 프로젝트 어노테이션 페이지를 조회합니다.
+     */
+    async getProjectRaw(requestParameters: GetProjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<GetProjectAnnotationResponseDto>> {
+        if (requestParameters['projectId'] == null) {
+            throw new runtime.RequiredError(
+                'projectId',
+                'Required parameter "projectId" was null or undefined when calling getProject().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/annotation/projects/{projectId}`.replace(`{${"projectId"}}`, encodeURIComponent(String(requestParameters['projectId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => GetProjectAnnotationResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * 해당 projectId를 기반으로 프로젝트 단위 정보들과 서브프로젝트들을 반환합니다.
+     * 프로젝트 어노테이션 페이지를 조회합니다.
+     */
+    async getProject(requestParameters: GetProjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<GetProjectAnnotationResponseDto> {
+        const response = await this.getProjectRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * 서브 프로젝트 ID로 해당 서브 프로젝트의 상세 정보를 조회합니다.
+     * 서브 프로젝트 상세 조회
+     */
+    async getSubProjectRaw(requestParameters: GetSubProjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SubProjectResponseDto>> {
+        if (requestParameters['subProjectId'] == null) {
+            throw new runtime.RequiredError(
+                'subProjectId',
+                'Required parameter "subProjectId" was null or undefined when calling getSubProject().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/annotation/sub-projects/{subProjectId}`.replace(`{${"subProjectId"}}`, encodeURIComponent(String(requestParameters['subProjectId']))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => SubProjectResponseDtoFromJSON(jsonValue));
+    }
+
+    /**
+     * 서브 프로젝트 ID로 해당 서브 프로젝트의 상세 정보를 조회합니다.
+     * 서브 프로젝트 상세 조회
+     */
+    async getSubProject(requestParameters: GetSubProjectRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SubProjectResponseDto> {
+        const response = await this.getSubProjectRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * 특정 SubProject와 AnnotationHistory에 ROI, 관련 이미지, 라벨 정보를 업로드합니다.
