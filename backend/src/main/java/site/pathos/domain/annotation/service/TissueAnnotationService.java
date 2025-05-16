@@ -100,8 +100,6 @@ public class TissueAnnotationService {
 
         List<ImageTile> tiles = ImageUtils.sliceImageByROIWithPosition(
                 resultImage,
-                roi.getX(),
-                roi.getY(),
                 roi.getWidth(),
                 roi.getHeight()
         );
