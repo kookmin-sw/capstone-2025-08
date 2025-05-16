@@ -37,7 +37,6 @@ import {
   RenderItem,
   RenderSnapshot,
 } from '@/types/annotation';
-import { SubProject } from '@/types/project-schema';
 import {
   dummyCellInferenceResults,
   dummyTissueInferenceResults,
@@ -46,9 +45,9 @@ import {
 import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
 import AnnotationSubProjectSlider from '@/components/annotation/annotation-subproject-slider';
 import { convertViewportROIToImageROI } from '@/hooks/use-viewport-to-image';
-import { Label } from '@/types/annotation-sidebar';
 import { useAnnotationSharedStore } from '@/stores/annotation-shared';
 import AnnotationCellDeleteModal from '@/components/annotation/annotation-cell-delete-modal';
+import { LabelDto, SubProjectSummaryDto } from '@/generated-api';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
@@ -56,21 +55,23 @@ const BORDER_THICKNESS = 2;
 type Tool = 'point' | 'polygon' | 'paintbrush' | 'eraser' | 'delete' | null;
 
 const AnnotationViewer: React.FC<{
-  subProject: SubProject | null;
-  setSubProject: (sp: SubProject) => void;
-  subProjects: SubProject[];
+  subProject: SubProjectSummaryDto | null;
+  setSubProject: (sp: SubProjectSummaryDto) => void;
+  subProjects: SubProjectSummaryDto[];
   inferenceResult:
     | (typeof dummyCellInferenceResults)[number]
     | (typeof dummyTissueInferenceResults)[number]
     | (typeof dummyMultiInferenceResults)[number]
     | null;
   modelType: string;
+  initialLabels: LabelDto[];
 }> = ({
   subProject,
   setSubProject,
   subProjects,
   inferenceResult,
   modelType,
+  initialLabels,
 }) => {
   /* =============================================
       Ref 및 State 선언
@@ -131,7 +132,7 @@ const AnnotationViewer: React.FC<{
   } | null>(null);
 
   // 현재 서브프로젝트 ID 기준 상태 접근
-  const subProjectId = subProject?.id ?? -1;
+  const subProjectId = subProject?.subProjectId ?? -1;
 
   const userDefinedROIs = useMemo(
     () => userDefinedROIsMap[subProjectId] || [],
@@ -275,39 +276,30 @@ const AnnotationViewer: React.FC<{
   // label 이름 수정
   const handleRenameLabel = (id: string, newName: string) => {
     const updated = labels.map((label) =>
-      label.id === id ? { ...label, name: newName } : label,
+      label.id?.toString() === id ? { ...label, name: newName } : label,
     );
     setLabels(updated);
   };
 
   // label 이름 삭제
   const handleDeleteLabel = (id: string) => {
-    const updated = labels.filter((label) => label.id !== id);
+    const updated = labels.filter((label) => label.id?.toString() === id);
     setLabels(updated);
   };
 
   // 1. 최초 inference 로딩 시 (덮어쓰기 방지)
   useEffect(() => {
-    if (!inferenceResult || !inferenceResult.labels) return;
     if (labels.length > 0) return; // 이미 있으면 아무 것도 안함
 
-    setLabels(
-      inferenceResult.labels.map((label, idx) => ({
-        id: String(label.id ?? idx),
-        name: label.name,
-        color: label.color,
-        createdAt: Date.now(),
-        order: idx,
-      })),
-    );
-  }, [inferenceResult, labels, setLabels]);
+    setLabels(initialLabels);
+  }, [initialLabels, labels, setLabels]);
 
   // 2. 드로잉 시 새 색상이면 추가
   const ensureLabelForCurrentColor = () => {
     const exists = labels.find((l) => l.color === penColor);
     if (!exists) {
       const newLabel = {
-        id: crypto.randomUUID(),
+        id: undefined,
         name: `Label ${labels.length + 1}`,
         color: penColor,
         createdAt: Date.now(),
@@ -318,7 +310,7 @@ const AnnotationViewer: React.FC<{
   };
 
   // label 순서 변경
-  const handleReorderLabels = (reordered: Label[]) => {
+  const handleReorderLabels = (reordered: LabelDto[]) => {
     setLabels(reordered);
   };
 
@@ -697,13 +689,15 @@ const AnnotationViewer: React.FC<{
     viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
 
     // 새 타일 이미지 로딩
-    OpenSeadragon.GeoTIFFTileSource.getAllTileSources(subProject.svsPath).then(
-      ([tileSource]: [any]) => {
-        if (tileSource) {
-          viewer.addTiledImage({ tileSource });
-        }
-      },
-    );
+    viewer.addTiledImage({
+      tileSource:
+        'https://pathos-images.s3.ap-northeast-2.amazonaws.com/sub-project/25/tiles/output_slide.dzi',
+      success: {
+        'AnnotationTestViewer.useEffect': () => {
+          console.log('DZI image loaded successfully');
+        },
+      }['AnnotationTestViewer.useEffect'],
+    });
   }, [viewerInstance, subProject]);
 
   /* =============================================

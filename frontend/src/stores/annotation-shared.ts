@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { ROI, LoadedROI, Polygon } from '@/types/annotation';
-import { Label } from '@/types/annotation-sidebar';
+import { LabelDto } from '@/generated-api';
 
 interface AnnotationSharedState {
   viewer: OpenSeadragon.Viewer | null;
@@ -8,13 +8,13 @@ interface AnnotationSharedState {
   loadedROIs: LoadedROI[];
   userDefinedROIs: ROI[];
   cellPolygons: Polygon[];
-  labels: Label[];
+  labels: LabelDto[];
   setViewer: (viewer: OpenSeadragon.Viewer | null) => void;
   setCanvas: (canvas: HTMLCanvasElement | null) => void;
   setLoadedROIs: (rois: LoadedROI[]) => void;
   setUserDefinedROIs: (rois: ROI[]) => void;
   setCellPolygons: (polygons: Polygon[]) => void;
-  setLabels: (labels: Label[]) => void;
+  setLabels: (labels: LabelDto[]) => void;
 }
 
 export const useAnnotationSharedStore = create<AnnotationSharedState>(

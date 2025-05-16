@@ -1,13 +1,13 @@
-import { Label } from '@/types/annotation-sidebar';
 import DraggableList from '@/components/common/draggable-list';
 import LabelItem from '@/components/annotation/annotation-sidebar/label-list/label-item';
+import { LabelDto } from '@/generated-api';
 
 interface SidebarLabelProps {
-  labels: Label[];
+  labels: LabelDto[];
   onRename: (id: string, newName: string) => void;
   onDelete: (id: string) => void;
   onSelect: (color: string) => void;
-  onReorder: (reordered: Label[]) => void;
+  onReorder: (reordered: LabelDto[]) => void;
 }
 
 export default function SidebarLabel({
@@ -20,7 +20,7 @@ export default function SidebarLabel({
   return (
     <DraggableList
       items={labels}
-      getId={(l) => l.id}
+      getId={(l) => String(l.id ?? `temp-${l.name}`)}
       onReorder={(newLabels) => {
         const reordered = newLabels.map((label, i) => ({
           ...label,
@@ -30,7 +30,7 @@ export default function SidebarLabel({
       }}
       renderItem={(label) => (
         <LabelItem
-          key={label.id}
+          key={label.name}
           label={label}
           onRename={onRename}
           onDelete={onDelete}

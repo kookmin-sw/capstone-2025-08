@@ -4,76 +4,85 @@ import { useParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
-  dummyProjects,
-  dummySubProject,
-  dummyCellInferenceResults,
-  dummyTissueInferenceResults,
-  dummyMultiInferenceResults,
-} from '@/data/dummy';
-import { Project, SubProject } from '@/types/project-schema';
+  AnnotationHistoryResponseDto,
+  GetProjectAnnotationResponseDto,
+  LabelDto,
+  ProjectAnnotationAPIApi,
+  SubProjectSummaryDto,
+} from '@/generated-api';
 
-const getInferenceResultByModelType = (
-  modelType: string,
-  selectedSubProjectId: number,
-) => {
-  const resultList =
-    {
-      CELL: dummyCellInferenceResults,
-      TISSUE: dummyTissueInferenceResults,
-      MULTI: dummyMultiInferenceResults,
-    }[modelType] || [];
-
-  return (
-    resultList.find((res) => res.subProjectId === selectedSubProjectId) ?? null
-  );
-};
-
-/* 뷰어는 동적 import */
 const AnnotationViewer = dynamic(
   () => import('@/components/annotation/annotation-viewer'),
   { ssr: false },
 ) as unknown as React.FC<{
-  subProject: SubProject | null;
-  setSubProject: (sp: SubProject) => void;
-  subProjects: SubProject[];
-  inferenceResult:
-    | (typeof dummyCellInferenceResults)[number]
-    | (typeof dummyTissueInferenceResults)[number]
-    | (typeof dummyMultiInferenceResults)[number]
-    | null;
+  subProject: SubProjectSummaryDto | null;
+  setSubProject: (sp: SubProjectSummaryDto) => void;
+  subProjects: SubProjectSummaryDto[];
+  inferenceResult: AnnotationHistoryResponseDto | null;
   modelType: string;
+  initialLabels?: LabelDto[];
 }>;
 
 export default function ProjectAnnotationPage() {
+  const ProjectAnnotationApi = useMemo(() => new ProjectAnnotationAPIApi(), []);
   const { id } = useParams<{ id: string }>();
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [subProjects, setSubProjects] = useState<SubProject[]>([]);
-  const [selected, setSelected] = useState<SubProject | null>(null);
+  const [project, setProject] =
+    useState<GetProjectAnnotationResponseDto | null>(null);
+  const [subProjects, setSubProjects] = useState<SubProjectSummaryDto[]>([]);
+  const [selected, setSelected] = useState<SubProjectSummaryDto | null>(null);
+  const [inferenceResult, setInferenceResult] =
+    useState<AnnotationHistoryResponseDto | null>(null);
   const [ready, setReady] = useState(false);
 
-  // 더미 데이터 매칭
   useEffect(() => {
     if (!id) return;
 
-    /* 1) 프로젝트 찾기 */
-    const p = dummyProjects.find((d) => d.id === Number(id)) ?? null;
-    setProject(p);
+    const fetchData = async () => {
+      try {
+        const projectId = Number(id);
 
-    /* 2) 서브프로젝트 목록 필터링 */
-    const list = dummySubProject.filter((sp) => sp.projectId === id);
-    setSubProjects(list);
+        // 1. 프로젝트 및 서브프로젝트 목록 가져오기
+        const projectRes = await ProjectAnnotationApi.getProject({ projectId });
+        setProject(projectRes);
+        const subProjectList = projectRes.subProjects ?? [];
+        setSubProjects(subProjectList);
 
-    /* 3) 기본 선택(첫 번째) */
-    setSelected(list[0] ?? null);
+        const firstSubProject = subProjectList[0];
+        if (!firstSubProject) {
+          setReady(true);
+          return;
+        }
 
-    setReady(true);
+        // 2. 첫 번째 서브프로젝트의 상세 정보 가져오기
+        const subProjectRes = await ProjectAnnotationApi.getSubProject({
+          subProjectId: firstSubProject.subProjectId!,
+        });
+        const latestAnnotationHistoryId =
+          subProjectRes.latestAnnotationHistoryId;
+
+        if (!latestAnnotationHistoryId) {
+          setReady(true);
+          return;
+        }
+
+        // 3. 해당 히스토리 ID로 어노테이션 히스토리 조회
+        const annotationHistory =
+          await ProjectAnnotationApi.getAnnotationHistory({
+            annotationHistoryId: latestAnnotationHistoryId,
+          });
+
+        setSelected(firstSubProject);
+        setInferenceResult(annotationHistory);
+      } catch (error) {
+        console.error('프로젝트 정보를 불러오는 중 오류 발생:', error);
+      } finally {
+        setReady(true);
+      }
+    };
+
+    fetchData();
   }, [id]);
-
-  const selectedInferenceResult = useMemo(() => {
-    if (!project || !selected) return null;
-    return getInferenceResultByModelType(project.modelType, selected.id);
-  }, [project, selected]);
 
   if (!ready) return <p>Loading…</p>;
   if (!project) return <p>잘못된 프로젝트 ID입니다.</p>;
@@ -82,14 +91,14 @@ export default function ProjectAnnotationPage() {
 
   return (
     <div className="h-full">
-      {/* 선택된 서브프로젝트가 있을 때만 뷰어 표시 */}
       {selected ? (
         <AnnotationViewer
           subProject={selected}
           setSubProject={setSelected}
           subProjects={subProjects}
-          inferenceResult={selectedInferenceResult}
-          modelType={project.modelType}
+          inferenceResult={inferenceResult}
+          modelType={project.modelsDto?.modelType || ''}
+          initialLabels={project.labels}
         />
       ) : (
         <p>서브프로젝트를 선택하세요.</p>

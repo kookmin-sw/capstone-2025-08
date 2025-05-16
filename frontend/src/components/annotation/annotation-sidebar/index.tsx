@@ -4,18 +4,18 @@ import SidebarRoi from '@/components/annotation/annotation-sidebar/roi-list';
 import SidebarUncertainROI from '@/components/annotation/annotation-sidebar/uncertain-roi-list';
 import SidebarLabel from '@/components/annotation/annotation-sidebar/label-list';
 import { dummyUncertainROIs } from '@/data/dummy';
-import { Label } from '@/types/annotation-sidebar';
+import { LabelDto } from '@/generated-api';
 
 interface AnnotationSidebarProps {
   rois: ROI[];
   onClickROI: (index: number) => void;
   onEditROI: (index: number) => void;
   onDeleteROI: (index: number) => void;
-  labels: Label[];
+  labels: LabelDto[];
   onRenameLabel: (id: string, newName: string) => void;
   onDeleteLabel: (id: string) => void;
   onSelectLabelColor: (color: string) => void;
-  onReorderLabels: (labels: Label[]) => void;
+  onReorderLabels: (labels: LabelDto[]) => void;
 }
 
 export default function AnnotationSidebar({
