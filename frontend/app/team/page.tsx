@@ -1,14 +1,11 @@
 "use client";
 
-import { useRouter } from 'next/router'
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {Github, Mail} from "lucide-react"
 import Link from "next/link";
 
 export default function TeamPage() {
-  const { basePath } = useRouter();
-
   return (
     <div className="space-y-20">
       {/* Hero Section */}
@@ -37,7 +34,7 @@ export default function TeamPage() {
                 name: "송규원",
                 role: "Team Leader / Front-end Developer",
                 bio: "프로젝트 관리와 어노테이션 툴 개발을 주도하며, 사용자의 작업 흐름과 인터페이스 최적화에 집중했습니다. 팀 운영과 전체 개발 과정을 총괄했습니다.",
-                image: `${basePath}/profile/1.jpg`,
+                image: '/capstone-2025-08/profile/1.jpg',
                 github: "https://github.com/gyuwonsong",
                 email: "gyuwon0722@kookmin.ac.kr",
               },
@@ -45,7 +42,7 @@ export default function TeamPage() {
                 name: "유태근",
                 role: "Back-end Developer",
                 bio: "모델 서버 및 전체 서버 아키텍처 설계를 담당하며, 프론트엔드-모델 간 데이터 처리 파이프라인을 구축하여 AI 기능이 원활하게 동작하도록 지원했습니다.",
-                image: `${basePath}/profile/2.jpg`,
+                image: '/capstone-2025-08/profile/2.jpg',
                 github: "https://github.com/TaegeunYou",
                 email: "youngryu10@kookmin.ac.kr",
               },
@@ -53,7 +50,7 @@ export default function TeamPage() {
                 name: "정한결",
                 role: "AI/Algorithm Researcher",
                 bio: "티슈 세그멘테이션 모델 개발과 멀티 파이프라인 구축을 통해 병리 AI 성능 향상에 기여하며, 관련 연구 및 실험을 진행했습니다.",
-                image: `${basePath}/profile/3.jpg`,
+                image: '/capstone-2025-08/profile/3.jpg',
                 github: "https://github.com/kmuhan",
                 email: "hkjung1123@gmail.com",
               },
@@ -61,7 +58,7 @@ export default function TeamPage() {
                 name: "황현진",
                 role: "Front-end Developer",
                 bio: "어노테이션 툴과 퍼블릭 스페이스(공유 페이지) 개발을 담당하며, 사용자가 편리하게 협업할 수 있는 인터페이스를 주도적으로 구현했습니다.",
-                image: `${basePath}/profile/4.jpg`,
+                image: '/capstone-2025-08/profile/4.jpg',
                 github: "https://github.com/hyeonjin6530",
                 email: "jjini6530@kookmin.ac.kr",
               },
@@ -69,7 +66,7 @@ export default function TeamPage() {
                 name: "이정욱",
                 role: "Back-end Developer",
                 bio: "어플리케이션 서버 설계 및 데이터베이스 구조 최적화를 담당하며, 타일링 기법 구현 등 안정적인 데이터 처리와 서비스 운영을 지원했습니다.",
-                image: `${basePath}/profile/5.jpg`,
+                image: '/capstone-2025-08/profile/5.jpg',
                 github: "https://github.com/ukly",
                 email: "dlwjddnr5438@kookmin.ac.kr",
               },
@@ -77,7 +74,7 @@ export default function TeamPage() {
                 name: "정현서",
                 role: "AI/Algorithm Researcher",
                 bio: "셀 세그멘테이션 모델 개발과 멀티 파이프라인 최적화를 통해 병리 AI의 세포 분석 성능을 향상시키며, 관련 연구 및 실험을 진행했습니다.",
-                image: `${basePath}/profile/6.jpg`,
+                image: '/capstone-2025-08/profile/6.jpg',
                 github: "https://github.com/hyunseo24",
                 email: "hugemouth@kookmin.ac.kr",
               },
@@ -152,8 +149,8 @@ export default function TeamPage() {
             </div>
             <div className="relative aspect-square md:aspect-auto md:h-[400px] rounded-2xl overflow-hidden border border-border/40 backdrop-blur-sm bg-background/30">
               <Image
-                  src={`${basePath}/pathos-spring.png`}
-                alt="PathOs 팀"
+                  src='/capstone-2025-08/pathos-spring.png'
+              alt="PathOs 팀"
                 fill
                 className="object-cover mix-blend-luminosity z-10"
               />
