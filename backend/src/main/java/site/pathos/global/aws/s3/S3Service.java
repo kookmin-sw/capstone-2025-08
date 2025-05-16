@@ -13,25 +13,19 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import javax.imageio.ImageIO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.project.dto.request.SubProjectTilingRequestDto;
 import site.pathos.global.aws.config.AwsProperty;
 import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 import site.pathos.global.util.image.ImageUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
-import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
-import software.amazon.awssdk.services.s3.model.CompletedPart;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.UploadPartRequest;
-import software.amazon.awssdk.services.s3.model.UploadPartResponse;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
@@ -64,6 +58,20 @@ public class S3Service {
         }
     }
 
+    public void uploadFileAsync(String key, MultipartFile file,
+                                Runnable onSuccess, Consumer<Throwable> onFailure) {
+        CompletableFuture.runAsync(() -> {
+            uploadFile(key, file);
+        }, imageUploadExecutor).thenRun(() -> {
+            log.info("비동기 업로드 성공: {}", key);
+            onSuccess.run();
+        }).exceptionally(ex -> {
+            log.error("비동기 업로드 실패: {}", key, ex);
+            onFailure.accept(ex);
+            return null;
+        });
+    }
+
     public String uploadBufferedImage(BufferedImage image, String filename) {
         byte[] imageBytes = ImageUtils.convertToByteArray(image);
 
@@ -76,6 +84,27 @@ public class S3Service {
         s3Client.putObject(request, RequestBody.fromBytes(imageBytes));
 
         return filename;
+    }
+
+    public void uploadBufferedImageAsync(BufferedImage image, String key,
+                                         Runnable onSuccess, Consumer<Exception> onFailure) {
+        CompletableFuture.runAsync(() -> {
+            try {
+                byte[] imageBytes = ImageUtils.convertToByteArray(image);
+                PutObjectRequest request = PutObjectRequest.builder()
+                        .bucket(awsProperty.s3().bucket())
+                        .key(key)
+                        .contentType("image/png")
+                        .build();
+
+                s3Client.putObject(request, RequestBody.fromBytes(imageBytes));
+                log.info("비동기 S3 업로드 완료: {}", key);
+                onSuccess.run();
+            } catch (Exception e) {
+                log.error("비동기 S3 업로드 실패: {}", key, e);
+                onFailure.accept(e);
+            }
+        }, imageUploadExecutor);
     }
 
     public String getPresignedUrl(String key) {
@@ -109,7 +138,7 @@ public class S3Service {
         }
     }
 
-    public void uploadFilesAsync(List<S3UploadFileDto> files) {
+    public void uploadSvsFilesAsync(List<S3UploadFileDto> files, Consumer<List<SubProjectTilingRequestDto>> onComplete) {
         List<CompletableFuture<Void>> uploadTasks = files.stream()
                 .map(s3UploadFile -> CompletableFuture.runAsync(() -> {
                     uploadFile(s3UploadFile.key(), s3UploadFile.file());
@@ -117,11 +146,28 @@ public class S3Service {
                 .toList();
 
         CompletableFuture.allOf(uploadTasks.toArray(new CompletableFuture[0]))
-                .thenRun(() -> log.info("모든 파일 업로드 완료"))
+                .thenRun(() -> {
+                    log.info("모든 파일 업로드 완료");
+
+                    List<SubProjectTilingRequestDto> uploadImages = files.stream()
+                            .map(file -> new SubProjectTilingRequestDto(
+                                    file.subProjectId(),
+                                    "s3://" + awsProperty.s3().bucket() + "/" + file.key()))
+                            .toList();
+
+                    onComplete.accept(uploadImages);
+                })
                 .exceptionally(ex -> {
                     log.error("일부 파일 업로드 실패", ex);
                     return null;
                 });
+    }
+
+    public void deleteFile(String key) {
+        s3Client.deleteObject(DeleteObjectRequest.builder()
+                .bucket(awsProperty.s3().bucket())
+                .key(key)
+                .build());
     }
 
     public void uploadFileAsMultipart(String key, MultipartFile file) {
@@ -176,12 +222,10 @@ public class S3Service {
                 futures.add(future);
             }
 
-            // 모든 파트 업로드 완료 대기
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             completedParts.sort(Comparator.comparingInt(CompletedPart::partNumber));
 
-            // 업로드 완료
             CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
                     .bucket(bucket)
                     .key(key)

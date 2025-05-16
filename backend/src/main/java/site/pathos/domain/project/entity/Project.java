@@ -19,8 +19,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLRestriction;
-import site.pathos.domain.model.entity.ModelType;
-import site.pathos.domain.subProject.entity.SubProject;
+import site.pathos.domain.model.enums.ModelType;
 import site.pathos.domain.user.entity.User;
 
 @Entity
@@ -68,6 +67,7 @@ public class Project {
         this.title = title;
         this.description = description;
         this.modelType = modelType;
+        isDeleted = false;
         setUpdatedAt();
     }
 
@@ -78,6 +78,7 @@ public class Project {
     public void updateDetail(String title, String description) {
         this.title = title;
         this.description = description;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void delete() {

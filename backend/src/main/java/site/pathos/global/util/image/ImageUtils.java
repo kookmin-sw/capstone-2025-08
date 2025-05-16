@@ -53,7 +53,7 @@ public class ImageUtils {
         else return 3 + (int) Math.ceil((dimension - 40000) / 10000.0);
     }
 
-    public static List<ImageTile> sliceImageByROIWithPosition(BufferedImage image, int roiX, int roiY, int roiWidth, int roiHeight) {
+    public static List<ImageTile> sliceImageByROIWithPosition(BufferedImage image, int roiWidth, int roiHeight) {
         List<ImageTile> tiles = new ArrayList<>();
 
         int cols = getDivisionCountDynamic(roiWidth);
@@ -65,11 +65,11 @@ public class ImageUtils {
         int widthRemainder = roiWidth % cols;
         int heightRemainder = roiHeight % rows;
 
-        int yOffset = roiY;
+        int yOffset = 0;
 
         for (int row = 0; row < rows; row++) {
             int tileHeight = baseTileHeight + (row < heightRemainder ? 1 : 0);
-            int xOffset = roiX;
+            int xOffset = 0;
 
             for (int col = 0; col < cols; col++) {
                 int tileWidth = baseTileWidth + (col < widthRemainder ? 1 : 0);

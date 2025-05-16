@@ -27,8 +27,8 @@ public class SharedProject {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "thumbnail_image_url", nullable = false)
-    private String thumbnailImageUrl;
+    @Column(name = "thumbnail_image_path", nullable = false)
+    private String thumbnailImagePath;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)

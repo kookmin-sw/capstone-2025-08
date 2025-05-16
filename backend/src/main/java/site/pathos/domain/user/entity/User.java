@@ -20,6 +20,6 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "profile_image_url", nullable = false)
-    private String profileImageUrl;
+    @Column(name = "profile_image_path", nullable = false)
+    private String profileImagePath;
 }
