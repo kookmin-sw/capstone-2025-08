@@ -15,7 +15,7 @@ public record RoiResponsePayload(
                 description = "조직 주석 이미지 경로 목록",
                 example = "[\"sub-project/1/annotation-history/2/roi-3/train/tissue1.png\", \"sub-project/1/annotation-history/2/roi-3/train/tissue2.png\"]"
         )
-        List<String> tissue_path,
+        List<String> tissuePath,
 
         @Schema(description = "세포 위치 정보 목록")
         List<CellDetail> cell

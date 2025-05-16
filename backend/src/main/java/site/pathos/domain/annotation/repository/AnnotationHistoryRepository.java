@@ -29,4 +29,12 @@ public interface AnnotationHistoryRepository extends JpaRepository<AnnotationHis
     Optional<AnnotationHistory> findLatestBySubProjectId(@Param("subProjectId") Long subProjectId);
 
     Optional<AnnotationHistory> findFirstBySubProjectIdOrderByUpdatedAtDesc(Long subProjectId);
+
+    @Query("""
+    SELECT ah FROM AnnotationHistory ah
+    JOIN FETCH ah.subProject sp
+    JOIN FETCH sp.project p
+    WHERE ah.id = :annotationHistoryId
+""")
+    Optional<AnnotationHistory> findWithProjectById(@Param("annotationHistoryId") Long annotationHistoryId);
 }

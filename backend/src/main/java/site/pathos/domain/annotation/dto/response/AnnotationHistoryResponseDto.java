@@ -1,6 +1,7 @@
 package site.pathos.domain.annotation.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import site.pathos.domain.annotation.dto.request.RoiLabelSaveRequestDto;
 
 import java.util.List;
 
@@ -9,5 +10,8 @@ public record AnnotationHistoryResponseDto(
         Long annotationHistoryId,
 
         @Schema(description = "ROI 데이터 목록")
-        List<RoiResponsePayload> roiPayloads
-) {}
+        List<RoiResponsePayload> roiPayloads,
+
+        List<RoiLabelSaveRequestDto.LabelDto> labels
+) {
+}

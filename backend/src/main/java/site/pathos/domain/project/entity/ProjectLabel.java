@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.pathos.domain.annotation.entity.Label;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(
         name = "project_label",
@@ -34,16 +36,26 @@ public class ProjectLabel {
     @Column(name = "color", nullable = false)
     private String color;
 
+    @Column(name = "displayer_order",nullable = false)
+    private int displayOrder;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
     @Builder
-    public ProjectLabel(Project project, Label label, String name, String color){
+    public ProjectLabel(Project project, Label label, String name, String color
+            , int displayOrder, LocalDateTime createdAt){
         this.project = project;
         this.label = label;
         this.name = name;
         this.color = color;
+        this.displayOrder = displayOrder;
+        this.createdAt = createdAt;
     }
 
-    public void changeLabel(String color, String name){
+    public void changeLabel(String color, String name, int displayOrder){
         this.color = color;
         this.name = name;
+        this.displayOrder = displayOrder;
     }
 }
