@@ -1,8 +1,12 @@
 /** @type {import('next').NextConfig} */
+const isProd = process.env.NODE_ENV === 'production';
+const basePath = isProd ? '/capstone-2025-08' : '';
+const assetPrefix = isProd ? '/capstone-2025-08/' : '';
+
 const nextConfig = {
+  basePath,
+  assetPrefix,
   output: 'export',
-  basePath: '/capstone-2025-08',
-  assetPrefix: '/capstone-2025-08/',
   eslint: {
     ignoreDuringBuilds: true,
   },
