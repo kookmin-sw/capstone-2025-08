@@ -15,6 +15,7 @@ const AnnotationViewer = dynamic(
   () => import('@/components/annotation/annotation-viewer'),
   { ssr: false },
 ) as unknown as React.FC<{
+  project: GetProjectAnnotationResponseDto;
   subProject: SubProjectSummaryDto | null;
   setSubProject: (sp: SubProjectSummaryDto) => void;
   subProjects: SubProjectSummaryDto[];
@@ -93,6 +94,7 @@ export default function ProjectAnnotationPage() {
     <div className="h-full">
       {selected ? (
         <AnnotationViewer
+          project={project}
           subProject={selected}
           setSubProject={setSelected}
           subProjects={subProjects}

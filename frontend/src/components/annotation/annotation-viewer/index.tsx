@@ -47,7 +47,12 @@ import AnnotationSubProjectSlider from '@/components/annotation/annotation-subpr
 import { convertViewportROIToImageROI } from '@/hooks/use-viewport-to-image';
 import { useAnnotationSharedStore } from '@/stores/annotation-shared';
 import AnnotationCellDeleteModal from '@/components/annotation/annotation-cell-delete-modal';
-import { LabelDto, SubProjectSummaryDto } from '@/generated-api';
+import {
+  AnnotationHistoryResponseDto,
+  GetProjectAnnotationResponseDto,
+  LabelDto,
+  SubProjectSummaryDto,
+} from '@/generated-api';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
@@ -55,17 +60,15 @@ const BORDER_THICKNESS = 2;
 type Tool = 'point' | 'polygon' | 'paintbrush' | 'eraser' | 'delete' | null;
 
 const AnnotationViewer: React.FC<{
+  project: GetProjectAnnotationResponseDto;
   subProject: SubProjectSummaryDto | null;
   setSubProject: (sp: SubProjectSummaryDto) => void;
   subProjects: SubProjectSummaryDto[];
-  inferenceResult:
-    | (typeof dummyCellInferenceResults)[number]
-    | (typeof dummyTissueInferenceResults)[number]
-    | (typeof dummyMultiInferenceResults)[number]
-    | null;
+  inferenceResult: AnnotationHistoryResponseDto | null;
   modelType: string;
   initialLabels: LabelDto[];
 }> = ({
+  project,
   subProject,
   setSubProject,
   subProjects,
@@ -440,10 +443,15 @@ const AnnotationViewer: React.FC<{
     }
 
     const load = async () => {
+      // TODO: 규원 Uncertain ROIs 구현
       const roiData: LoadedROI[] = [];
       const polygonsToLoad: Polygon[] = [];
 
-      for (const payload of inferenceResult.roiPayloads) {
+      if (!inferenceResult?.roiPayloads) return;
+
+      for (const payload of inferenceResult?.roiPayloads) {
+        if (!payload.detail) continue;
+
         const bbox = {
           x: payload.detail.x,
           y: payload.detail.y,
@@ -454,9 +462,9 @@ const AnnotationViewer: React.FC<{
         const roiItem: LoadedROI = { bbox, tiles: [], cells: [] };
 
         // Tissue 처리
-        if (payload.tissue_path.length > 0) {
+        if (payload.tissuePath.length > 0) {
           const tiles = await Promise.all(
-            payload.tissue_path.map((url) =>
+            payload.tissuePath.map((url) =>
               processMaskTile(payload.detail, url),
             ),
           );

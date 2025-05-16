@@ -93,7 +93,7 @@ export function RoiFromJSONTyped(json: any, ignoreDiscriminator: boolean): Roi {
         'displayOrder': json['displayOrder'] == null ? undefined : json['displayOrder'],
         'detail': json['detail'] == null ? undefined : RoiDetailFromJSON(json['detail']),
         'faulty': json['faulty'] == null ? undefined : json['faulty'],
-        'tissuePath': json['tissue_path'] == null ? undefined : json['tissue_path'],
+        'tissuePath': json['tissuePath'] == null ? undefined : json['tissuePath'],
         'cells': json['cells'] == null ? undefined : ((json['cells'] as Array<any>).map(CellFromJSON)),
     };
 }
@@ -113,7 +113,7 @@ export function RoiToJSONTyped(value?: Roi | null, ignoreDiscriminator: boolean 
         'displayOrder': value['displayOrder'],
         'detail': RoiDetailToJSON(value['detail']),
         'faulty': value['faulty'],
-        'tissue_path': value['tissuePath'],
+        'tissuePath': value['tissuePath'],
         'cells': value['cells'] == null ? undefined : ((value['cells'] as Array<any>).map(CellToJSON)),
     };
 }

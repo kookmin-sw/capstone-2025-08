@@ -21,6 +21,7 @@ export * from './PaginationResponseGetProjectsResponseDetailDto';
 export * from './Performance';
 export * from './PointDto';
 export * from './PolygonDto';
+export * from './ProjectLabelDto';
 export * from './ProjectModelsDto';
 export * from './Roi';
 export * from './RoiDetail';

@@ -32,6 +32,12 @@ export interface SubProjectSummaryDto {
      */
     thumbnailUrl?: string;
     /**
+     * 타일링 이미지 URL
+     * @type {string}
+     * @memberof SubProjectSummaryDto
+     */
+    tileImageUrl?: string;
+    /**
      * 이미지 업로드 여부 완료
      * @type {boolean}
      * @memberof SubProjectSummaryDto
@@ -58,6 +64,7 @@ export function SubProjectSummaryDtoFromJSONTyped(json: any, ignoreDiscriminator
         
         'subProjectId': json['subProjectId'] == null ? undefined : json['subProjectId'],
         'thumbnailUrl': json['thumbnailUrl'] == null ? undefined : json['thumbnailUrl'],
+        'tileImageUrl': json['tileImageUrl'] == null ? undefined : json['tileImageUrl'],
         'isUploadComplete': json['isUploadComplete'] == null ? undefined : json['isUploadComplete'],
     };
 }
@@ -75,6 +82,7 @@ export function SubProjectSummaryDtoToJSONTyped(value?: SubProjectSummaryDto | n
         
         'subProjectId': value['subProjectId'],
         'thumbnailUrl': value['thumbnailUrl'],
+        'tileImageUrl': value['tileImageUrl'],
         'isUploadComplete': value['isUploadComplete'],
     };
 }

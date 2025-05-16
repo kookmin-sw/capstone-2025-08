@@ -24,6 +24,7 @@ models/PaginationResponseGetProjectsResponseDetailDto.ts
 models/Performance.ts
 models/PointDto.ts
 models/PolygonDto.ts
+models/ProjectLabelDto.ts
 models/ProjectModelsDto.ts
 models/Roi.ts
 models/RoiDetail.ts

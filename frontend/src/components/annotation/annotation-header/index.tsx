@@ -2,7 +2,6 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { dummyProjects } from '@/data/dummy';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -14,25 +13,44 @@ import {
 import { formatDateTime } from '@/lib/utils';
 import { exportROIAsPNG } from '@/utils/canvas-image-utils';
 import { useAnnotationSharedStore } from '@/stores/annotation-shared';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import AnnotationModelExportModal from '@/components/annotation/annotation-model-export-modal';
+import {
+  GetProjectAnnotationResponseDto,
+  ProjectAnnotationAPIApi,
+} from '@/generated-api';
 
 export default function AnnotationHeader() {
+  const ProjectAnnotationApi = useMemo(() => new ProjectAnnotationAPIApi(), []);
   const router = useRouter();
   const { id } = useParams();
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-
-  // project 찾기 (항상 실행)
-  const project = dummyProjects.find((proj) => proj.id === Number(id));
-
-  // modelName 상태 초기화
+  const [project, setProject] =
+    useState<GetProjectAnnotationResponseDto | null>(null);
   const [selectedModelName, setSelectedModelName] = useState('none');
 
   useEffect(() => {
-    if (project?.modelNameList?.[0]) {
-      setSelectedModelName(project.modelNameList[0]);
-    }
-  }, [project]);
+    if (!id) return;
+
+    const fetchData = async () => {
+      try {
+        const projectId = Number(id);
+
+        // 1. 프로젝트 및 서브프로젝트 목록 가져오기
+        const projectRes = await ProjectAnnotationApi.getProject({ projectId });
+        setProject(projectRes);
+
+        // 2. 모델 이름 설정
+        const firstModelName =
+          projectRes.modelsDto?.projectModels?.[0]?.name ?? 'none';
+        setSelectedModelName(firstModelName);
+      } catch (error) {
+        console.error('프로젝트 정보를 불러오는 중 오류 발생:', error);
+      }
+    };
+
+    fetchData();
+  }, [id]);
 
   // project가 없으면 빈 UI 반환 (하지만 Hook 이후 실행됨)
   if (!project) {
@@ -157,7 +175,7 @@ export default function AnnotationHeader() {
         </Select>
         {/* 모델 타입 */}
         <Select
-          value={project?.modelType.toLowerCase()}
+          value={project.modelsDto?.modelType.toLowerCase()}
           onValueChange={() => {}}
         >
           <SelectTrigger className="w-36">
