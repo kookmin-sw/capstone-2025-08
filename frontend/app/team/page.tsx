@@ -33,7 +33,7 @@ export default function TeamPage() {
               {
                 name: "송규원",
                 role: "Team Leader / Front-end Developer",
-                bio: "프로젝트 관리와 어노테이션 툴 개발을 주도하며, 사용자의 작업 흐름과 인터페이스 최적화에 집중했습니다. 팀 운영과 전체 개발 과정을 총괄했습니다.",
+                bio: "팀 개발 총괄을 맡아 전반적인 개발 방향을 이끌었으며, 어노테이션 툴(티슈·셀 클라이언트)의 초기 기획과 기술 검증을 주도하여 서비스의 기반을 마련했습니다.",
                 image: '/capstone-2025-08/profile/1.jpg',
                 github: "https://github.com/gyuwonsong",
                 email: "gyuwon0722@kookmin.ac.kr",
@@ -49,7 +49,7 @@ export default function TeamPage() {
               {
                 name: "정한결",
                 role: "AI/Algorithm Researcher",
-                bio: "티슈 세그멘테이션 모델 개발과 멀티 파이프라인 구축을 통해 병리 AI 성능 향상에 기여하며, 관련 연구 및 실험을 진행했습니다.",
+                bio: "티슈 세그멘테이션 모델 개발과 멀티 파이프라인 설계를 통해 병리 AI의 세포·조직 통합 분석 성능을 고도화하고, 이를 검증하기 위한 실험을 주도했습니다.",
                 image: '/capstone-2025-08/profile/3.jpg',
                 github: "https://github.com/kmuhan",
                 email: "hkjung1123@gmail.com",
@@ -57,7 +57,7 @@ export default function TeamPage() {
               {
                 name: "황현진",
                 role: "Front-end Developer",
-                bio: "어노테이션 툴과 퍼블릭 스페이스(공유 페이지) 개발을 담당하며, 사용자가 편리하게 협업할 수 있는 인터페이스를 주도적으로 구현했습니다.",
+                bio: "퍼블릭 스페이스의 기획과 개발을 주도하며, 어노테이션 과정부터 결과 공유, 모델 평가, 협업 피드백까지 사용자의 전반적인 경험을 설계하고 구현했습니다.",
                 image: '/capstone-2025-08/profile/4.jpg',
                 github: "https://github.com/hyeonjin6530",
                 email: "jjini6530@kookmin.ac.kr",
@@ -65,7 +65,7 @@ export default function TeamPage() {
               {
                 name: "이정욱",
                 role: "Back-end Developer",
-                bio: "어플리케이션 서버 설계 및 데이터베이스 구조 최적화를 담당하며, 타일링 기법 구현 등 안정적인 데이터 처리와 서비스 운영을 지원했습니다.",
+                bio: "어플리케이션 서버 설계와 데이터베이스 구조 최적화를 담당하며, 타일링 기법 구현을 통해 대용량 병리 데이터의 안정적인 처리와 서비스 운영을 지원했습니다.",
                 image: '/capstone-2025-08/profile/5.jpg',
                 github: "https://github.com/ukly",
                 email: "dlwjddnr5438@kookmin.ac.kr",
@@ -73,7 +73,7 @@ export default function TeamPage() {
               {
                 name: "정현서",
                 role: "AI/Algorithm Researcher",
-                bio: "셀 세그멘테이션 모델 개발과 멀티 파이프라인 최적화를 통해 병리 AI의 세포 분석 성능을 향상시키며, 관련 연구 및 실험을 진행했습니다.",
+                bio: "셀 세그멘테이션 모델 개발과 멀티 파이프라인 최적화를 통해 병리 AI의 세포 분석 성능을 높였으며, 이를 뒷받침할 연구와 실험을 함께 수행했습니다.",
                 image: '/capstone-2025-08/profile/6.jpg',
                 github: "https://github.com/hyunseo24",
                 email: "hugemouth@kookmin.ac.kr",
