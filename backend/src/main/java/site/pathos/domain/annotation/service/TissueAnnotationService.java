@@ -48,15 +48,19 @@ public class TissueAnnotationService {
                     .build();
             tissueAnnotationRepository.save(ta);
 
-            s3Service.uploadFileAsync(key, image, () ->
-                    {
-                        ta.uploadComplete();
-                        tissueAnnotationRepository.save(ta);
-                    },
-                    ex -> {
-                        log.error("타일 업로드 실패: {}", key, ex);
-                    }
-            );
+//            s3Service.uploadFileAsync(key, image, () ->
+//                    {
+//                        ta.uploadComplete();
+//                        tissueAnnotationRepository.save(ta);
+//                    },
+//                    ex -> {
+//                        log.error("타일 업로드 실패: {}", key, ex);
+//                    }
+//            );
+
+            s3Service.uploadFile(key, image);
+            ta.uploadComplete();
+            tissueAnnotationRepository.save(ta);
         }
     }
 
@@ -140,7 +144,7 @@ public class TissueAnnotationService {
             } catch (Exception e) {
                 log.error("S3 이미지 삭제 실패: {}", key, e);
             }
-            tissueAnnotationRepository.delete(annotation);
+            annotation.getRoi().getTissueAnnotations().remove(annotation);
         }
 
         log.info("ROI ID {} 관련 TissueAnnotation 모두 삭제 완료", roiId);
