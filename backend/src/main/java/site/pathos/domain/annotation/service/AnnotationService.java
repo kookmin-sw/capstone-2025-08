@@ -7,17 +7,14 @@ import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.dto.response.CellDetail;
 import site.pathos.domain.annotation.dto.response.PolygonDto;
 import site.pathos.domain.annotation.entity.CellAnnotation;
-import site.pathos.domain.annotation.repository.CellAnnotationRepository;
+import site.pathos.domain.annotation.enums.AnnotationType;
+import site.pathos.domain.annotation.repository.*;
 import site.pathos.domain.annotation.entity.TissueAnnotation;
 import site.pathos.domain.annotation.dto.response.AnnotationHistoryResponseDto;
 import site.pathos.domain.annotation.dto.response.AnnotationHistorySummaryDto;
 import site.pathos.domain.annotation.entity.AnnotationHistory;
-import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
 import site.pathos.domain.annotation.entity.Label;
-import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto;
 import site.pathos.domain.project.entity.ProjectLabel;
-import site.pathos.domain.annotation.repository.LabelRepository;
-import site.pathos.domain.annotation.repository.ProjectLabelRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.annotation.dto.response.GetProjectAnnotationResponseDto;
@@ -27,7 +24,6 @@ import site.pathos.domain.annotation.dto.request.RoiLabelSaveRequestDto;
 import site.pathos.domain.annotation.dto.response.RoiResponseDto;
 import site.pathos.domain.annotation.dto.response.RoiResponsePayload;
 import site.pathos.domain.annotation.entity.Roi;
-import site.pathos.domain.annotation.repository.RoiRepository;
 import site.pathos.domain.project.dto.response.SubProjectResponseDto;
 import site.pathos.domain.project.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.project.entity.SubProject;
@@ -54,6 +50,7 @@ public class AnnotationService {
     private final ProjectModelRepository projectModelRepository;
     private final CellAnnotationRepository cellAnnotationRepository;
     private final S3Service s3Service;
+    private final TissueAnnotationRepository tissueAnnotationRepository;
 
     @Transactional
     public AnnotationHistoryResponseDto saveWithAnnotations(Long subProjectId, Long annotationHistoryId,
@@ -255,7 +252,10 @@ public class AnnotationService {
                     RoiResponseDto detail = new RoiResponseDto(
                             roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
 
-                    List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
+                    List<TissueAnnotation> tissueAnnotations = tissueAnnotationRepository.findByRoiId(roi.getId());
+
+                    List<String> presignedTissuePaths = tissueAnnotations.stream()
+                            .filter(ta -> ta.getAnnotationType() != AnnotationType.MERGED)
                             .map(TissueAnnotation::getAnnotationImagePath)
                             .map(s3Service::getPresignedUrl)
                             .toList();
