@@ -17,6 +17,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import site.pathos.domain.user.entity.User;
 import site.pathos.global.entity.BaseTimeEntity;
+import site.pathos.global.error.BusinessException;
+import site.pathos.global.error.ErrorCode;
 
 @Entity
 @Table(name = "user_notification_setting")
@@ -44,5 +46,12 @@ public class UserNotificationSetting extends BaseTimeEntity {
     public UserNotificationSetting(User user, NotificationType notificationType) {
         this.user = user;
         this.notificationType = notificationType;
+    }
+
+    public void updateEnabled(Boolean isEnabled) {
+        if (isEnabled == null) {
+            throw new BusinessException(ErrorCode.NO_NOTIFICATION_SETTING);
+        }
+        this.isEnabled = isEnabled;
     }
 }
