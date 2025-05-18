@@ -22,10 +22,10 @@ public class NotificationEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleProjectRunCompletedEvent(ProjectRunCompletedEvent event) {
+    public void handleProjectSvsUploadCompletedEvent(ProjectSvsUploadedEvent event) {
         userNotificationService.notify(
                 event.user(),
-                NotificationTypeCode.PROJECT_RUN_COMPLETED,
+                NotificationTypeCode.PROJECT_SVS_UPLOAD_COMPLETED,
                 Map.of(
                         "projectId", event.projectId(),
                         "projectTitle", event.projectTitle()
@@ -35,10 +35,10 @@ public class NotificationEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleProjectSvsUploadCompletedEvent(ProjectSvsUploadedEvent event) {
+    public void handleProjectRunCompletedEvent(ProjectRunCompletedEvent event) {
         userNotificationService.notify(
                 event.user(),
-                NotificationTypeCode.PROJECT_SVS_UPLOAD_COMPLETED,
+                NotificationTypeCode.PROJECT_RUN_COMPLETED,
                 Map.of(
                         "projectId", event.projectId(),
                         "projectTitle", event.projectTitle()
