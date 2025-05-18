@@ -3,7 +3,7 @@ package site.pathos.domain.user.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
-public record UpdateUserNotificationSettingsRequestDto(
+public record UpdateNotificationSettingsRequestDto(
         List<UpdateUserNotificationSettingsRequestNotificationDto> settings
 ) {
     public record UpdateUserNotificationSettingsRequestNotificationDto(

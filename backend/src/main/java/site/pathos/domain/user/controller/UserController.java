@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import site.pathos.domain.notification.service.UserNotificationSettingService;
-import site.pathos.domain.user.dto.GetMyPageResponseDto;
-import site.pathos.domain.user.dto.UpdateUserNotificationSettingsRequestDto;
-import site.pathos.domain.user.dto.UpdateUserRequestDto;
+import site.pathos.domain.user.dto.GetUserSettingsResponseDto;
+import site.pathos.domain.user.dto.UpdateNotificationSettingsRequestDto;
+import site.pathos.domain.user.dto.UpdateUserNameRequestDto;
 import site.pathos.domain.user.service.UserService;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/profile")
 @RequiredArgsConstructor
 public class UserController {
 
@@ -23,26 +23,26 @@ public class UserController {
     private final UserNotificationSettingService userNotificationSettingService;
 
     @Operation(summary = "사용자의 설정 정보를 조회합니다.")
-    @GetMapping("/me")
-    public ResponseEntity<GetMyPageResponseDto> getMyPage() {
+    @GetMapping
+    public ResponseEntity<GetUserSettingsResponseDto> getUserSettings() {
         return ResponseEntity.ok(
-                userService.getMyPage()
+                userService.getUserSettings()
         );
     }
 
     @Operation(summary = "사용자의 이름을 수정합니다.")
-    @PatchMapping("/me")
-    public ResponseEntity<Void> updateUser(
-            @RequestBody UpdateUserRequestDto request
+    @PatchMapping("/name")
+    public ResponseEntity<Void> updateUserName(
+            @RequestBody UpdateUserNameRequestDto request
     ) {
-        userService.updateUser(request);
+        userService.updateUserName(request);
         return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "사용자의 알림 설정 정보를 수정합니다.")
-    @PatchMapping("/me/notification-settings")
-    public ResponseEntity<Void> updateUserNotificationSettings(
-            @RequestBody UpdateUserNotificationSettingsRequestDto request
+    @PatchMapping("/notification-settings")
+    public ResponseEntity<Void> updateNotificationSettings(
+            @RequestBody UpdateNotificationSettingsRequestDto request
     ) {
         userNotificationSettingService.updateNotificationSettings(request);
         return ResponseEntity.noContent().build();

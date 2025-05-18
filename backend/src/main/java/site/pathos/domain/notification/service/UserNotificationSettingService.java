@@ -11,7 +11,7 @@ import site.pathos.domain.notification.entity.NotificationType;
 import site.pathos.domain.notification.entity.UserNotificationSetting;
 import site.pathos.domain.notification.repository.NotificationTypeRepository;
 import site.pathos.domain.notification.repository.UserNotificationSettingRepository;
-import site.pathos.domain.user.dto.UpdateUserNotificationSettingsRequestDto;
+import site.pathos.domain.user.dto.UpdateNotificationSettingsRequestDto;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.error.BusinessException;
@@ -41,7 +41,7 @@ public class UserNotificationSettingService {
     }
 
     @Transactional
-    public void updateNotificationSettings(UpdateUserNotificationSettingsRequestDto request) {
+    public void updateNotificationSettings(UpdateNotificationSettingsRequestDto request) {
         Long userId = 1L;
         List<UserNotificationSetting> settings = userNotificationSettingRepository.findByUserIdWithType(userId);
         Map<String, UserNotificationSetting> settingMap = settings.stream()
@@ -50,7 +50,7 @@ public class UserNotificationSettingService {
                         Function.identity()
                 ));
 
-        for (UpdateUserNotificationSettingsRequestDto.UpdateUserNotificationSettingsRequestNotificationDto dto : request.settings()) {
+        for (UpdateNotificationSettingsRequestDto.UpdateUserNotificationSettingsRequestNotificationDto dto : request.settings()) {
             UserNotificationSetting setting = settingMap.get(dto.type());
             if (setting == null) {
                 throw new BusinessException(ErrorCode.NOTIFICATION_SETTING_NOT_FOUND);

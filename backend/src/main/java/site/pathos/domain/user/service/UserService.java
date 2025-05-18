@@ -7,8 +7,9 @@ import org.springframework.transaction.annotation.Transactional;
 import site.pathos.domain.notification.entity.NotificationType;
 import site.pathos.domain.notification.entity.UserNotificationSetting;
 import site.pathos.domain.notification.repository.UserNotificationSettingRepository;
-import site.pathos.domain.user.dto.GetMyPageResponseDto;
-import site.pathos.domain.user.dto.UpdateUserRequestDto;
+import site.pathos.domain.user.dto.GetUserSettingsResponseDto;
+import site.pathos.domain.user.dto.GetUserSettingsResponseDto.GetUserSettingsResponseNotificationDto;
+import site.pathos.domain.user.dto.UpdateUserNameRequestDto;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.aws.s3.S3Service;
@@ -24,24 +25,24 @@ public class UserService {
     private final S3Service s3Service;
 
     @Transactional(readOnly = true)
-    public GetMyPageResponseDto getMyPage() {
+    public GetUserSettingsResponseDto getUserSettings() {
         Long userId = 1L;
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         String profileImagePresignedUrl = s3Service.getPresignedUrl(user.getProfileImagePath());
 
         List<UserNotificationSetting> settings = userNotificationSettingRepository.findByUserId(userId);
-        List<GetMyPageResponseDto.GetMyPageResponseNotificationSettingDto> notificationSettings = settings.stream()
+        List<GetUserSettingsResponseNotificationDto> notificationSettings = settings.stream()
                 .map(setting -> {
                     NotificationType notificationType = setting.getNotificationType();
-                    return new GetMyPageResponseDto.GetMyPageResponseNotificationSettingDto(
+                    return new GetUserSettingsResponseNotificationDto(
                             notificationType.getCode().getDisplayName(),
                             setting.getIsEnabled()
                     );
                 })
                 .toList();
 
-        return new GetMyPageResponseDto(
+        return new GetUserSettingsResponseDto(
                 user.getEmail(),
                 user.getName(),
                 profileImagePresignedUrl,
@@ -50,7 +51,7 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUser(UpdateUserRequestDto request) {
+    public void updateUserName(UpdateUserNameRequestDto request) {
         Long userId = 1L;
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
