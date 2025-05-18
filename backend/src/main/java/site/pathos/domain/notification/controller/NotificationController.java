@@ -1,5 +1,6 @@
 package site.pathos.domain.notification.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ public class NotificationController {
 
     private final UserNotificationService userNotificationService;
 
+    @Operation(summary = "알림 목록을 조회합니다.")
     @GetMapping
     public ResponseEntity<PaginationResponse<GetNotificationsResponseDto>> getNotifications(
             @RequestParam(name = "page", defaultValue = "1") int page
@@ -28,6 +30,7 @@ public class NotificationController {
         );
     }
 
+    @Operation(summary = "알림을 읽은 것으로 처리합니다.")
     @PatchMapping("/{notificationId}/read")
     public ResponseEntity<Void> readNotification(
             @PathVariable("notificationId") Long notificationId
