@@ -101,4 +101,13 @@ public class UserNotificationService {
                 pageData.getTotalElements()
         );
     }
+
+    @Transactional
+    public void readNotification(Long notificationId) {
+        Long userId = 1L;
+        UserNotification notification = userNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        notification.readBy(userId);
+    }
 }

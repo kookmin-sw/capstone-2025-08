@@ -18,6 +18,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import site.pathos.domain.user.entity.User;
 import site.pathos.global.entity.BaseTimeEntity;
+import site.pathos.global.error.BusinessException;
+import site.pathos.global.error.ErrorCode;
 
 @Entity
 @Table(name = "user_notification")
@@ -61,5 +63,23 @@ public class UserNotification extends BaseTimeEntity {
         this.title = title;
         this.message = message;
         this.redirectPath = redirectPath;
+    }
+
+    public void readBy(Long userId) {
+        checkOwnership(userId);
+        markAsRead();
+    }
+
+    private void checkOwnership(Long userId) {
+        if (userId == null || !userId.equals(this.user.getId())) {
+            throw new BusinessException(ErrorCode.NO_NOTIFICATION_ACCESS);
+        }
+    }
+
+    private void markAsRead() {
+        if (!this.isRead) {
+            this.isRead = true;
+            this.readAt = LocalDateTime.now();
+        }
     }
 }
