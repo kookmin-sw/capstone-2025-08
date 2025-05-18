@@ -1,5 +1,6 @@
 package site.pathos.domain.notification.repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -10,4 +11,5 @@ import site.pathos.domain.user.entity.User;
 @Repository
 public interface UserNotificationSettingRepository extends JpaRepository<UserNotificationSetting, Long> {
     Optional<UserNotificationSetting> findByUserAndNotificationType(User user, NotificationType notificationType);
+    List<UserNotificationSetting> findByUserId(Long userId);
 }
