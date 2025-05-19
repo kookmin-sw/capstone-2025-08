@@ -14,5 +14,5 @@ public interface ModelProjectLabelRepository extends JpaRepository<ModelLabel, L
     WHERE ml.model.id = :modelId
     AND pl.project.id = :projectId
 """)
-    List<ModelLabel> findByModelIdAndProjectId(@Param("sharedProjectId") Long modelId, @Param("projectId") Long projectId);
+    List<ModelLabel> findByModelIdAndProjectId(@Param("modelId") Long modelId, @Param("projectId") Long projectId);
 }
