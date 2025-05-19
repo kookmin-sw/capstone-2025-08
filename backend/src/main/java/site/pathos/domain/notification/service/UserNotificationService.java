@@ -48,14 +48,13 @@ public class UserNotificationService {
         }
 
         // 템플릿 치환
-        String title = render(notificationType.getTitleTemplate(), templateVariables);
         String message = render(notificationType.getMessageTemplate(), templateVariables);
         String redirectPath = render(notificationType.getRedirectPathTemplate(), templateVariables);
 
         UserNotification notif = UserNotification.builder()
                 .user(user)
                 .notificationType(notificationType)
-                .title(title)
+                .title(type.getDisplayName())
                 .message(message)
                 .redirectPath(redirectPath)
                 .build();

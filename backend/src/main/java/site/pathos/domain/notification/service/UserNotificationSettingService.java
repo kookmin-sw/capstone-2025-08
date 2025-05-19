@@ -13,7 +13,6 @@ import site.pathos.domain.notification.repository.NotificationTypeRepository;
 import site.pathos.domain.notification.repository.UserNotificationSettingRepository;
 import site.pathos.domain.user.dto.UpdateNotificationSettingsRequestDto;
 import site.pathos.domain.user.entity.User;
-import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 
@@ -23,7 +22,6 @@ public class UserNotificationSettingService {
 
     private final NotificationTypeRepository notificationTypeRepository;
     private final UserNotificationSettingRepository userNotificationSettingRepository;
-    private final UserRepository userRepository;
 
     // 신규 가입 시, 사용자 알림 설정
     @Transactional
@@ -42,7 +40,7 @@ public class UserNotificationSettingService {
 
     @Transactional
     public void updateNotificationSettings(UpdateNotificationSettingsRequestDto request) {
-        Long userId = 1L;
+        Long userId = 1L;   //TODO
         List<UserNotificationSetting> settings = userNotificationSettingRepository.findByUserIdWithType(userId);
         Map<String, UserNotificationSetting> settingMap = settings.stream()
                 .collect(Collectors.toMap(

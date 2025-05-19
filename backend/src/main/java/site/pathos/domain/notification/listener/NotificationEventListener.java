@@ -11,7 +11,7 @@ import site.pathos.domain.notification.service.UserNotificationService;
 import site.pathos.domain.model.event.ProjectRunCompletedEvent;
 import site.pathos.domain.project.event.ProjectSvsUploadCompletedEvent;
 import site.pathos.domain.model.event.ProjectTrainCompletedEvent;
-import site.pathos.domain.sharedProject.event.SharedModelCommentEvent;
+import site.pathos.domain.sharedProject.event.SharedProjectCommentReceivedEvent;
 
 
 @Component
@@ -61,13 +61,13 @@ public class NotificationEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleSharedModelCommentEvent(SharedModelCommentEvent event) {
+    public void handleSharedProjectCommentReceivedEvent(SharedProjectCommentReceivedEvent event) {
         userNotificationService.notify(
-                event.modelOwner(),
-                NotificationTypeCode.MODEL_COMMENT_RECEIVED,
+                event.owner(),
+                NotificationTypeCode.SHARED_PROJECT_COMMENT_RECEIVED,
                 Map.of(
-                        "modelId", event.modelId(),
-                        "modelName", event.modelName(),
+                        "sharedProjectId", event.sharedProjectId(),
+                        "sharedProjectTitle", event.sharedProjectTitle(),
                         "commenter", event.commenter().getName()
                 )
         );

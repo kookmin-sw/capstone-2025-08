@@ -31,9 +31,6 @@ public class NotificationType extends BaseTimeEntity {
     @Column(nullable = false, unique = true)
     private NotificationTypeCode code;
 
-    @Column(name = "title_template", nullable = false)
-    private String titleTemplate;
-
     @Column(name = "message_template", nullable = false)
     private String messageTemplate;
 

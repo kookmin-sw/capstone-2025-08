@@ -7,7 +7,7 @@ public enum NotificationTypeCode {
     PROJECT_SVS_UPLOAD_COMPLETED("File Upload Completed"),
     PROJECT_TRAIN_COMPLETED("Model Train Completed"),
     PROJECT_RUN_COMPLETED("Model Run Completed"),
-    MODEL_COMMENT_RECEIVED("New Comments");
+    SHARED_PROJECT_COMMENT_RECEIVED("New Comments");
 
     private final String displayName;
 
