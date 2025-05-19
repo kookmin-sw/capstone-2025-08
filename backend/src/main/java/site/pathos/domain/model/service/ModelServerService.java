@@ -1,42 +1,45 @@
 package site.pathos.domain.model.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import site.pathos.domain.annotation.entity.CellAnnotation;
-import site.pathos.domain.annotation.repository.CellAnnotationRepository;
-import site.pathos.domain.annotation.enums.AnnotationType;
-import site.pathos.domain.annotation.entity.TissueAnnotation;
-import site.pathos.domain.annotation.repository.TissueAnnotationRepository;
 import site.pathos.domain.annotation.entity.AnnotationHistory;
-import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
-import site.pathos.domain.annotation.service.TissueAnnotationService;
-import site.pathos.domain.model.entity.InferenceHistory;
-import site.pathos.domain.model.entity.TrainingHistory;
-import site.pathos.domain.model.repository.InferenceHistoryRepository;
-import site.pathos.domain.model.repository.TrainingHistoryRepository;
-import site.pathos.domain.model.entity.ModelLabel;
-import site.pathos.domain.annotation.repository.ModelProjectLabelRepository;
-import site.pathos.domain.model.repository.ProjectModelRepository;
-import site.pathos.domain.model.entity.Model;
-import site.pathos.domain.model.entity.ProjectModel;
-import site.pathos.domain.model.dto.TrainingRequestDto;
-import site.pathos.domain.model.dto.TrainingResultRequestDto;
-import site.pathos.domain.project.entity.Project;
-import site.pathos.domain.project.repository.ProjectRepository;
+import site.pathos.domain.annotation.entity.CellAnnotation;
 import site.pathos.domain.annotation.entity.Roi;
-import site.pathos.domain.model.dto.TrainingRequestMessageDto;
+import site.pathos.domain.annotation.entity.TissueAnnotation;
+import site.pathos.domain.annotation.enums.AnnotationType;
+import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
+import site.pathos.domain.annotation.repository.CellAnnotationRepository;
+import site.pathos.domain.annotation.repository.ModelProjectLabelRepository;
 import site.pathos.domain.annotation.repository.RoiRepository;
+import site.pathos.domain.annotation.repository.TissueAnnotationRepository;
+import site.pathos.domain.annotation.service.TissueAnnotationService;
+import site.pathos.domain.model.dto.TrainingRequestDto;
+import site.pathos.domain.model.dto.TrainingRequestMessageDto;
+import site.pathos.domain.model.dto.TrainingResultRequestDto;
+import site.pathos.domain.model.entity.InferenceHistory;
+import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.model.entity.ModelLabel;
+import site.pathos.domain.model.entity.ProjectModel;
+import site.pathos.domain.model.entity.TrainingHistory;
+import site.pathos.domain.model.enums.ModelRequestType;
+import site.pathos.domain.model.event.ProjectRunCompletedEvent;
+import site.pathos.domain.model.event.ProjectTrainCompletedEvent;
+import site.pathos.domain.model.repository.InferenceHistoryRepository;
+import site.pathos.domain.model.repository.ProjectModelRepository;
+import site.pathos.domain.model.repository.TrainingHistoryRepository;
+import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.entity.SubProject;
+import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.project.repository.SubProjectRepository;
 import site.pathos.global.aws.sqs.service.SqsService;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 import site.pathos.global.util.color.ColorUtils;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,6 +60,8 @@ public class ModelServerService {
     private final RoiRepository roiRepository;
     private final TrainingHistoryService trainingHistoryService;
     private final TissueAnnotationService tissueAnnotationService;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void requestTraining(Long projectId, TrainingRequestDto trainingRequestDto) {
@@ -252,6 +257,27 @@ public class ModelServerService {
 
                 tissueAnnotationService.saveResultAnnotation(roi, roiDto.tissuePath());
             }
+        }
+        publishCompletedEvent(resultRequestDto.type(), project);
+    }
+
+    private void publishCompletedEvent(ModelRequestType modelRequestType, Project project) {
+        if (modelRequestType == ModelRequestType.TRAINING_INFERENCE) {
+            eventPublisher.publishEvent(
+                    new ProjectTrainCompletedEvent(
+                            project.getUser(),
+                            project.getId(),
+                            project.getTitle()
+                    )
+            );
+        } else if (modelRequestType == ModelRequestType.INFERENCE) {
+            eventPublisher.publishEvent(
+                    new ProjectRunCompletedEvent(
+                            project.getUser(),
+                            project.getId(),
+                            project.getTitle()
+                    )
+            );
         }
     }
 }

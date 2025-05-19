@@ -19,6 +19,11 @@ public enum ErrorCode {
     INFERENCE_HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 추론 기록을 찾을 수 없습니다."),
     PROJECT_LABEL_NOT_FUND(HttpStatus.NOT_FOUND, "해당 프로젝트 라벨을 찾을 수 없습니다"),
     PROJECT_MODEL_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 프로젝트에서 모델을 찾을 수 없습니다"),
+    NOTIFICATION_TYPE_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "해당 알림 유형을 찾을 수 없습니다."),
+    NOTIFICATION_SETTING_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "해당 유저의 알림 설정을 찾을 수 없습니다."),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 알림을 찾을 수 없습니다."),
+    NO_NOTIFICATION_ACCESS(HttpStatus.FORBIDDEN, "해당 알림에 접근 권한이 없습니다."),
+    NO_NOTIFICATION_SETTING(HttpStatus.BAD_REQUEST, "알림 설정 값이 필요합니다.")
     ;
 
     private final HttpStatus status;

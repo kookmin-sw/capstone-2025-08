@@ -22,4 +22,8 @@ public class User {
 
     @Column(name = "profile_image_path", nullable = false)
     private String profileImagePath;
+
+    public void updateName(String name) {
+        this.name = name;
+    }
 }
