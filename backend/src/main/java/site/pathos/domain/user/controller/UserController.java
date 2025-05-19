@@ -1,6 +1,7 @@
 package site.pathos.domain.user.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import site.pathos.domain.user.dto.UpdateNotificationSettingsRequestDto;
 import site.pathos.domain.user.dto.UpdateUserNameRequestDto;
 import site.pathos.domain.user.service.UserService;
 
+@Tag(name = "Profile API", description = "유저 프로필 API")
 @RestController
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor

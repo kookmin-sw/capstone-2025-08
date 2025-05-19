@@ -8,9 +8,9 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import site.pathos.domain.notification.enums.NotificationTypeCode;
 import site.pathos.domain.notification.service.UserNotificationService;
-import site.pathos.domain.project.event.ProjectRunCompletedEvent;
-import site.pathos.domain.project.event.ProjectSvsUploadedEvent;
-import site.pathos.domain.project.event.ProjectTrainCompletedEvent;
+import site.pathos.domain.model.event.ProjectRunCompletedEvent;
+import site.pathos.domain.project.event.ProjectSvsUploadCompletedEvent;
+import site.pathos.domain.model.event.ProjectTrainCompletedEvent;
 import site.pathos.domain.sharedProject.event.SharedModelCommentEvent;
 
 
@@ -22,7 +22,7 @@ public class NotificationEventListener {
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void handleProjectSvsUploadCompletedEvent(ProjectSvsUploadedEvent event) {
+    public void handleProjectSvsUploadCompletedEvent(ProjectSvsUploadCompletedEvent event) {
         userNotificationService.notify(
                 event.user(),
                 NotificationTypeCode.PROJECT_SVS_UPLOAD_COMPLETED,

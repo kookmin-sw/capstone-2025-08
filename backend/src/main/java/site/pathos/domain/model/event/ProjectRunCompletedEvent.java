@@ -1,4 +1,4 @@
-package site.pathos.domain.project.event;
+package site.pathos.domain.model.event;
 
 import site.pathos.domain.user.entity.User;
 

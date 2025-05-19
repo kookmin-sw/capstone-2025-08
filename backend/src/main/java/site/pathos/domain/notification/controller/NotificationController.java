@@ -1,6 +1,7 @@
 package site.pathos.domain.notification.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import site.pathos.domain.notification.dto.response.GetNotificationsResponseDto;
 import site.pathos.domain.notification.service.UserNotificationService;
 import site.pathos.global.common.PaginationResponse;
 
+@Tag(name = "Notification API", description = "알림 기능 API")
 @RestController
 @RequestMapping("/api/notifications")
 @RequiredArgsConstructor
