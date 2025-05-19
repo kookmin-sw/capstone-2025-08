@@ -6,8 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import site.pathos.domain.annotationHistory.entity.AnnotationHistory;
-import site.pathos.domain.inferenceHistory.entity.TrainingHistory;
+import site.pathos.domain.model.enums.ModelType;
 
 import java.time.LocalDateTime;
 

@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j; // Log4j 대신 Slf4j로 변경 (Spring Boot에서 선호)
 import org.springframework.stereotype.Service;
 import site.pathos.global.aws.config.AwsProperty;
-import site.pathos.domain.modelServer.dto.request.TrainingRequestMessageDto;
+import site.pathos.domain.model.dto.TrainingRequestMessageDto;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 import software.amazon.awssdk.services.sqs.model.SendMessageResponse;

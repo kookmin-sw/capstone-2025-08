@@ -22,6 +22,9 @@ public class ProjectModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "name", nullable = false)
+    private String name;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
@@ -38,7 +41,8 @@ public class ProjectModel {
     private LocalDateTime createdAt;
 
     @Builder
-    public ProjectModel(Project project, Model model, boolean isInitial){
+    public ProjectModel(Project project, String name, Model model, boolean isInitial){
+        this.name = name;
         this.project = project;
         this.model = model;
         this.isInitial = isInitial;

@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import site.pathos.domain.subProject.dto.request.SubProjectTilingRequestDto;
+import site.pathos.domain.project.dto.request.SubProjectTilingRequestDto;
 import site.pathos.global.aws.config.AwsProperty;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ec2.model.*;
