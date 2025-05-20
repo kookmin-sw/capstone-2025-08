@@ -19,21 +19,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import site.pathos.domain.subProject.dto.request.SubProjectTilingRequestDto;
+import site.pathos.domain.project.dto.request.SubProjectTilingRequestDto;
 import site.pathos.global.aws.config.AwsProperty;
 import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 import site.pathos.global.util.image.ImageUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
-import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
-import software.amazon.awssdk.services.s3.model.CompletedPart;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.UploadPartRequest;
-import software.amazon.awssdk.services.s3.model.UploadPartResponse;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
@@ -171,6 +163,13 @@ public class S3Service {
                 });
     }
 
+    public void deleteFile(String key) {
+        s3Client.deleteObject(DeleteObjectRequest.builder()
+                .bucket(awsProperty.s3().bucket())
+                .key(key)
+                .build());
+    }
+
     public void uploadFileAsMultipart(String key, MultipartFile file) {
         String bucket = awsProperty.s3().bucket();
         long partSize = 5 * 1024 * 1024; // 5MB
@@ -223,12 +222,10 @@ public class S3Service {
                 futures.add(future);
             }
 
-            // 모든 파트 업로드 완료 대기
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
             completedParts.sort(Comparator.comparingInt(CompletedPart::partNumber));
 
-            // 업로드 완료
             CompleteMultipartUploadRequest completeRequest = CompleteMultipartUploadRequest.builder()
                     .bucket(bucket)
                     .key(key)

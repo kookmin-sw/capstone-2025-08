@@ -2,7 +2,7 @@ package site.pathos.domain.project.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
-import site.pathos.domain.model.entity.ModelType;
+import site.pathos.domain.model.enums.ModelType;
 import site.pathos.global.common.PaginationResponse;
 
 public record GetProjectsResponseDto(
@@ -14,6 +14,8 @@ public record GetProjectsResponseDto(
             Long projectId,
             @Schema(description = "프로젝트명", example = "Upsilon Viz")
             String title,
+            @Schema(description = "프로젝트 설명", example = "Initial tissue analysis project")
+            String description,
             @Schema(description = "프로젝트 생성일", example = "2025. 03. 20 (Thu)")
             String createdAt,
             @Schema(description = "프로젝트 수정일", example = "2025. 03. 21 (Fri)")

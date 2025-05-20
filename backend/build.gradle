@@ -47,6 +47,8 @@ dependencies {
 	implementation 'software.amazon.awssdk:sqs:2.25.64'
 	implementation 'software.amazon.awssdk:ec2:2.25.64'
 
+	implementation 'org.ocpsoft.prettytime:prettytime:5.0.8.Final'
+
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 	implementation 'io.netty:netty-resolver-dns-native-macos:4.1.68.Final:osx-aarch_64'
 }

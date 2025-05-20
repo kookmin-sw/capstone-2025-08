@@ -44,6 +44,9 @@ public class User {
     @Column(name="social_id", nullable=false)
     private String socialId;
 
+    @Column(name = "profile_image_path", nullable = false)
+    private String profileImagePath;
+
     @Builder
     public User(String email, String name, String profileImageUrl, RoleType role, SocialType socialType,
                 String socialId) {
@@ -53,5 +56,9 @@ public class User {
         this.role = role;
         this.socialType = socialType;
         this.socialId = socialId;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
     }
 }
