@@ -64,4 +64,8 @@ public class Roi {
         this.width = width;
         this.height = height;
     }
+
+    public void changeDisplayOrder(int displayOrder){
+        this.displayOrder = displayOrder;
+    }
 }
