@@ -34,25 +34,25 @@ export interface PaginationResponseGetProjectsResponseDetailDto {
      */
     content?: Array<GetProjectsResponseDetailDto>;
     /**
-     * 
+     * 한 페이지 컨텐츠 개수
      * @type {number}
      * @memberof PaginationResponseGetProjectsResponseDetailDto
      */
     pageSize?: number;
     /**
-     * 
+     * 현재 페이지 번호 (1부터 시작)
      * @type {number}
      * @memberof PaginationResponseGetProjectsResponseDetailDto
      */
     currentPage?: number;
     /**
-     * 
+     * 전체 페이지 수
      * @type {number}
      * @memberof PaginationResponseGetProjectsResponseDetailDto
      */
     totalPages?: number;
     /**
-     * 
+     * 전체 요소 수
      * @type {number}
      * @memberof PaginationResponseGetProjectsResponseDetailDto
      */
