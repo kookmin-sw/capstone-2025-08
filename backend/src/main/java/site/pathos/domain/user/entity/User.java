@@ -8,10 +8,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.user.enums.RoleType;
 import site.pathos.domain.user.enums.SocialType;
 
@@ -30,7 +32,7 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "profile_image_path", nullable = false)
+    @Column(name = "profile_image_path")
     private String profileImagePath;
 
     @Enumerated(EnumType.STRING)
@@ -57,5 +59,22 @@ public class User {
 
     public void updateName(String name) {
         this.name = name;
+    }
+
+    public String initializeProfileImagePath(MultipartFile image) {
+        String originalName = image.getOriginalFilename();
+        String fileExtension = originalName.substring(originalName.lastIndexOf("."));
+        String profileImagePath = getProfileImagePath(fileExtension);
+        return this.profileImagePath = profileImagePath;
+    }
+
+    public String initializeProfileImagePath() {
+        String defaultFileExtension = ".png";
+        String profileImagePath = getProfileImagePath(defaultFileExtension);
+        return this.profileImagePath = profileImagePath;
+    }
+
+    private String getProfileImagePath(String fileExtension) {
+        return "profile/" + id + "/" + UUID.randomUUID() + fileExtension;
     }
 }

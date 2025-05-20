@@ -4,6 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.notification.entity.NotificationType;
 import site.pathos.domain.notification.entity.UserNotificationSetting;
 import site.pathos.domain.notification.repository.UserNotificationSettingRepository;
@@ -59,5 +60,15 @@ public class UserService {
         Long userId = SecurityUtil.getCurrentUserId();
         return userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    @Transactional
+    public void updateProfileImage(MultipartFile image) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        String profileImagePath = user.initializeProfileImagePath(image);
+        s3Service.uploadFile(profileImagePath, image);
     }
 }
