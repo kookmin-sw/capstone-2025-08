@@ -48,7 +48,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private void mockAuthenticateAsUserId1() {
-        User user = userRepository.findById(1L)
+        Long mockUserId = 1L;
+        User user = userRepository.findById(mockUserId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
         CustomOAuth2User mockPrincipal = new CustomOAuth2User(user);
 
