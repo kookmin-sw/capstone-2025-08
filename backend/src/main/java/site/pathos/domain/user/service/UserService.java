@@ -15,6 +15,7 @@ import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
+import site.pathos.global.security.util.SecurityUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -26,12 +27,10 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public GetUserSettingsResponseDto getUserSettings() {
-        Long userId = 1L;
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User user = getCurrentUser();
         String profileImagePresignedUrl = s3Service.getPresignedUrl(user.getProfileImagePath());
 
-        List<UserNotificationSetting> settings = userNotificationSettingRepository.findByUserId(userId);
+        List<UserNotificationSetting> settings = userNotificationSettingRepository.findByUserId(user.getId());
         List<GetUserSettingsResponseNotificationDto> notificationSettings = settings.stream()
                 .map(setting -> {
                     NotificationType notificationType = setting.getNotificationType();
@@ -52,10 +51,13 @@ public class UserService {
 
     @Transactional
     public void updateUserName(UpdateUserNameRequestDto request) {
-        Long userId = 1L;
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
+        User user = getCurrentUser();
         user.updateName(request.name());
+    }
+
+    public User getCurrentUser() {
+        Long userId = SecurityUtil.getCurrentUserId();
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 }

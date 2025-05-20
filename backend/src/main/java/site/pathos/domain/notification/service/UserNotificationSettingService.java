@@ -15,6 +15,7 @@ import site.pathos.domain.user.dto.UpdateNotificationSettingsRequestDto;
 import site.pathos.domain.user.entity.User;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
+import site.pathos.global.security.util.SecurityUtil;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +41,7 @@ public class UserNotificationSettingService {
 
     @Transactional
     public void updateNotificationSettings(UpdateNotificationSettingsRequestDto request) {
-        Long userId = 1L;   //TODO
+        Long userId = SecurityUtil.getCurrentUserId();
         List<UserNotificationSetting> settings = userNotificationSettingRepository.findByUserIdWithType(userId);
         Map<String, UserNotificationSetting> settingMap = settings.stream()
                 .collect(Collectors.toMap(

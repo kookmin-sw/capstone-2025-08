@@ -25,7 +25,7 @@ public class AuthService {
 
     public JwtTokenDto refreshTokens(String refreshToken) {
         if (!jwtProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("Invalid refresh token");
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         Long userId = jwtProvider.getUserIdFromToken(refreshToken);
@@ -33,7 +33,7 @@ public class AuthService {
 
         String saved = refreshTokenService.get(userId);
         if (saved == null || !saved.equals(refreshToken)) {
-            throw new IllegalArgumentException("Refresh token mismatch");
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
         String newAccessToken = jwtProvider.createAccessToken(user);

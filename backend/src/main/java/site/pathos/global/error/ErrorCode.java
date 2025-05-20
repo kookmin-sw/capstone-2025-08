@@ -27,7 +27,8 @@ public enum ErrorCode {
     NOTIFICATION_SETTING_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "해당 유저의 알림 설정을 찾을 수 없습니다."),
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 알림을 찾을 수 없습니다."),
     NO_NOTIFICATION_ACCESS(HttpStatus.FORBIDDEN, "해당 알림에 접근 권한이 없습니다."),
-    NO_NOTIFICATION_SETTING(HttpStatus.BAD_REQUEST, "알림 설정 값이 필요합니다.")
+    NO_NOTIFICATION_SETTING(HttpStatus.BAD_REQUEST, "알림 설정 값이 필요합니다."),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 리프레시 토큰입니다."),
     ;
 
     private final HttpStatus status;
