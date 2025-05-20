@@ -3,6 +3,7 @@ package site.pathos.global.aws.s3;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,7 +26,16 @@ import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 import site.pathos.global.util.image.ImageUtils;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompletedMultipartUpload;
+import software.amazon.awssdk.services.s3.model.CompletedPart;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.UploadPartRequest;
+import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
@@ -243,4 +253,19 @@ public class S3Service {
             throw new RuntimeException("업로드 실패", e);
         }
     }
+
+    public void uploadFromUrl(String imageUrl, String key) {
+        try (InputStream inputStream = new URL(imageUrl).openStream()) {
+            byte[] fileBytes = inputStream.readAllBytes();
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(awsProperty.s3().bucket())
+                    .key(key)
+                    .contentType("image/png")
+                    .build();
+            s3Client.putObject(request, RequestBody.fromBytes(fileBytes));
+        } catch (IOException e) {
+            throw new RuntimeException("프로필 이미지 업로드 실패", e);
+        }
+    }
+
 }

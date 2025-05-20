@@ -13,6 +13,7 @@ import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.enums.RoleType;
 import site.pathos.domain.user.enums.SocialType;
 import site.pathos.domain.user.repository.UserRepository;
+import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.security.oauth2.userinfo.GoogleUserInfo;
 
 @Service
@@ -20,6 +21,7 @@ import site.pathos.global.security.oauth2.userinfo.GoogleUserInfo;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
     private final UserNotificationSettingService userNotificationSettingService;
+    private final S3Service s3Service;
 
     @Override
     @Transactional
@@ -42,13 +44,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .socialId(info.getId())
                 .email(info.getEmail())
                 .name(info.getName())
-                .profileImagePath(info.getPicture())
                 .role(RoleType.USER)
                 .build();
-
         userRepository.save(newUser);
         userNotificationSettingService.createNotificationSetting(newUser);
 
+        String profileImagePath = newUser.initializeProfileImagePath();
+        s3Service.uploadFromUrl(info.getPicture(), profileImagePath);
         return newUser;
     }
 }
