@@ -16,9 +16,8 @@
 
 ## 🚀 핵심 기능
 
-![14](https://github.com/user-attachments/assets/cf02a7c7-eb18-4986-b497-fa5072f1d000)
 ![13](https://github.com/user-attachments/assets/0701b3e9-db5e-4988-9712-8fea9f772684)
-
+![14](https://github.com/user-attachments/assets/cf02a7c7-eb18-4986-b497-fa5072f1d000)
 
 ## 👫 팀원 소개
 
