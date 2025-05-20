@@ -30,8 +30,8 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "profile_image_url", nullable = false)
-    private String profileImageUrl;
+    @Column(name = "profile_image_path", nullable = false)
+    private String profileImagePath;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
@@ -44,15 +44,12 @@ public class User {
     @Column(name="social_id", nullable=false)
     private String socialId;
 
-    @Column(name = "profile_image_path", nullable = false)
-    private String profileImagePath;
-
     @Builder
-    public User(String email, String name, String profileImageUrl, RoleType role, SocialType socialType,
+    public User(String email, String name, String profileImagePath, RoleType role, SocialType socialType,
                 String socialId) {
         this.email = email;
         this.name = name;
-        this.profileImageUrl = profileImageUrl;
+        this.profileImagePath = profileImagePath;
         this.role = role;
         this.socialType = socialType;
         this.socialId = socialId;

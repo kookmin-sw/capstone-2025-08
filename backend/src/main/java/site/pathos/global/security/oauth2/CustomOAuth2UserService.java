@@ -40,7 +40,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .socialId(info.getId())
                 .email(info.getEmail())
                 .name(info.getName())
-                .profileImageUrl(info.getPicture())
+                .profileImagePath(info.getPicture())
                 .role(RoleType.USER)
                 .build();
         return userRepository.save(newUser);
