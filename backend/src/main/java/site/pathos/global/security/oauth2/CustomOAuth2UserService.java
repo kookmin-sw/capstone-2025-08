@@ -8,6 +8,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import site.pathos.domain.notification.service.UserNotificationSettingService;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.enums.RoleType;
 import site.pathos.domain.user.enums.SocialType;
@@ -18,6 +19,7 @@ import site.pathos.global.security.oauth2.userinfo.GoogleUserInfo;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private final UserRepository userRepository;
+    private final UserNotificationSettingService userNotificationSettingService;
 
     @Override
     @Transactional
@@ -43,6 +45,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .profileImagePath(info.getPicture())
                 .role(RoleType.USER)
                 .build();
-        return userRepository.save(newUser);
+
+        userRepository.save(newUser);
+        userNotificationSettingService.createNotificationSetting(newUser);
+
+        return newUser;
     }
 }
