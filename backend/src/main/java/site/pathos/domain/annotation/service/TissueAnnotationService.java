@@ -26,9 +26,7 @@ public class TissueAnnotationService {
     private final TissueAnnotationRepository tissueAnnotationRepository;
     private final RoiRepository roiRepository;
 
-    public void uploadTissueAnnotations(Long subProjectId, Long annotationHistoryId, Long roiId, List<MultipartFile> images) {
-        Roi roi = roiRepository.findById(roiId)
-                .orElseThrow(() -> new RuntimeException("ROI not found: " + roiId));
+    public void uploadTissueAnnotations(Long subProjectId, Long annotationHistoryId, Roi roi, List<MultipartFile> images) {
 
         uploadTiles(subProjectId, annotationHistoryId, roi, images);
         uploadMergedImage(subProjectId, annotationHistoryId, roi, images);
@@ -37,9 +35,13 @@ public class TissueAnnotationService {
     private void uploadTiles(Long subProjectId, Long annotationHistoryId, Roi roi, List<MultipartFile> images) {
         for (MultipartFile image : images) {
             String originalFilename = image.getOriginalFilename().replaceAll("\\s+", "_");
+
+            String fixedFilename = originalFilename.replaceFirst("^-?\\d+", String.valueOf(roi.getId()));
+
             String key = "sub-project/" + subProjectId
                     + "/annotation-history/" + annotationHistoryId
-                    + "/roi" + roi.getId() + "/train/" + originalFilename;
+                    + "/roi/" + roi.getId() + "/tile/" + fixedFilename;
+
 
             TissueAnnotation ta = TissueAnnotation.builder()
                     .roi(roi)
@@ -47,16 +49,6 @@ public class TissueAnnotationService {
                     .annotationType(AnnotationType.TILE)
                     .build();
             tissueAnnotationRepository.save(ta);
-
-//            s3Service.uploadFileAsync(key, image, () ->
-//                    {
-//                        ta.uploadComplete();
-//                        tissueAnnotationRepository.save(ta);
-//                    },
-//                    ex -> {
-//                        log.error("타일 업로드 실패: {}", key, ex);
-//                    }
-//            );
 
             s3Service.uploadFile(key, image);
             ta.uploadComplete();

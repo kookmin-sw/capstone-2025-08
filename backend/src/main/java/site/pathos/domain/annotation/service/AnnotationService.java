@@ -71,7 +71,7 @@ public class AnnotationService {
         project.setUpdatedAt();
 
         for (RoiLabelSaveRequestDto.LabelDto labelDto : labels){
-            if(labelDto.id() == null){
+            if(labelDto.id() < 0){
                 createLabel(project, labelDto);
             } else {
                 updateLabel(project, labelDto);
@@ -82,15 +82,15 @@ public class AnnotationService {
             List<MultipartFile> matchedImages = images.stream()
                     .filter(img -> roiDto.imageNames().contains(img.getOriginalFilename()))
                     .toList();
-            if (roiDto.roiId() != null) {
+            if (roiDto.roiId() < 0) {
+                Roi roi = createRoi(history, roiDto);
+                tissueAnnotationService.uploadTissueAnnotations(subProjectId, annotationHistoryId,
+                        roi, matchedImages);
+            } else {
                 Roi roi = updateRoi(roiDto);
                 tissueAnnotationService.deleteTissueAnnotationsByRoiId(roi.getId());
                 tissueAnnotationService.uploadTissueAnnotations(subProjectId, annotationHistoryId,
-                        roi.getId(), matchedImages);
-            } else {
-                Roi roi = createRoi(history, roiDto);
-                tissueAnnotationService.uploadTissueAnnotations(subProjectId, annotationHistoryId,
-                        roi.getId(), matchedImages);
+                        roi, matchedImages);
             }
         }
 
