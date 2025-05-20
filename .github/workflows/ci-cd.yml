@@ -63,7 +63,7 @@ jobs:
         run: sudo docker stop pathos || true
 
       - name: docker run new container
-        run: sudo docker run --name pathos --rm -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/pathos:latest
+        run: sudo docker run --name pathos --network pathos-network --rm -d -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/pathos:latest
 
       - name: delete old docker image
         run: sudo docker image prune -f
