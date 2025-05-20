@@ -19,6 +19,7 @@ public record RoiLabelSaveRequestDto(
                 Integer y,
                 Integer width,
                 Integer height,
+                int displayOrder,
                 List<String> imageNames,
                 @Schema(description = "CellAnnotation 정보 리스트")
                 List<CellDto> cells

@@ -106,20 +106,18 @@ public class AnnotationService {
                 roiDto.width(),
                 roiDto.height()
         );
+        roi.changeDisplayOrder(roiDto.displayOrder());
         return roi;
     }
 
     private Roi createRoi(AnnotationHistory history, RoiLabelSaveRequestDto.RoiSaveRequestDto roiDto) {
-        Integer max = roiRepository.findMaxDisplayOrderByAnnotationHistory(history.getId());
-        int displayOrder = (max == null) ? 0 : max + 1;
-
         Roi roi = Roi.builder()
                 .annotationHistory(history)
                 .x(roiDto.x())
                 .y(roiDto.y())
                 .width(roiDto.width())
                 .height(roiDto.height())
-                .displayOrder(displayOrder)
+                .displayOrder(roiDto.displayOrder())
                 .build();
         return roiRepository.save(roi);
     }
