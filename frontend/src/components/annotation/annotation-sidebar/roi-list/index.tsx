@@ -1,9 +1,9 @@
 import { Pencil, Trash2 } from 'lucide-react';
-import { ROI } from '@/types/annotation';
 import MiniBox from '@/components/annotation/annotation-sidebar/roi-list/roi-mini-box';
+import { RoiResponseDto } from '@/generated-api';
 
 interface RoiListProps {
-  rois: ROI[];
+  rois: RoiResponseDto[];
   onClick: (index: number) => void;
   onDelete: (index: number) => void;
   onEdit: (index: number) => void;

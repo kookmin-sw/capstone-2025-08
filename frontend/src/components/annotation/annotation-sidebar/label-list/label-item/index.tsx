@@ -2,10 +2,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AlignJustify, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { LabelDto } from '@/generated-api';
+import { ProjectLabelDto } from '@/generated-api';
 
 interface LabelItemProps {
-  label: LabelDto;
+  label: ProjectLabelDto;
   onRename: (id: string, newName: string) => void;
   onDelete: (id: string) => void;
   onSelect: (color: string) => void;
@@ -21,7 +21,7 @@ export default function LabelItem({
   const [editValue, setEditValue] = useState(label.name);
 
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: label.id! });
+    useSortable({ id: label.labelId! });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -56,14 +56,14 @@ export default function LabelItem({
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={() => {
               if (editValue != null) {
-                onRename(String(label.id), editValue);
+                onRename(String(label.labelId), editValue);
               }
               setEditing(false);
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 if (editValue != null) {
-                  onRename(String(label.id), editValue);
+                  onRename(String(label.labelId), editValue);
                 }
                 setEditing(false);
               }
@@ -91,7 +91,7 @@ export default function LabelItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onDelete(String(label.id));
+              onDelete(String(label.labelId));
             }}
           >
             <Trash2 className="text-muted-foreground h-4 w-4 cursor-pointer hover:text-[#CA0000]" />
