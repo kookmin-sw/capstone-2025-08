@@ -38,10 +38,10 @@ const AnnotationModelExportModal: React.FC<AnnotationModelExportModalProps> = ({
     <Dialog open={open} onOpenChange={handleCancel}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Export Model</DialogTitle>
+          <DialogTitle>Train Model</DialogTitle>
         </DialogHeader>
         <p className="text-muted-foreground mt-2 text-sm">
-          Enter a name to export this model. <br />
+          Enter a name to train this model. <br />
           You can reuse this model in other projects to save time and effort.{' '}
           <br />
           Optionally, you can share this model in the{' '}
@@ -63,7 +63,7 @@ const AnnotationModelExportModal: React.FC<AnnotationModelExportModalProps> = ({
             Cancel
           </Button>
           <Button onClick={handleSave} className="min-w-[80px]">
-            Save
+            Train
           </Button>
         </div>
       </DialogContent>

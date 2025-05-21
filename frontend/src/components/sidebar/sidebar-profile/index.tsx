@@ -4,8 +4,8 @@ import { LogOut } from 'lucide-react';
 // profile dummy
 const profile = {
   imageUrl: '/images/test-profile-image.png',
-  name: 'hyeonjin Hwang',
-  email: 'jjini6530@kookmin.ac.kr',
+  name: 'PathOs',
+  email: 'capstone8team@pathos.com',
 };
 
 export function Profile() {
