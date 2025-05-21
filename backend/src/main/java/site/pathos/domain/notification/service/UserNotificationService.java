@@ -18,10 +18,11 @@ import site.pathos.domain.notification.repository.NotificationTypeRepository;
 import site.pathos.domain.notification.repository.UserNotificationRepository;
 import site.pathos.domain.notification.repository.UserNotificationSettingRepository;
 import site.pathos.domain.user.entity.User;
-import site.pathos.domain.user.repository.UserRepository;
+import site.pathos.domain.user.service.UserService;
 import site.pathos.global.common.PaginationResponse;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
+import site.pathos.global.security.util.SecurityUtil;
 import site.pathos.global.util.datetime.DateTimeUtils;
 
 @Service
@@ -31,7 +32,7 @@ public class UserNotificationService {
     private final NotificationTypeRepository notificationTypeRepository;
     private final UserNotificationSettingRepository userNotificationSettingRepository;
     private final UserNotificationRepository userNotificationRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private static final int DEFAULT_PAGE_SIZE = 20;
 
     @Transactional
@@ -75,9 +76,7 @@ public class UserNotificationService {
 
         Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
         Pageable pageable = PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE, sort);
-
-        User user = userRepository.findById(1L)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        User user = userService.getCurrentUser();
 
         Page<UserNotification> pageData = userNotificationRepository.findByUser(user, pageable);
 
@@ -103,7 +102,7 @@ public class UserNotificationService {
 
     @Transactional
     public void readNotification(Long notificationId) {
-        Long userId = 1L;
+        Long userId = SecurityUtil.getCurrentUserId();
         UserNotification notification = userNotificationRepository.findById(notificationId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
 

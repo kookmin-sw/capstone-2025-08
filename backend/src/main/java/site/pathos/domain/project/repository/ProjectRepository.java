@@ -2,7 +2,6 @@ package site.pathos.domain.project.repository;
 
 import java.util.List;
 import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,11 +9,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import site.pathos.domain.project.entity.Project;
+import site.pathos.domain.user.entity.User;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
-    Page<Project> findAll(Pageable pageable);
-    Page<Project> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+    Page<Project> findAllByUser(User user, Pageable pageable);
+    Page<Project> findByTitleContainingIgnoreCaseAndUser(String title, User user, Pageable pageable);
 
     @Query("""
         SELECT DISTINCT p FROM Project p
