@@ -23,11 +23,36 @@ export const drawStroke = (
 ) => {
   if (stroke.points.length === 0) return;
 
+  // 뷰포트 → 픽셀 좌표
   const pixelPoints = stroke.points.map((pt) =>
     viewerInstance.viewport.pixelFromPoint(new OpenSeadragon.Point(pt.x, pt.y)),
   );
 
+  // 이미지 좌표계에서 정의된 stroke.size를 픽셀 단위로 변환
+  const imageCenter = new OpenSeadragon.Point(
+    stroke.points[0].x,
+    stroke.points[0].y,
+  );
+  const imageRight = new OpenSeadragon.Point(
+    stroke.points[0].x + stroke.size,
+    stroke.points[0].y,
+  );
+
+  // 이미지 → 뷰포트 → 픽셀 좌표 변환
+  const vpCenter =
+    viewerInstance.viewport.imageToViewportCoordinates(imageCenter);
+  const vpRight =
+    viewerInstance.viewport.imageToViewportCoordinates(imageRight);
+
+  const pxCenter = viewerInstance.viewport.pixelFromPoint(vpCenter);
+  const pxRight = viewerInstance.viewport.pixelFromPoint(vpRight);
+
+  // css기준 픽셀과 동적으로 스케일링되는 stroke의 차이 때문에 약 5배를 곱하여 사용
+  const pixelStrokeWidth = Math.abs(pxRight.x - pxCenter.x) * 5;
+
+  ctx.save();
   ctx.beginPath();
+
   const first = pixelPoints[0];
   ctx.moveTo(first.x, first.y);
 
@@ -36,26 +61,26 @@ export const drawStroke = (
     ctx.lineTo(pt.x, pt.y);
   }
 
-  ctx.lineWidth = stroke.size;
+  ctx.lineWidth = pixelStrokeWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
 
   if (stroke.isEraser) {
     ctx.globalCompositeOperation = 'destination-out';
-    ctx.strokeStyle = 'rgba(0,0,0,1)';
+    ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 1)';
   } else {
     ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = stroke.color;
+    ctx.fillStyle = stroke.color;
   }
 
   if (stroke.points.length === 1) {
-    ctx.arc(first.x, first.y, stroke.size / 2, 0, Math.PI * 2);
-    ctx.fillStyle = stroke.color;
+    ctx.arc(first.x, first.y, pixelStrokeWidth / 2, 0, Math.PI * 2);
     ctx.fill();
   } else {
     ctx.stroke();
   }
 
-  // 복원
-  ctx.globalCompositeOperation = 'source-over';
+  ctx.restore();
 };
