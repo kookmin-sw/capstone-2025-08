@@ -6,8 +6,8 @@ import dynamic from 'next/dynamic';
 import {
   AnnotationHistoryResponseDto,
   GetProjectAnnotationResponseDto,
-  LabelDto,
   ProjectAnnotationAPIApi,
+  ProjectLabelDto,
   SubProjectSummaryDto,
 } from '@/generated-api';
 import { useAnnotationSharedStore } from '@/stores/annotation-shared';
@@ -16,13 +16,13 @@ const AnnotationViewer = dynamic(
   () => import('@/components/annotation/annotation-viewer'),
   { ssr: false },
 ) as unknown as React.FC<{
-  project: GetProjectAnnotationResponseDto;
+  projectId: string;
   subProject: SubProjectSummaryDto | null;
   setSubProject: (sp: SubProjectSummaryDto) => void;
   subProjects: SubProjectSummaryDto[];
   inferenceResult: AnnotationHistoryResponseDto | null;
   modelType: string;
-  initialLabels?: LabelDto[];
+  initialLabels?: ProjectLabelDto[];
 }>;
 
 export default function ProjectAnnotationPage() {
@@ -36,6 +36,9 @@ export default function ProjectAnnotationPage() {
   const [inferenceResult, setInferenceResult] =
     useState<AnnotationHistoryResponseDto | null>(null);
   const [ready, setReady] = useState(false);
+  const selectedAnnotationHistoryId = useAnnotationSharedStore(
+    (s) => s.selectedAnnotationHistoryId,
+  );
 
   // 최초 1회 - 프로젝트 전체 정보와 첫 서브프로젝트 선택
   useEffect(() => {
@@ -46,6 +49,10 @@ export default function ProjectAnnotationPage() {
         const projectId = Number(id);
         const projectRes = await ProjectAnnotationApi.getProject({ projectId });
         setProject(projectRes);
+        console.log('project: ', projectRes);
+
+        useAnnotationSharedStore.getState().setProject(projectRes);
+
         const subProjectList = projectRes.subProjects ?? [];
         setSubProjects(subProjectList);
         const firstSubProject = subProjectList[0];
@@ -89,6 +96,7 @@ export default function ProjectAnnotationPage() {
             annotationHistoryId: latestAnnotationHistoryId,
           });
         setInferenceResult(annotationHistory);
+        console.log('inferenceResult: ', annotationHistory);
       } catch (err) {
         console.error('서브프로젝트 변경 후 inference 불러오기 실패:', err);
       }
@@ -96,6 +104,24 @@ export default function ProjectAnnotationPage() {
 
     fetchInference();
   }, [selected]);
+
+  useEffect(() => {
+    const fetchSelectedHistory = async () => {
+      if (!selectedAnnotationHistoryId) return;
+
+      try {
+        const annotationHistory =
+          await ProjectAnnotationApi.getAnnotationHistory({
+            annotationHistoryId: selectedAnnotationHistoryId,
+          });
+        setInferenceResult(annotationHistory);
+      } catch (err) {
+        console.error('선택한 히스토리 불러오기 실패:', err);
+      }
+    };
+
+    fetchSelectedHistory();
+  }, [selectedAnnotationHistoryId]);
 
   if (!ready) return <p>Loading…</p>;
   if (!project) return <p>잘못된 프로젝트 ID입니다.</p>;
@@ -106,7 +132,7 @@ export default function ProjectAnnotationPage() {
     <div className="h-full">
       {selected ? (
         <AnnotationViewer
-          project={project}
+          projectId={id}
           subProject={selected}
           setSubProject={setSelected}
           subProjects={subProjects}

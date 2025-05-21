@@ -1,4 +1,4 @@
-import { ROI, LoadedROI } from '@/types/annotation';
+import { RoiResponseDto, RoiResponsePayload } from '@/generated-api';
 
 /**
  * ROI 전용 캔버스에 실선을 그리는 함수
@@ -6,9 +6,9 @@ import { ROI, LoadedROI } from '@/types/annotation';
 export const drawROIs = (
   viewerInstance: any,
   roiCanvas: HTMLCanvasElement | null,
-  roi: ROI | null,
-  userDefinedROIs: ROI[],
-  loadedROIs: LoadedROI[],
+  roi: RoiResponseDto | null,
+  userDefinedROIs: RoiResponseDto[],
+  loadedROIs: RoiResponsePayload[],
   isSelectingROI: boolean,
   isEditingROI: boolean,
 ) => {
@@ -67,22 +67,34 @@ export const drawROIs = (
   };
 
   // 1. 모델 ROI
-  loadedROIs.forEach(({ bbox }) => {
-    const vpTL = tiledImage.imageToViewportCoordinates(
-      new OpenSeadragon.Point(bbox.x, bbox.y),
-    );
-    const vpBR = tiledImage.imageToViewportCoordinates(
-      new OpenSeadragon.Point(bbox.x + bbox.w, bbox.y + bbox.h),
-    );
-    const p1 = viewerInstance.viewport.pixelFromPoint(vpTL);
-    const p2 = viewerInstance.viewport.pixelFromPoint(vpBR);
+  loadedROIs.forEach(({ detail }) => {
+    if (
+      detail &&
+      typeof detail.x === 'number' &&
+      typeof detail.y === 'number' &&
+      typeof detail.width === 'number' &&
+      typeof detail.height === 'number'
+    ) {
+      const vpTL = tiledImage.imageToViewportCoordinates(
+        new OpenSeadragon.Point(detail.x, detail.y),
+      );
+      const vpBR = tiledImage.imageToViewportCoordinates(
+        new OpenSeadragon.Point(
+          detail.x + detail.width,
+          detail.y + detail.height,
+        ),
+      );
 
-    ctx.save();
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([]);
-    ctx.strokeRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
-    ctx.restore();
+      const p1 = viewerInstance.viewport.pixelFromPoint(vpTL);
+      const p2 = viewerInstance.viewport.pixelFromPoint(vpBR);
+
+      ctx.save();
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.strokeRect(p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
+      ctx.restore();
+    }
   });
 
   // 2. 유저 ROI
@@ -91,7 +103,7 @@ export const drawROIs = (
       new OpenSeadragon.Point(roi.x, roi.y),
     );
     const p2 = viewerInstance.viewport.pixelFromPoint(
-      new OpenSeadragon.Point(roi.x + roi.width, roi.y + roi.height),
+      new OpenSeadragon.Point(roi.x! + roi.width!, roi.y! + roi.height!),
     );
 
     ctx.save();
@@ -108,7 +120,7 @@ export const drawROIs = (
       new OpenSeadragon.Point(roi.x, roi.y),
     );
     const p2 = viewerInstance.viewport.pixelFromPoint(
-      new OpenSeadragon.Point(roi.x + roi.width, roi.y + roi.height),
+      new OpenSeadragon.Point(roi.x! + roi.width!, roi.y! + roi.height!),
     );
 
     ctx.save();
@@ -133,8 +145,8 @@ export const drawROIs = (
  */
 export const getAllViewportROIs = (
   viewer: any,
-  loadedROIs: LoadedROI[],
-): ROI[] => {
+  loadedROIs: RoiResponsePayload[],
+): RoiResponseDto[] => {
   if (typeof window === 'undefined') return [];
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -143,21 +155,43 @@ export const getAllViewportROIs = (
   const tiledImage = viewer.world.getItemAt(0);
   if (!tiledImage) return [];
 
-  return loadedROIs.map((r) => {
-    const tlImg = new OpenSeadragon.Point(r.bbox.x, r.bbox.y);
-    const brImg = new OpenSeadragon.Point(
-      r.bbox.x + r.bbox.w,
-      r.bbox.y + r.bbox.h,
-    );
-    const vpTL = tiledImage.imageToViewportCoordinates(tlImg);
-    const vpBR = tiledImage.imageToViewportCoordinates(brImg);
-    return {
-      x: vpTL.x,
-      y: vpTL.y,
-      width: vpBR.x - vpTL.x,
-      height: vpBR.y - vpTL.y,
-    };
-  });
+  return loadedROIs
+    .filter(
+      (
+        r,
+      ): r is {
+        detail: {
+          id: number;
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+        };
+      } =>
+        r.detail != null &&
+        typeof r.detail.id === 'number' &&
+        typeof r.detail.x === 'number' &&
+        typeof r.detail.y === 'number' &&
+        typeof r.detail.width === 'number' &&
+        typeof r.detail.height === 'number',
+    )
+    .map((r) => {
+      const { id, x, y, width, height } = r.detail;
+
+      const tlImg = new OpenSeadragon.Point(x, y);
+      const brImg = new OpenSeadragon.Point(x + width, y + height);
+
+      const vpTL = tiledImage.imageToViewportCoordinates(tlImg);
+      const vpBR = tiledImage.imageToViewportCoordinates(brImg);
+
+      return {
+        id: id,
+        x: vpTL.x,
+        y: vpTL.y,
+        width: vpBR.x - vpTL.x,
+        height: vpBR.y - vpTL.y,
+      };
+    });
 };
 
 /**
@@ -165,15 +199,48 @@ export const getAllViewportROIs = (
  */
 export const isPointInsideROIs = (
   pt: { x: number; y: number },
-  rois: ROI[],
+  rois: RoiResponseDto[],
 ): boolean => {
   const padding = 0.0001;
   return rois.some((roi) => {
     return (
-      pt.x >= roi.x - padding &&
-      pt.x <= roi.x + roi.width + padding &&
-      pt.y >= roi.y - padding &&
-      pt.y <= roi.y + roi.height + padding
+      pt.x >= roi.x! - padding &&
+      pt.x <= roi.x! + roi.width! + padding &&
+      pt.y >= roi.y! - padding &&
+      pt.y <= roi.y! + roi.height! + padding
     );
+  });
+};
+
+/**
+ * userDefinedROIs가 viewport 기준일 경우 → image 기준으로 변환
+ */
+export const convertViewportToImageROIs = (
+  viewer: OpenSeadragon.Viewer,
+  userDefinedROIs: RoiResponseDto[],
+): RoiResponseDto[] => {
+  if (!viewer || !viewer.world || !viewer.world.getItemAt(0))
+    return userDefinedROIs;
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const OpenSeadragon = require('openseadragon');
+
+  const tiledImage = viewer.world.getItemAt(0);
+
+  return userDefinedROIs.map((roi) => {
+    const topLeftImage = tiledImage.viewportToImageCoordinates(
+      new OpenSeadragon.Point(roi.x, roi.y),
+    );
+    const bottomRightImage = tiledImage.viewportToImageCoordinates(
+      new OpenSeadragon.Point(roi.x! + roi.width!, roi.y! + roi.height!),
+    );
+
+    return {
+      ...roi,
+      x: Math.round(topLeftImage.x),
+      y: Math.round(topLeftImage.y),
+      width: Math.round(bottomRightImage.x - topLeftImage.x),
+      height: Math.round(bottomRightImage.y - topLeftImage.y),
+    };
   });
 };

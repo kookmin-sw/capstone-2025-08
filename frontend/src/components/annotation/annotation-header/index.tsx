@@ -34,6 +34,7 @@ export default function AnnotationHeader() {
     useState<GetProjectAnnotationResponseDto | null>(null);
   const [selectedModelName, setSelectedModelName] = useState('none');
   const { selectedSubProject } = useAnnotationSharedStore();
+  const [showSplash, setShowSplash] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -212,6 +213,8 @@ export default function AnnotationHeader() {
       );
 
       alert('ROI 저장 및 이미지 업로드가 완료되었습니다.');
+
+      window.location.reload(); // 저장 완료 후 새로고침
     } catch (error) {
       console.error('저장 오류:', error);
       alert('저장 중 오류가 발생했습니다.');
@@ -312,32 +315,14 @@ export default function AnnotationHeader() {
         </Select>
 
         {/* 모델 타입 */}
-        <div className="flex h-9 w-36 items-center whitespace-nowrap rounded-md border px-3 py-2">
+        <div className="flex h-9 w-40 items-center whitespace-nowrap rounded-md border px-3 py-2">
           {project.modelsDto?.modelType?.toLowerCase()}
         </div>
 
         {/* 모델 이름 */}
-        <Select
-          value={selectedModelName}
-          onValueChange={(value) => {
-            console.log('선택된 모델 이름:', value);
-            setSelectedModelName(value);
-          }}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Select Model Name" />
-          </SelectTrigger>
-          <SelectContent>
-            {project?.modelsDto?.projectModels?.map((model, index) => (
-              <SelectItem key={model.modelId} value={model.name || ''}>
-                {model.name}
-              </SelectItem>
-            ))}
-
-            {/* 항상 고정으로 표시 */}
-            <SelectItem value="none">Not Selected</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex h-9 w-40 items-center whitespace-nowrap rounded-md border px-3 py-2">
+          {selectedModelName}
+        </div>
 
         {/* 버튼 */}
         <Button variant="secondary" onClick={() => setIsExportModalOpen(true)}>
@@ -353,7 +338,7 @@ export default function AnnotationHeader() {
           onClose={() => setIsExportModalOpen(false)}
           onSave={(modelName) => {
             setIsExportModalOpen(false);
-            handleSave(); // 학습추론 전 저장부터
+            // handleSave(); // TODO: 규원 - 저장하는 동안 토스토로 로딩 처리 후 handleTrain 호출
             handleTrain(modelName);
           }}
         />

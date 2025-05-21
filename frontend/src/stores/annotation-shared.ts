@@ -1,23 +1,33 @@
 import { create } from 'zustand';
-import { ROI, LoadedROI, Polygon } from '@/types/annotation';
-import { LabelDto, SubProjectResponseDto } from '@/generated-api';
+import { Polygon } from '@/types/annotation';
+import {
+  GetProjectAnnotationResponseDto,
+  ProjectLabelDto,
+  RoiResponseDto,
+  RoiResponsePayload,
+  SubProjectResponseDto,
+} from '@/generated-api';
 
 interface AnnotationSharedState {
   viewer: OpenSeadragon.Viewer | null;
   canvas: HTMLCanvasElement | null;
-  loadedROIs: LoadedROI[];
-  userDefinedROIs: ROI[];
+  loadedROIs: RoiResponsePayload[];
+  userDefinedROIs: RoiResponseDto[];
   cellPolygons: Polygon[];
-  labels: LabelDto[];
+  labels: ProjectLabelDto[];
   selectedSubProject: SubProjectResponseDto | null;
+  selectedAnnotationHistoryId: number | null;
+  project: GetProjectAnnotationResponseDto | null;
 
   setViewer: (viewer: OpenSeadragon.Viewer | null) => void;
   setCanvas: (canvas: HTMLCanvasElement | null) => void;
-  setLoadedROIs: (rois: LoadedROI[]) => void;
-  setUserDefinedROIs: (rois: ROI[]) => void;
+  setLoadedROIs: (rois: RoiResponsePayload[]) => void;
+  setUserDefinedROIs: (rois: RoiResponseDto[]) => void;
   setCellPolygons: (polygons: Polygon[]) => void;
-  setLabels: (labels: LabelDto[]) => void;
+  setLabels: (labels: ProjectLabelDto[]) => void;
   setSelectedSubProject: (subProject: SubProjectResponseDto | null) => void;
+  setSelectedAnnotationHistoryId: (id: number | null) => void;
+  setProject: (project: GetProjectAnnotationResponseDto | null) => void;
 }
 
 export const useAnnotationSharedStore = create<AnnotationSharedState>(
@@ -29,6 +39,8 @@ export const useAnnotationSharedStore = create<AnnotationSharedState>(
     cellPolygons: [],
     labels: [],
     selectedSubProject: [],
+    selectedAnnotationHistoryId: null,
+    project: [],
 
     setViewer: (viewer) => set({ viewer }),
     setCanvas: (canvas) => set({ canvas }),
@@ -38,5 +50,8 @@ export const useAnnotationSharedStore = create<AnnotationSharedState>(
     setLabels: (labels) => set({ labels }),
     setSelectedSubProject: (subProject) =>
       set({ selectedSubProject: subProject }),
+    setSelectedAnnotationHistoryId: (id) =>
+      set({ selectedAnnotationHistoryId: id }),
+    setProject: (project) => set({ project: project }),
   }),
 );
