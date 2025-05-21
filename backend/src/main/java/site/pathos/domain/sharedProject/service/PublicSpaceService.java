@@ -4,8 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.model.repository.ModelRepository;
+import site.pathos.domain.model.repository.ProjectModelRepository;
+import site.pathos.domain.project.entity.Project;
+import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
+import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
 import site.pathos.domain.sharedProject.entity.DataSet;
 import site.pathos.domain.sharedProject.entity.SharedProject;
 import site.pathos.domain.sharedProject.entity.Tag;
@@ -32,6 +37,8 @@ public class PublicSpaceService {
     private final DataSetRepository dataSetRepository;
     private final ModelRepository modelRepository;
     private final TagRepository tagRepository;
+    private final ProjectRepository projectRepository;
+    private final ProjectModelRepository projectModelRepository;
 
     public void createSharedProject(CreateSharedProjectDto requestDto,
                                     List<MultipartFile> originalImages,
@@ -116,5 +123,32 @@ public class PublicSpaceService {
     private Model getModel(Long modelId){
         return modelRepository.findById(modelId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MODEL_NOT_FOUND));
+    }
+
+    public GetProjectWithModelsResponseDto getProjectWithModels(){
+        Long userId = SecurityUtil.getCurrentUserId();
+
+        List<Project> projects = projectRepository.findAllByUserId(userId);
+
+        List<GetProjectWithModelsResponseDto.ProjectModelsDto> projectDtos = projects.stream()
+                .map(project -> {
+                    List<ProjectModel> projectModels = projectModelRepository.findByProjectIdOrderByCreatedAt(project.getId());
+
+                    List<GetProjectWithModelsResponseDto.ProjectModelsDto.modelsDto> modelDtos = projectModels.stream()
+                            .map(pm -> new GetProjectWithModelsResponseDto.ProjectModelsDto.modelsDto(
+                                    pm.getModel().getId(),
+                                    pm.getModel().getName()
+                            ))
+                            .toList();
+
+                    return new GetProjectWithModelsResponseDto.ProjectModelsDto(
+                            project.getId(),
+                            project.getTitle(),
+                            modelDtos
+                    );
+                })
+                .toList();
+
+        return new GetProjectWithModelsResponseDto(projectDtos);
     }
 }

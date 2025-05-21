@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
+import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
 import site.pathos.domain.sharedProject.service.PublicSpaceService;
 
 import java.util.List;
@@ -24,5 +25,11 @@ public class PublicSpaceController {
             ) {
         publicSpaceService.createSharedProject(requestDto, originalImages, resultingImages);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/project-models")
+    public ResponseEntity<GetProjectWithModelsResponseDto> getProjectWithModels(){
+        GetProjectWithModelsResponseDto projects = publicSpaceService.getProjectWithModels();
+        return ResponseEntity.ok(projects);
     }
 }
