@@ -2,9 +2,11 @@ package site.pathos.domain.sharedProject.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.user.entity.User;
 import java.time.LocalDateTime;
 
@@ -21,6 +23,10 @@ public class SharedProject {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "model_id", nullable = false)
+    private Model model;
+
     @Column(name = "title", nullable = false)
     private String title;
 
@@ -34,6 +40,20 @@ public class SharedProject {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @CreationTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Builder
+    public SharedProject(User user,  Model model, String title, String description,
+                         String thumbnailImagePath){
+        this.user = user;
+        this.model = model;
+        this.title = title;
+        this.description = description;
+    }
+
+    public void assignThumbnailPath(String thumbnailImagePath){
+        this.thumbnailImagePath = thumbnailImagePath;
+    }
 }
