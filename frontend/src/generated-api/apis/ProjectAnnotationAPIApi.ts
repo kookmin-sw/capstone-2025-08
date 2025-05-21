@@ -164,7 +164,7 @@ export class ProjectAnnotationAPIApi extends runtime.BaseAPI {
      * 특정 SubProject와 AnnotationHistory에 ROI, 관련 이미지, 라벨 정보를 업로드합니다.
      * ROI, 이미지, 라벨 업로드
      */
-    async uploadRoisRaw(requestParameters: UploadRoisRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+    async uploadRoisRaw(requestParameters: UploadRoisRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<AnnotationHistoryResponseDto>> {
         if (requestParameters['subProjectId'] == null) {
             throw new runtime.RequiredError(
                 'subProjectId',
@@ -214,7 +214,7 @@ export class ProjectAnnotationAPIApi extends runtime.BaseAPI {
         }
 
         if (requestParameters['requestDto'] != null) {
-            formParams.append('requestDto', new Blob([JSON.stringify(ToJSON(requestParameters['requestDto']))], { type: "application/json", }));
+            formParams.append('requestDto', new Blob([JSON.stringify(AnnotationHistoryResponseDtoToJSON(requestParameters['requestDto']))], { type: "application/json", }));
                     }
 
         if (requestParameters['images'] != null) {
@@ -231,15 +231,16 @@ export class ProjectAnnotationAPIApi extends runtime.BaseAPI {
             body: formParams,
         }, initOverrides);
 
-        return new runtime.VoidApiResponse(response);
+        return new runtime.JSONApiResponse(response, (jsonValue) => AnnotationHistoryResponseDtoFromJSON(jsonValue));
     }
 
     /**
      * 특정 SubProject와 AnnotationHistory에 ROI, 관련 이미지, 라벨 정보를 업로드합니다.
      * ROI, 이미지, 라벨 업로드
      */
-    async uploadRois(requestParameters: UploadRoisRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-        await this.uploadRoisRaw(requestParameters, initOverrides);
+    async uploadRois(requestParameters: UploadRoisRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<AnnotationHistoryResponseDto> {
+        const response = await this.uploadRoisRaw(requestParameters, initOverrides);
+        return await response.value();
     }
 
 }

@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 
 import {
-  History,
   FolderOpenDot,
   Earth,
   Settings,
   ChevronRight,
+  Home,
 } from 'lucide-react';
 
 import {
@@ -31,11 +31,11 @@ import {
 
 // Top Menu items.
 const topItems = [
-  // {
-  //   title: 'Recents',
-  //   url: '/main/recents',
-  //   icon: History,
-  // },
+  {
+    title: 'Home',
+    url: '/main',
+    icon: Home,
+  },
   {
     title: 'Projects',
     url: '/main/projects',

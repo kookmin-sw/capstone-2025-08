@@ -1,5 +1,6 @@
-import { ROI, LoadedROI, MaskTile } from '@/types/annotation';
+import { MaskTile } from '@/types/annotation';
 import { getAllViewportROIs } from '@/utils/canvas-roi-utils';
+import { RoiResponseDto, RoiResponsePayload } from '@/generated-api';
 
 /**
  * 타일 이미지의 URL을 받아서 해당 타일을 처리하여 MaskTile 객체를 반환하는 함수
@@ -15,6 +16,7 @@ export const processMaskTile = async (
     }
 
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = url;
 
     img.onload = () => {
@@ -89,29 +91,67 @@ const getDivisionCountDynamic = (dimension: number): number => {
 /**
  * 어노테이션을 PNG로 내보내는 함수
  */
+type ExportedImage = {
+  roiId: number;
+  filename: string;
+  blob: Blob;
+};
+
 export const exportROIAsPNG = async (
   viewer: any,
   canvas: HTMLCanvasElement,
-  loadedROIs: LoadedROI[],
-  userDefinedROIs: ROI[],
+  loadedROIs: RoiResponsePayload[],
+  userDefinedROIs: RoiResponseDto[],
   borderThickness = 2,
-) => {
-  if (typeof window === 'undefined') return;
+): Promise<ExportedImage[]> => {
+  if (typeof window === 'undefined') return [];
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const OpenSeadragon = require('openseadragon');
-  if (!viewer || !canvas) return;
+  if (!viewer || !canvas) return [];
 
   const tiledImage = viewer.world.getItemAt(0);
-  if (!tiledImage) return;
+  if (!tiledImage) return [];
 
-  const allROIs: ROI[] = [
-    ...getAllViewportROIs(viewer, loadedROIs),
-    ...userDefinedROIs,
-  ];
+  const convertedLoadedROIs = loadedROIs.map((roi) => {
+    const viewportRect = viewer.viewport.imageToViewportRectangle(
+      new OpenSeadragon.Rect(
+        roi.detail!.x,
+        roi.detail!.y,
+        roi.detail!.width,
+        roi.detail!.height,
+      ),
+    );
+    return {
+      x: viewportRect.x,
+      y: viewportRect.y,
+      width: viewportRect.width,
+      height: viewportRect.height,
+      id: roi.detail?.id ?? -Math.floor(Math.random() * 1000000), // fallback ID
+      ...roi,
+    };
+  });
 
-  for (let i = 0; i < allROIs.length; i++) {
-    const roi = allROIs[i];
+  const convertedUserROIs = userDefinedROIs.map((roi) => ({
+    ...roi,
+    id: roi.id ?? -Math.floor(Math.random() * 1000000),
+  }));
+
+  const allROIs = [...convertedLoadedROIs, ...convertedUserROIs];
+
+  const results: ExportedImage[] = [];
+  const ratio = window.devicePixelRatio || 1;
+
+  for (const roi of allROIs) {
+    if (
+      roi.x === undefined ||
+      roi.y === undefined ||
+      roi.width === undefined ||
+      roi.height === undefined ||
+      roi.id === undefined
+    ) {
+      continue;
+    }
 
     const topLeftCanvas = viewer.viewport.pixelFromPoint(
       new OpenSeadragon.Point(roi.x, roi.y),
@@ -148,19 +188,11 @@ export const exportROIAsPNG = async (
     const bottomRightImage =
       tiledImage.viewportToImageCoordinates(bottomRightViewport);
 
-    const imageROI = {
-      x: Math.round(topLeftImage.x),
-      y: Math.round(bottomRightImage.y),
-      width: Math.round(bottomRightImage.x - topLeftImage.x),
-      height: Math.round(bottomRightImage.y - topLeftImage.y),
-    };
+    const totalExportWidth = Math.round(bottomRightImage.x - topLeftImage.x);
+    const totalExportHeight = Math.round(bottomRightImage.y - topLeftImage.y);
 
-    const totalExportWidth = imageROI.width;
-    const totalExportHeight = imageROI.height;
     const cols = getDivisionCountDynamic(totalExportWidth);
     const rows = getDivisionCountDynamic(totalExportHeight);
-
-    const ratio = window.devicePixelRatio || 1;
 
     const sourceROI_X = adjustedROI.x * ratio;
     const sourceROI_Y = adjustedROI.y * ratio;
@@ -209,19 +241,22 @@ export const exportROIAsPNG = async (
         }
         offCtx.putImageData(imageData, 0, 0);
 
-        await new Promise<void>((resolve) => {
-          offscreenCanvas.toBlob((blob) => {
-            if (!blob) return resolve();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${i}_${r}_${c}.png`; // TODO: (현진) 실제 백엔드 연결 시 r_c 로 변경
-            a.click();
-            URL.revokeObjectURL(url);
-            setTimeout(resolve, 200);
-          }, 'image/png');
+        const filename = `${roi.id}_${r}_${c}.png`;
+
+        const blob = await new Promise<Blob | null>((resolve) => {
+          offscreenCanvas.toBlob((b) => resolve(b), 'image/png');
         });
+
+        if (blob) {
+          results.push({
+            roiId: roi.id,
+            filename,
+            blob,
+          });
+        }
       }
     }
   }
+
+  return results;
 };

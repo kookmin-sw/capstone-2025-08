@@ -58,7 +58,7 @@ export interface TrainingResultRequestDto {
      * @type {string}
      * @memberof TrainingResultRequestDto
      */
-    type?: string;
+    type?: TrainingResultRequestDtoTypeEnum;
     /**
      * 모델 종류
      * @type {string}
@@ -103,6 +103,15 @@ export interface TrainingResultRequestDto {
     performance?: Performance;
 }
 
+
+/**
+ * @export
+ */
+export const TrainingResultRequestDtoTypeEnum = {
+    Inference: 'INFERENCE',
+    TrainingInference: 'TRAINING_INFERENCE'
+} as const;
+export type TrainingResultRequestDtoTypeEnum = typeof TrainingResultRequestDtoTypeEnum[keyof typeof TrainingResultRequestDtoTypeEnum];
 
 /**
  * @export

@@ -1,8 +1,17 @@
 'use client';
 
-import { ROI } from '@/types/annotation';
+import { RoiResponseDto } from '@/generated-api';
 
-export default function MiniBox({ roi }: { roi: ROI }) {
+export default function MiniBox({ roi }: { roi: RoiResponseDto }) {
+  if (
+    roi.width === undefined ||
+    roi.height === undefined ||
+    roi.width === 0 ||
+    roi.height === 0
+  ) {
+    return null; // 아무것도 렌더링하지 않음
+  }
+
   const aspectRatio = roi.width / roi.height;
   const boxSize = 40;
 
