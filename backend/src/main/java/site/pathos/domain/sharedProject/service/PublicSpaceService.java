@@ -11,6 +11,7 @@ import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
+import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
 import site.pathos.domain.sharedProject.entity.DataSet;
 import site.pathos.domain.sharedProject.entity.SharedProject;
 import site.pathos.domain.sharedProject.entity.Tag;
@@ -150,5 +151,49 @@ public class PublicSpaceService {
                 .toList();
 
         return new GetProjectWithModelsResponseDto(projectDtos);
+    }
+
+    public GetSharedProjectDetailResponseDto getSharedProjectDetail(Long sharedProjectId){
+        SharedProject sharedProject = getSharedProject(sharedProjectId);
+
+        User author = userRepository.findById(sharedProject.getUser().getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+        Model model = getModel(sharedProject.getModel().getId());
+
+        GetSharedProjectDetailResponseDto.ModelInfo modelInfo
+                = new GetSharedProjectDetailResponseDto.ModelInfo(model.getId(), model.getName());
+
+        return new GetSharedProjectDetailResponseDto(
+                sharedProject.getId(),
+                sharedProject.getTitle(),
+                sharedProject.getDescription(),
+                sharedProject.getCreatedAt(),
+                author.getName(),
+                modelInfo,
+                getTags(sharedProjectId),
+                getDataSets(sharedProjectId, DataType.ORIGINAL),
+                getDataSets(sharedProjectId, DataType.RESULT)
+        );
+    }
+
+    private List<String> getTags(Long sharedProjectId){
+        List<Tag> tags = tagRepository.findAllBySharedProjectId(sharedProjectId);
+
+        return tags.stream()
+                .map(Tag::getName)
+                .toList();
+    }
+
+    private SharedProject getSharedProject(Long sharedProject){
+        return sharedProjectRepository.findById(sharedProject)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SHARED_PROJECT_NOT_FOUND));
+    }
+
+    private List<String> getDataSets(Long sharedProjectId, DataType dataType){
+        return dataSetRepository.findAllBySharedProjectIdAndDataType(sharedProjectId, dataType)
+                .stream()
+                .map(DataSet::getImagePath)
+                .toList();
     }
 }
