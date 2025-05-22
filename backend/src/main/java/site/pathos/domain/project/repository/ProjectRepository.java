@@ -39,4 +39,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     )
 """)
     Optional<Project> findBySubProjectId(@Param("subProjectId") Long subProjectId);
+
+    List<Project> findAllByUserId(Long userId);
 }
