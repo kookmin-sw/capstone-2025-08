@@ -1,24 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Toaster } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import PageTitle from '@/components/common/page-title';
 import Preferences from '@/components/settings/preferences';
 import NameEditModal from '@/components/settings/name-edit-modal';
+import { GetUserSettingsResponseDto, ProfileAPIApi } from '@/generated-api';
 
 export default function SettingsPage() {
+  const ProfileApi = useMemo(() => new ProfileAPIApi(), []);
   const [showNameEditModal, setShowNameEditModal] = useState(false);
+  const [userInfo, setUserInfo] = useState<GetUserSettingsResponseDto>({});
+  const notificationMap = useMemo(() => {
+    if (!userInfo.notificationSettings) return {};
 
-  const userInfo = {
-    name: 'Hyeonjin Hwang',
-    email: 'jjini6530@pathos.com',
-    profileUrl: '/images/test-profile-image.png',
-    file_upload_completed: true,
-    model_analysis_completed: true,
-    new_comments: false,
-  };
+    const map: Record<string, boolean> = {};
+    userInfo.notificationSettings.forEach((s) => {
+      const key = s.type!.toLowerCase().replace(/ /g, '_');
+      if (s.enabled) {
+        map[key] = s.enabled;
+      }
+    });
+    return map;
+  }, [userInfo.notificationSettings]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userInfoRes = await ProfileApi.getUserSettings();
+        setUserInfo(userInfoRes);
+        console.log('userInfo: ', userInfoRes);
+      } catch (error) {
+        console.error('유저 정보를 불러오는 중 오류 발생:', error);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div>
@@ -31,8 +50,8 @@ export default function SettingsPage() {
           <h3 className="mb-4 text-lg font-medium">Profile</h3>
           <div className="flex flex-col items-center gap-4">
             <Avatar className="size-36">
-              <AvatarImage src={userInfo.profileUrl} />
-              <AvatarFallback>CN</AvatarFallback>
+              <AvatarImage src={userInfo.profileImagePath} />
+              <AvatarFallback></AvatarFallback>
             </Avatar>
 
             <div className="w-full rounded-lg border">
@@ -52,9 +71,10 @@ export default function SettingsPage() {
           <h3 className="mb-4 text-lg font-medium">Preferences</h3>
           <Preferences
             defaultValues={{
-              file_upload_completed: userInfo.file_upload_completed,
-              model_analysis_completed: userInfo.model_analysis_completed,
-              new_comments: userInfo.new_comments,
+              file_upload_completed: notificationMap.file_upload_completed,
+              model_train_completed: notificationMap.model_train_completed,
+              model_run_completed: notificationMap.model_run_completed,
+              new_comments: notificationMap.new_comments,
             }}
           />
         </div>
@@ -83,7 +103,7 @@ export default function SettingsPage() {
         <NameEditModal
           open={showNameEditModal}
           onClose={() => setShowNameEditModal(false)}
-          defaultName={userInfo.name}
+          defaultName={userInfo.name ?? ''}
         />
       )}
     </div>
