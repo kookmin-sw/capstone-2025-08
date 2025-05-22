@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,8 @@ import { toast } from 'sonner';
 
 interface FormValues {
   file_upload_completed?: boolean;
-  model_analysis_completed?: boolean;
+  model_train_completed?: boolean;
+  model_run_completed?: boolean;
   new_comments?: boolean;
 }
 
@@ -28,6 +30,10 @@ export default function Preferences({ defaultValues }: PreferencesProps) {
     defaultValues,
   });
 
+  useEffect(() => {
+    form.reset(defaultValues);
+  }, [defaultValues]);
+
   const formItems = [
     {
       name: 'file_upload_completed' as const,
@@ -35,9 +41,14 @@ export default function Preferences({ defaultValues }: PreferencesProps) {
       description: 'Notify when a file upload is done.',
     },
     {
-      name: 'model_analysis_completed' as const,
-      label: 'Model Analysis Completed',
-      description: 'Notify when model analysis is complete.',
+      name: 'model_train_completed' as const,
+      label: 'Model Train Completed',
+      description: 'Notify when model train is complete.',
+    },
+    {
+      name: 'model_run_completed' as const,
+      label: 'Model Run Completed',
+      description: 'Notify when model run is complete.',
     },
     {
       name: 'new_comments' as const,
