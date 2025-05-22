@@ -13,24 +13,38 @@
  */
 
 import { mapValues } from '../runtime';
+import type { ModelsDto } from './ModelsDto';
+import {
+    ModelsDtoFromJSON,
+    ModelsDtoFromJSONTyped,
+    ModelsDtoToJSON,
+    ModelsDtoToJSONTyped,
+} from './ModelsDto';
+
 /**
- * 단일 모델 정보 DTO
+ * 프로젝트 및 해당 프로젝트에 속한 모델 정보 DTO
  * @export
  * @interface ProjectModelsDto
  */
 export interface ProjectModelsDto {
     /**
-     * 모델 ID
+     * 프로젝트 ID
      * @type {number}
      * @memberof ProjectModelsDto
      */
-    modelId?: number;
+    projectId?: number;
     /**
-     * 모델 이름
+     * 프로젝트 제목
      * @type {string}
      * @memberof ProjectModelsDto
      */
-    name?: string;
+    projectTitle?: string;
+    /**
+     * 해당 프로젝트에 속한 모델 리스트
+     * @type {Array<ModelsDto>}
+     * @memberof ProjectModelsDto
+     */
+    models?: Array<ModelsDto>;
 }
 
 /**
@@ -50,8 +64,9 @@ export function ProjectModelsDtoFromJSONTyped(json: any, ignoreDiscriminator: bo
     }
     return {
         
-        'modelId': json['modelId'] == null ? undefined : json['modelId'],
-        'name': json['name'] == null ? undefined : json['name'],
+        'projectId': json['projectId'] == null ? undefined : json['projectId'],
+        'projectTitle': json['projectTitle'] == null ? undefined : json['projectTitle'],
+        'models': json['models'] == null ? undefined : ((json['models'] as Array<any>).map(ModelsDtoFromJSON)),
     };
 }
 
@@ -66,8 +81,9 @@ export function ProjectModelsDtoToJSONTyped(value?: ProjectModelsDto | null, ign
 
     return {
         
-        'modelId': value['modelId'],
-        'name': value['name'],
+        'projectId': value['projectId'],
+        'projectTitle': value['projectTitle'],
+        'models': value['models'] == null ? undefined : ((value['models'] as Array<any>).map(ModelsDtoToJSON)),
     };
 }
 
