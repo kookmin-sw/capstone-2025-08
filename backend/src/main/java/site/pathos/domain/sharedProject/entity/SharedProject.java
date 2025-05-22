@@ -41,6 +41,9 @@ public class SharedProject {
     @OneToMany(mappedBy = "sharedProject", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Tag> tags = new ArrayList<>();
 
+    @Column(name = "download_count", nullable = false)
+    private long downloadCount;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -56,9 +59,14 @@ public class SharedProject {
         this.model = model;
         this.title = title;
         this.description = description;
+        this.downloadCount = 0;
     }
 
     public void assignThumbnailPath(String thumbnailImagePath){
         this.thumbnailImagePath = thumbnailImagePath;
+    }
+
+    public void incrementDownloadCount() {
+        this.downloadCount++;
     }
 }

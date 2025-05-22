@@ -15,6 +15,7 @@ import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailRespo
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectsResponseDto;
 import site.pathos.domain.sharedProject.service.PublicSpaceService;
 import site.pathos.global.annotation.FormDataRequestBody;
+import site.pathos.global.security.util.SecurityUtil;
 
 import java.util.List;
 
@@ -76,4 +77,13 @@ public class PublicSpaceController {
         GetSharedProjectsResponseDto response = publicSpaceService.getSharedProjects(search, page);
         return ResponseEntity.ok(response);
     }
-}
+
+    @PostMapping("/shared-projects/{sharedProjectId}/model-download/{modelId}")
+    public ResponseEntity<Void> downloadModel(
+            @PathVariable Long sharedProjectId,
+            @PathVariable Long modelId
+    ){
+        publicSpaceService.downloadModel(sharedProjectId, modelId);
+        return ResponseEntity.ok().build();
+    }
+ }

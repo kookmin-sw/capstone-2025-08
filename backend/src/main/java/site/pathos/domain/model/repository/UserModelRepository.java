@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.model.entity.UserModel;
+import site.pathos.domain.user.entity.User;
 
 import java.util.List;
 
@@ -13,4 +14,6 @@ import java.util.List;
 public interface UserModelRepository extends JpaRepository<UserModel, Long> {
     @Query("SELECT m FROM UserModel u JOIN u.model m WHERE u.user.id = :userId")
     List<Model> findAllModelsByUserId(@Param("userId") Long userId);
+
+    boolean existsByUserAndModel(User user, Model model);
 }
