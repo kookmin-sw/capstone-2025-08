@@ -2,13 +2,17 @@ package site.pathos.domain.sharedProject.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
+import site.pathos.domain.sharedProject.dto.response.GetSharedProjectsResponseDto;
 import site.pathos.domain.sharedProject.service.PublicSpaceService;
+import site.pathos.global.annotation.FormDataRequestBody;
 
 import java.util.List;
 
@@ -19,7 +23,10 @@ public class PublicSpaceController {
 
     private final PublicSpaceService publicSpaceService;
 
-    @PostMapping
+    @PostMapping(
+            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
+    )
+    @FormDataRequestBody
     public ResponseEntity<Long> createPost(
             @RequestPart("requestDto") CreateSharedProjectDto requestDto,
             @RequestPart("originalImages") List<MultipartFile> originalImages,
@@ -41,6 +48,15 @@ public class PublicSpaceController {
             @PathVariable Long sharedProjectId
     ){
         GetSharedProjectDetailResponseDto response = publicSpaceService.getSharedProjectDetail(sharedProjectId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<GetSharedProjectsResponseDto> getSharedProjectsResponseDtoResponseEntity(
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "page", defaultValue = "1") int page
+    ) {
+        GetSharedProjectsResponseDto response = publicSpaceService.getSharedProjects(search, page);
         return ResponseEntity.ok(response);
     }
 }

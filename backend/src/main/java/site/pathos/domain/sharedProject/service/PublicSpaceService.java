@@ -1,6 +1,10 @@
 package site.pathos.domain.sharedProject.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.model.entity.Model;
@@ -12,6 +16,7 @@ import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
+import site.pathos.domain.sharedProject.dto.response.GetSharedProjectsResponseDto;
 import site.pathos.domain.sharedProject.entity.DataSet;
 import site.pathos.domain.sharedProject.entity.SharedProject;
 import site.pathos.domain.sharedProject.entity.Tag;
@@ -22,6 +27,7 @@ import site.pathos.domain.sharedProject.repository.TagRepository;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.aws.s3.S3Service;
+import site.pathos.global.common.PaginationResponse;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 import site.pathos.global.security.util.SecurityUtil;
@@ -40,6 +46,7 @@ public class PublicSpaceService {
     private final TagRepository tagRepository;
     private final ProjectRepository projectRepository;
     private final ProjectModelRepository projectModelRepository;
+    private static final int SHARED_PROJECTS_PAGE_SIZE = 12;
 
     public void createSharedProject(CreateSharedProjectDto requestDto,
                                     List<MultipartFile> originalImages,
@@ -195,5 +202,79 @@ public class PublicSpaceService {
                 .stream()
                 .map(DataSet::getImagePath)
                 .toList();
+    }
+
+    public GetSharedProjectsResponseDto getSharedProjects(String search, int page){
+        Page<SharedProject> sharedProjectPage = getSharedProjectPage(search, page);
+        List<GetSharedProjectsResponseDto.GetSharedProjectsResponseDetailDto> sharedProjects = getSharedProjectDetails(sharedProjectPage);
+
+        PaginationResponse<GetSharedProjectsResponseDto.GetSharedProjectsResponseDetailDto> sharedProjectPages =
+                new PaginationResponse<>(
+                      sharedProjects,
+                      SHARED_PROJECTS_PAGE_SIZE,
+                        sharedProjectPage.getNumber() + 1,
+                        sharedProjectPage.getTotalPages(),
+                        sharedProjectPage.getTotalElements()
+                );
+
+        List<GetSharedProjectsResponseDto.BestProjectDto> bestProjects = List.of(
+                new GetSharedProjectsResponseDto.BestProjectDto(
+                        1L,
+                        "Project 1",
+                        "Hyeonjin",
+                        "https://example.com/avatar1.jpg",
+                        10000000L
+                ),
+                new GetSharedProjectsResponseDto.BestProjectDto(
+                        2L,
+                        "Project 2",
+                        "Hyeonjin",
+                        "https://example.com/avatar2.jpg",
+                        10000000L
+                ),
+                new GetSharedProjectsResponseDto.BestProjectDto(
+                        3L,
+                        "Project 3",
+                        "Hyeonjin",
+                        "https://example.com/avatar3.jpg",
+                        10000000L
+                )
+        );
+
+        return new GetSharedProjectsResponseDto(
+                sharedProjectPages,
+                bestProjects
+                );
+    }
+
+    private Page<SharedProject> getSharedProjectPage(String search, int page) {
+        Pageable pageable = PageRequest.of(page - 1, SHARED_PROJECTS_PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+            Page<SharedProject> sharedProjectPage;
+            if (search != null && !search.isBlank()) {
+                sharedProjectPage = sharedProjectRepository.searchByTitleOrTag(search, pageable);
+            } else {
+                sharedProjectPage = sharedProjectRepository.findAll(pageable);
+            }
+
+        return sharedProjectPage;
+    }
+
+    private List<GetSharedProjectsResponseDto.GetSharedProjectsResponseDetailDto> getSharedProjectDetails(Page<SharedProject> sharedProjectPage) {
+        return sharedProjectPage.stream()
+                .map(sharedProject -> new GetSharedProjectsResponseDto.GetSharedProjectsResponseDetailDto(
+                        sharedProject.getId(),
+                        sharedProject.getTitle(),
+                        getAuthor(sharedProject).getName(),
+                        sharedProject.getThumbnailImagePath(),
+                        getTags(sharedProject.getId()),
+                        1000000
+                ))
+                .toList();
+    }
+
+    private User getAuthor(SharedProject sharedProject){
+        return userRepository.findById(sharedProject.getId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 }
