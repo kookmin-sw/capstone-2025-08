@@ -1,6 +1,8 @@
 package site.pathos.domain.sharedProject.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import site.pathos.global.annotation.FormDataRequestBody;
 
 import java.util.List;
 
+@Tag(name = "Public Space API", description = "퍼블릭 스페이스 관련 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/public-space")
@@ -23,34 +26,48 @@ public class PublicSpaceController {
 
     private final PublicSpaceService publicSpaceService;
 
-    @PostMapping(
-            consumes = {MediaType.MULTIPART_FORM_DATA_VALUE}
+    @Operation(
+            summary = "공유 프로젝트 생성",
+            description = "공유 프로젝트를 업로드합니다."
     )
+    @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     @FormDataRequestBody
     public ResponseEntity<Long> createPost(
             @RequestPart("requestDto") CreateSharedProjectDto requestDto,
             @RequestPart("originalImages") List<MultipartFile> originalImages,
-            @RequestPart("resultingImages") List<MultipartFile> resultingImages
-            ) {
-        publicSpaceService.createSharedProject(requestDto, originalImages, resultingImages);
+            @RequestPart("resultImages") List<MultipartFile> resultImages
+    ) {
+        publicSpaceService.createSharedProject(requestDto, originalImages, resultImages);
         return ResponseEntity.ok().build();
     }
 
+    @Operation(
+            summary = "프로젝트 목록 및 관련 모델 조회",
+            description = "공유 가능한 프로젝트와 해당 프로젝트의 학습 가능한 모델 목록을 조회합니다."
+    )
     @GetMapping("/project-models")
-    public ResponseEntity<GetProjectWithModelsResponseDto> getProjectWithModels(){
+    public ResponseEntity<GetProjectWithModelsResponseDto> getProjectWithModels() {
         GetProjectWithModelsResponseDto response = publicSpaceService.getProjectWithModels();
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/shared-project/{sharedProjectId}")
+    @Operation(
+            summary = "공유 프로젝트 상세 조회",
+            description = "특정 공유 프로젝트의 상세 정보를 조회합니다."
+    )
+    @GetMapping("/shared-projects/{sharedProjectId}")
     public ResponseEntity<GetSharedProjectDetailResponseDto> getSharedProject(
             @Parameter(description = "조회를 요청할 공유 프로젝트 ID", required = true)
             @PathVariable Long sharedProjectId
-    ){
+    ) {
         GetSharedProjectDetailResponseDto response = publicSpaceService.getSharedProjectDetail(sharedProjectId);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "공유 프로젝트 목록 조회",
+            description = "검색어와 페이지 번호를 기반으로 공유 프로젝트 목록을 조회합니다."
+    )
     @GetMapping
     public ResponseEntity<GetSharedProjectsResponseDto> getSharedProjectsResponseDtoResponseEntity(
             @RequestParam(name = "search", required = false) String search,

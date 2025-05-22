@@ -142,8 +142,8 @@ public class PublicSpaceService {
                 .map(project -> {
                     List<ProjectModel> projectModels = projectModelRepository.findByProjectIdOrderByCreatedAt(project.getId());
 
-                    List<GetProjectWithModelsResponseDto.ProjectModelsDto.modelsDto> modelDtos = projectModels.stream()
-                            .map(pm -> new GetProjectWithModelsResponseDto.ProjectModelsDto.modelsDto(
+                    List<GetProjectWithModelsResponseDto.ProjectModelsDto.ModelsDto> modelDtos = projectModels.stream()
+                            .map(pm -> new GetProjectWithModelsResponseDto.ProjectModelsDto.ModelsDto(
                                     pm.getModel().getId(),
                                     pm.getModel().getName()
                             ))
@@ -217,6 +217,7 @@ public class PublicSpaceService {
                         sharedProjectPage.getTotalElements()
                 );
 
+        //TODO 실제 다운로드 데이터 기반으로 변경 필요
         List<GetSharedProjectsResponseDto.BestProjectDto> bestProjects = List.of(
                 new GetSharedProjectsResponseDto.BestProjectDto(
                         1L,
@@ -268,7 +269,7 @@ public class PublicSpaceService {
                         getAuthor(sharedProject).getName(),
                         sharedProject.getThumbnailImagePath(),
                         getTags(sharedProject.getId()),
-                        1000000
+                        1000000 //TODO 실제 다운로드 데이터로 변경 필요
                 ))
                 .toList();
     }
