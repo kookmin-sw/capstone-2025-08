@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.sharedProject.dto.request.CreateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
+import site.pathos.domain.sharedProject.dto.request.UpdateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectCommentsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
@@ -103,5 +104,15 @@ public class PublicSpaceController {
     ){
         GetSharedProjectCommentsResponseDto response = publicSpaceService.getSharedProjectComments(sharedProjectId);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/shared-projects/{sharedProjectId}/comments/{commentId}")
+    public ResponseEntity<Void> updateComment(
+            @PathVariable Long sharedProjectId,
+            @PathVariable Long commentId,
+            @RequestBody UpdateCommentRequestDto updateRequest
+    ){
+        publicSpaceService.updateComment(sharedProjectId, commentId, updateRequest);
+        return ResponseEntity.ok().build();
     }
  }

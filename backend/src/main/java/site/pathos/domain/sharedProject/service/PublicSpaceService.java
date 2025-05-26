@@ -18,6 +18,7 @@ import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.sharedProject.dto.request.CreateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
+import site.pathos.domain.sharedProject.dto.request.UpdateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectCommentsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
@@ -313,7 +314,7 @@ public class PublicSpaceService {
         SharedProject sharedProject = getSharedProject(sharedProjectId);
 
         Comment parentComment = createCommentRequestDto.parentId() != null ?
-                getComment(createCommentRequestDto.parentId()) : null;
+                getComment(createCommentRequestDto.parentId(), sharedProjectId) : null;
 
         Comment comment = Comment.builder()
                 .user(user)
@@ -325,9 +326,15 @@ public class PublicSpaceService {
         commentRepository.save(comment);
     }
 
-    private Comment getComment(Long commentId){
-        return commentRepository.findById(commentId)
+    private Comment getComment(Long commentId, Long sharedProjectId){
+        Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+        if(!comment.getSharedProject().getId().equals(sharedProjectId)){
+            throw new BusinessException(ErrorCode.SHARED_PROJECT_COMMENT_MISMATCH);
+        }
+
+        return comment;
     }
 
     public GetSharedProjectCommentsResponseDto getSharedProjectComments(Long sharedProjectId) {
@@ -362,5 +369,11 @@ public class PublicSpaceService {
         for (GetSharedProjectCommentsResponseDto.CommentDto reply : commentDto.replies()) {
             sortRepliesRecursively(reply);
         }
+    }
+
+    @Transactional
+    public void updateComment(Long sharedProjectId, Long commentId, UpdateCommentRequestDto updateRequest) {
+        Comment comment = getComment(commentId, sharedProjectId);
+        comment.updateContent(updateRequest.content());
     }
 }

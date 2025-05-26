@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import site.pathos.domain.sharedProject.enums.CommentTag;
 import site.pathos.domain.user.entity.User;
+import site.pathos.global.entity.BaseTimeEntity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.List;
 @Table(name = "comment")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Comment {
+public class Comment extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,10 +44,6 @@ public class Comment {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> replies = new ArrayList<>();
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
     @Builder
     public Comment(User user, SharedProject sharedProject, String content, Comment parentComment, CommentTag commentTag){
         this.user = user;
@@ -54,5 +51,9 @@ public class Comment {
         this.content = content;
         this.parentComment = parentComment;
         this.commentTag = commentTag;
+    }
+
+    public void updateContent(String content) {
+        this.content = content;
     }
 }

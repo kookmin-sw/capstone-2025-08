@@ -32,6 +32,7 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않거나 만료된 리프레시 토큰입니다."),
     ALREADY_DOWNLOADED_MODEL(HttpStatus.CONFLICT, "이미 다운로드 받은 모델입니다"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다"),
+    SHARED_PROJECT_COMMENT_MISMATCH(HttpStatus.BAD_REQUEST, "요청한 프로젝트와 댓글의 프로젝트가 일치하지 않습니다."),
     ;
 
     private final HttpStatus status;
