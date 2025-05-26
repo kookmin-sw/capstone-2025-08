@@ -2,6 +2,7 @@ package site.pathos.domain.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import site.pathos.domain.user.entity.User;
@@ -22,4 +23,10 @@ public class UserModel {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "model_id", nullable = false)
     private Model model;
+
+    @Builder
+    public UserModel(User user, Model model){
+        this.user = user;
+        this.model = model;
+    }
 }

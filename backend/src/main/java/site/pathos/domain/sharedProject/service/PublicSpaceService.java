@@ -6,24 +6,26 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.model.entity.ProjectModel;
+import site.pathos.domain.model.entity.UserModel;
 import site.pathos.domain.model.repository.ModelRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;
+import site.pathos.domain.model.repository.UserModelRepository;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
+import site.pathos.domain.sharedProject.dto.request.CreateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
+import site.pathos.domain.sharedProject.dto.request.UpdateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
+import site.pathos.domain.sharedProject.dto.response.GetSharedProjectCommentsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectsResponseDto;
-import site.pathos.domain.sharedProject.entity.DataSet;
-import site.pathos.domain.sharedProject.entity.SharedProject;
-import site.pathos.domain.sharedProject.entity.Tag;
+import site.pathos.domain.sharedProject.entity.*;
 import site.pathos.domain.sharedProject.enums.DataType;
-import site.pathos.domain.sharedProject.repository.DataSetRepository;
-import site.pathos.domain.sharedProject.repository.SharedProjectRepository;
-import site.pathos.domain.sharedProject.repository.TagRepository;
+import site.pathos.domain.sharedProject.repository.*;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.aws.s3.S3Service;
@@ -32,7 +34,7 @@ import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 import site.pathos.global.security.util.SecurityUtil;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +49,11 @@ public class PublicSpaceService {
     private final ProjectRepository projectRepository;
     private final ProjectModelRepository projectModelRepository;
     private static final int SHARED_PROJECTS_PAGE_SIZE = 12;
+    private final UserModelRepository userModelRepository;
+    private final DownloadLogRepository downloadLogRepository;
+    private final CommentRepository commentRepository;
 
+    @Transactional
     public void createSharedProject(CreateSharedProjectDto requestDto,
                                     List<MultipartFile> originalImages,
                                     List<MultipartFile> resultingImages) {
@@ -133,6 +139,7 @@ public class PublicSpaceService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MODEL_NOT_FOUND));
     }
 
+    @Transactional(readOnly = true)
     public GetProjectWithModelsResponseDto getProjectWithModels(){
         Long userId = SecurityUtil.getCurrentUserId();
 
@@ -160,6 +167,7 @@ public class PublicSpaceService {
         return new GetProjectWithModelsResponseDto(projectDtos);
     }
 
+    @Transactional(readOnly = true)
     public GetSharedProjectDetailResponseDto getSharedProjectDetail(Long sharedProjectId){
         SharedProject sharedProject = getSharedProject(sharedProjectId);
 
@@ -204,6 +212,7 @@ public class PublicSpaceService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public GetSharedProjectsResponseDto getSharedProjects(String search, int page){
         Page<SharedProject> sharedProjectPage = getSharedProjectPage(search, page);
         List<GetSharedProjectsResponseDto.GetSharedProjectsResponseDetailDto> sharedProjects = getSharedProjectDetails(sharedProjectPage);
@@ -217,30 +226,21 @@ public class PublicSpaceService {
                         sharedProjectPage.getTotalElements()
                 );
 
-        //TODO 실제 다운로드 데이터 기반으로 변경 필요
-        List<GetSharedProjectsResponseDto.BestProjectDto> bestProjects = List.of(
-                new GetSharedProjectsResponseDto.BestProjectDto(
-                        1L,
-                        "Project 1",
-                        "Hyeonjin",
-                        "https://example.com/avatar1.jpg",
-                        10000000L
-                ),
-                new GetSharedProjectsResponseDto.BestProjectDto(
-                        2L,
-                        "Project 2",
-                        "Hyeonjin",
-                        "https://example.com/avatar2.jpg",
-                        10000000L
-                ),
-                new GetSharedProjectsResponseDto.BestProjectDto(
-                        3L,
-                        "Project 3",
-                        "Hyeonjin",
-                        "https://example.com/avatar3.jpg",
-                        10000000L
-                )
-        );
+        List<GetSharedProjectsResponseDto.BestProjectDto> bestProjects = sharedProjectRepository
+                .findTop3ByOrderByDownloadCountDesc()
+                .stream()
+                .map(sp -> {
+                    String presignedUrl = s3Service.getPresignedUrl(sp.getUser().getProfileImagePath());
+
+                    return new GetSharedProjectsResponseDto.BestProjectDto(
+                            sp.getId(),
+                            sp.getTitle(),
+                            sp.getUser().getName(),
+                            presignedUrl,
+                            sp.getDownloadCount()
+                    );
+                })
+                .toList();
 
         return new GetSharedProjectsResponseDto(
                 sharedProjectPages,
@@ -269,7 +269,7 @@ public class PublicSpaceService {
                         getAuthor(sharedProject).getName(),
                         sharedProject.getThumbnailImagePath(),
                         getTags(sharedProject.getId()),
-                        1000000 //TODO 실제 다운로드 데이터로 변경 필요
+                        sharedProject.getDownloadCount()
                 ))
                 .toList();
     }
@@ -277,5 +277,117 @@ public class PublicSpaceService {
     private User getAuthor(SharedProject sharedProject){
         return userRepository.findById(sharedProject.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    @Transactional
+    public void downloadModel(Long sharedProjectId, Long modelId){
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = getUser(userId);
+        SharedProject sharedProject = getSharedProject(sharedProjectId);
+        Model model = getModel(modelId);
+
+        boolean alreadyExists = userModelRepository.existsByUserAndModel(user, model);
+        if(alreadyExists) {
+            throw new BusinessException(ErrorCode.ALREADY_DOWNLOADED_MODEL);
+        }
+
+        UserModel userModel = UserModel.builder()
+                .user(user)
+                .model(model)
+                .build();
+        userModelRepository.save(userModel);
+
+        DownloadLog downloadLog = DownloadLog.builder()
+                .user(user)
+                .sharedProject(sharedProject)
+                .build();
+        downloadLogRepository.save(downloadLog);
+
+        sharedProject.incrementDownloadCount();
+        sharedProjectRepository.save(sharedProject);
+    }
+
+    @Transactional
+    public void createComment(Long sharedProjectId, CreateCommentRequestDto createCommentRequestDto){
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = getUser(userId);
+        SharedProject sharedProject = getSharedProject(sharedProjectId);
+
+        Comment parentComment = createCommentRequestDto.parentId() != null ?
+                getComment(createCommentRequestDto.parentId(), sharedProjectId) : null;
+
+        Comment comment = Comment.builder()
+                .user(user)
+                .sharedProject(sharedProject)
+                .content(createCommentRequestDto.content())
+                .parentComment(parentComment)
+                .commentTag(createCommentRequestDto.commentTag())
+                .build();
+        commentRepository.save(comment);
+    }
+
+    private Comment getComment(Long commentId, Long sharedProjectId){
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+
+        if(!comment.getSharedProject().getId().equals(sharedProjectId)){
+            throw new BusinessException(ErrorCode.SHARED_PROJECT_COMMENT_MISMATCH);
+        }
+
+        return comment;
+    }
+
+    public GetSharedProjectCommentsResponseDto getSharedProjectComments(Long sharedProjectId) {
+        List<Comment> allComments = commentRepository.findAllBySharedProjectIdWithUserOrderByCreatedAtAsc(sharedProjectId);
+
+        Map<Long, GetSharedProjectCommentsResponseDto.CommentDto> dtoMap = new HashMap<>();
+        List<GetSharedProjectCommentsResponseDto.CommentDto> rootComments = new ArrayList<>();
+
+        for (Comment comment : allComments) {
+            dtoMap.put(comment.getId(), GetSharedProjectCommentsResponseDto.CommentDto.from(comment));
+        }
+
+        for (Comment comment : allComments) {
+            if (comment.getParentComment() != null) {
+                Long parentId = comment.getParentComment().getId();
+                dtoMap.get(parentId).replies().add(dtoMap.get(comment.getId()));
+            } else {
+                rootComments.add(dtoMap.get(comment.getId()));
+            }
+        }
+
+        rootComments.sort(Comparator.comparing(GetSharedProjectCommentsResponseDto.CommentDto::createdAt));
+        for (GetSharedProjectCommentsResponseDto.CommentDto root : rootComments) {
+            sortRepliesRecursively(root);
+        }
+
+        return new GetSharedProjectCommentsResponseDto(rootComments);
+    }
+
+    private void sortRepliesRecursively(GetSharedProjectCommentsResponseDto.CommentDto commentDto) {
+        commentDto.replies().sort(Comparator.comparing(GetSharedProjectCommentsResponseDto.CommentDto::createdAt));
+        for (GetSharedProjectCommentsResponseDto.CommentDto reply : commentDto.replies()) {
+            sortRepliesRecursively(reply);
+        }
+    }
+
+    @Transactional
+    public void updateComment(Long sharedProjectId, Long commentId, UpdateCommentRequestDto updateRequest) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        Comment comment = getComment(commentId, sharedProjectId);
+        if(!comment.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_COMMENT_UPDATE_PERMISSION);
+        }
+        comment.updateContent(updateRequest.content());
+    }
+
+    @Transactional
+    public void deleteComment(Long sharedProjectId, Long commentId) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        Comment comment = getComment(commentId, sharedProjectId);
+        if(!comment.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_COMMENT_DELETE_PERMISSION);
+        }
+        comment.delete();
     }
 }

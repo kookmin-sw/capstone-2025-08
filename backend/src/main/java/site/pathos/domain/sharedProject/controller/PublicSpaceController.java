@@ -8,9 +8,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import site.pathos.domain.project.enums.ProjectSortType;
+import site.pathos.domain.sharedProject.dto.request.CreateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
+import site.pathos.domain.sharedProject.dto.request.UpdateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
+import site.pathos.domain.sharedProject.dto.response.GetSharedProjectCommentsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectsResponseDto;
 import site.pathos.domain.sharedProject.service.PublicSpaceService;
@@ -75,5 +77,70 @@ public class PublicSpaceController {
     ) {
         GetSharedProjectsResponseDto response = publicSpaceService.getSharedProjects(search, page);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "모델 다운로드",
+            description = "특정 공유 프로젝트에서 지정한 모델을 다운로드합니다."
+    )
+    @PostMapping("/shared-projects/{sharedProjectId}/model-download/{modelId}")
+    public ResponseEntity<Void> downloadModel(
+            @PathVariable Long sharedProjectId,
+            @PathVariable Long modelId
+    ){
+        publicSpaceService.downloadModel(sharedProjectId, modelId);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "댓글 작성",
+            description = "특정 공유 프로젝트에 댓글을 작성합니다."
+    )
+    @PostMapping("/shared-projects/{sharedProjectId}/comments")
+    public ResponseEntity<Void> createComment(
+            @PathVariable Long sharedProjectId,
+            @RequestBody CreateCommentRequestDto createCommentRequestDto
+    ){
+        publicSpaceService.createComment(sharedProjectId, createCommentRequestDto);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "댓글 조회",
+            description = "특정 공유 프로젝트의 댓글 목록을 조회합니다. 대댓글 포함 트리 구조로 반환됩니다."
+    )
+    @GetMapping("/shared-projects/{sharedProjectId}/comments")
+    public ResponseEntity<GetSharedProjectCommentsResponseDto> getComments(
+            @PathVariable Long sharedProjectId
+    ){
+        GetSharedProjectCommentsResponseDto response = publicSpaceService.getSharedProjectComments(sharedProjectId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "댓글 수정",
+            description = "댓글 내용을 수정합니다. 본인 댓글만 수정할 수 있습니다."
+    )
+    @PatchMapping("/shared-projects/{sharedProjectId}/comments/{commentId}")
+    public ResponseEntity<Void> updateComment(
+            @PathVariable Long sharedProjectId,
+            @PathVariable Long commentId,
+            @RequestBody UpdateCommentRequestDto updateRequest
+    ){
+        publicSpaceService.updateComment(sharedProjectId, commentId, updateRequest);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "댓글 삭제",
+            description = "댓글을 소프트 삭제합니다. 실제로 DB에서 삭제되지는 않으며, 표시되지 않도록 처리됩니다."
+    )
+    @DeleteMapping("/shared-projects/{sharedProjectId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long sharedProjectId,
+            @PathVariable Long commentId
+    ){
+        publicSpaceService.deleteComment(sharedProjectId, commentId);
+        return ResponseEntity.ok().build();
     }
 }
