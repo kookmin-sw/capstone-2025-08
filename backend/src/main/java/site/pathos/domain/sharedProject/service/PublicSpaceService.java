@@ -17,19 +17,14 @@ import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.repository.UserModelRepository;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.repository.ProjectRepository;
+import site.pathos.domain.sharedProject.dto.request.CreateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectsResponseDto;
-import site.pathos.domain.sharedProject.entity.DataSet;
-import site.pathos.domain.sharedProject.entity.DownloadLog;
-import site.pathos.domain.sharedProject.entity.SharedProject;
-import site.pathos.domain.sharedProject.entity.Tag;
+import site.pathos.domain.sharedProject.entity.*;
 import site.pathos.domain.sharedProject.enums.DataType;
-import site.pathos.domain.sharedProject.repository.DataSetRepository;
-import site.pathos.domain.sharedProject.repository.DownloadLogRepository;
-import site.pathos.domain.sharedProject.repository.SharedProjectRepository;
-import site.pathos.domain.sharedProject.repository.TagRepository;
+import site.pathos.domain.sharedProject.repository.*;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.aws.s3.S3Service;
@@ -55,6 +50,7 @@ public class PublicSpaceService {
     private static final int SHARED_PROJECTS_PAGE_SIZE = 12;
     private final UserModelRepository userModelRepository;
     private final DownloadLogRepository downloadLogRepository;
+    private final CommentRepository commentRepository;
 
     @Transactional
     public void createSharedProject(CreateSharedProjectDto requestDto,
@@ -305,5 +301,28 @@ public class PublicSpaceService {
 
         sharedProject.incrementDownloadCount();
         sharedProjectRepository.save(sharedProject);
+    }
+
+    public void createComment(Long sharedProjectId, CreateCommentRequestDto createCommentRequestDto){
+        Long userId = SecurityUtil.getCurrentUserId();
+        User user = getUser(userId);
+        SharedProject sharedProject = getSharedProject(sharedProjectId);
+
+        Comment parentComment = createCommentRequestDto.parentId() != null ?
+                getComment(createCommentRequestDto.parentId()) : null;
+
+        Comment comment = Comment.builder()
+                .user(user)
+                .sharedProject(sharedProject)
+                .content(createCommentRequestDto.content())
+                .parentComment(parentComment)
+                .commentTag(createCommentRequestDto.commentTag())
+                .build();
+        commentRepository.save(comment);
+    }
+
+    private Comment getComment(Long commentId){
+        return commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
     }
 }

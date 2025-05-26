@@ -31,7 +31,7 @@ public class Model {
 
     @Column(name = "tissue_model_path")
     private String tissueModelPath;
-
+;
     @Column(name = "cell_model_path")
     private String cellModelPath;
 

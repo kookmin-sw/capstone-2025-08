@@ -6,9 +6,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.project.enums.ProjectSortType;
+import site.pathos.domain.sharedProject.dto.request.CreateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
@@ -84,6 +86,15 @@ public class PublicSpaceController {
             @PathVariable Long modelId
     ){
         publicSpaceService.downloadModel(sharedProjectId, modelId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/shared-projects/{sharedProjectId}/comments")
+    public ResponseEntity<Void> createComment(
+            @PathVariable Long sharedProjectId,
+            @RequestBody CreateCommentRequestDto createCommentRequestDto
+    ){
+        publicSpaceService.createComment(sharedProjectId, createCommentRequestDto);
         return ResponseEntity.ok().build();
     }
  }
