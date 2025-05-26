@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.model.entity.ProjectModel;
@@ -20,6 +19,7 @@ import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.sharedProject.dto.request.CreateCommentRequestDto;
 import site.pathos.domain.sharedProject.dto.request.CreateSharedProjectDto;
 import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsResponseDto;
+import site.pathos.domain.sharedProject.dto.response.GetSharedProjectCommentsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectsResponseDto;
 import site.pathos.domain.sharedProject.entity.*;
@@ -33,7 +33,7 @@ import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 import site.pathos.global.security.util.SecurityUtil;
 
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -138,6 +138,7 @@ public class PublicSpaceService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MODEL_NOT_FOUND));
     }
 
+    @Transactional(readOnly = true)
     public GetProjectWithModelsResponseDto getProjectWithModels(){
         Long userId = SecurityUtil.getCurrentUserId();
 
@@ -165,6 +166,7 @@ public class PublicSpaceService {
         return new GetProjectWithModelsResponseDto(projectDtos);
     }
 
+    @Transactional(readOnly = true)
     public GetSharedProjectDetailResponseDto getSharedProjectDetail(Long sharedProjectId){
         SharedProject sharedProject = getSharedProject(sharedProjectId);
 
@@ -209,6 +211,7 @@ public class PublicSpaceService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public GetSharedProjectsResponseDto getSharedProjects(String search, int page){
         Page<SharedProject> sharedProjectPage = getSharedProjectPage(search, page);
         List<GetSharedProjectsResponseDto.GetSharedProjectsResponseDetailDto> sharedProjects = getSharedProjectDetails(sharedProjectPage);
@@ -303,6 +306,7 @@ public class PublicSpaceService {
         sharedProjectRepository.save(sharedProject);
     }
 
+    @Transactional
     public void createComment(Long sharedProjectId, CreateCommentRequestDto createCommentRequestDto){
         Long userId = SecurityUtil.getCurrentUserId();
         User user = getUser(userId);
@@ -324,5 +328,39 @@ public class PublicSpaceService {
     private Comment getComment(Long commentId){
         return commentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COMMENT_NOT_FOUND));
+    }
+
+    public GetSharedProjectCommentsResponseDto getSharedProjectComments(Long sharedProjectId) {
+        List<Comment> allComments = commentRepository.findAllBySharedProjectIdWithUserOrderByCreatedAtAsc(sharedProjectId);
+
+        Map<Long, GetSharedProjectCommentsResponseDto.CommentDto> dtoMap = new HashMap<>();
+        List<GetSharedProjectCommentsResponseDto.CommentDto> rootComments = new ArrayList<>();
+
+        for (Comment comment : allComments) {
+            dtoMap.put(comment.getId(), GetSharedProjectCommentsResponseDto.CommentDto.from(comment));
+        }
+
+        for (Comment comment : allComments) {
+            if (comment.getParentComment() != null) {
+                Long parentId = comment.getParentComment().getId();
+                dtoMap.get(parentId).replies().add(dtoMap.get(comment.getId()));
+            } else {
+                rootComments.add(dtoMap.get(comment.getId()));
+            }
+        }
+
+        rootComments.sort(Comparator.comparing(GetSharedProjectCommentsResponseDto.CommentDto::createdAt));
+        for (GetSharedProjectCommentsResponseDto.CommentDto root : rootComments) {
+            sortRepliesRecursively(root);
+        }
+
+        return new GetSharedProjectCommentsResponseDto(rootComments);
+    }
+
+    private void sortRepliesRecursively(GetSharedProjectCommentsResponseDto.CommentDto commentDto) {
+        commentDto.replies().sort(Comparator.comparing(GetSharedProjectCommentsResponseDto.CommentDto::createdAt));
+        for (GetSharedProjectCommentsResponseDto.CommentDto reply : commentDto.replies()) {
+            sortRepliesRecursively(reply);
+        }
     }
 }
