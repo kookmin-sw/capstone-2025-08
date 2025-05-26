@@ -115,4 +115,13 @@ public class PublicSpaceController {
         publicSpaceService.updateComment(sharedProjectId, commentId, updateRequest);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/shared-projects/{sharedProjectId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long sharedProjectId,
+            @PathVariable Long commentId
+    ){
+        publicSpaceService.deleteComment(sharedProjectId, commentId);
+        return ResponseEntity.ok().build();
+    }
  }

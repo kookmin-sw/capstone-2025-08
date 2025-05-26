@@ -373,7 +373,21 @@ public class PublicSpaceService {
 
     @Transactional
     public void updateComment(Long sharedProjectId, Long commentId, UpdateCommentRequestDto updateRequest) {
+        Long userId = SecurityUtil.getCurrentUserId();
         Comment comment = getComment(commentId, sharedProjectId);
+        if(!comment.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_COMMENT_UPDATE_PERMISSION);
+        }
         comment.updateContent(updateRequest.content());
+    }
+
+    @Transactional
+    public void deleteComment(Long sharedProjectId, Long commentId) {
+        Long userId = SecurityUtil.getCurrentUserId();
+        Comment comment = getComment(commentId, sharedProjectId);
+        if(!comment.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_COMMENT_DELETE_PERMISSION);
+        }
+        comment.delete();
     }
 }

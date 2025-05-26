@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 import site.pathos.domain.sharedProject.enums.CommentTag;
 import site.pathos.domain.user.entity.User;
 import site.pathos.global.entity.BaseTimeEntity;
@@ -18,6 +19,7 @@ import java.util.List;
 @Table(name = "comment")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@SQLRestriction("is_deleted = false")
 public class Comment extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,6 +46,12 @@ public class Comment extends BaseTimeEntity {
     @OneToMany(mappedBy = "parentComment", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> replies = new ArrayList<>();
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Builder
     public Comment(User user, SharedProject sharedProject, String content, Comment parentComment, CommentTag commentTag){
         this.user = user;
@@ -55,5 +63,12 @@ public class Comment extends BaseTimeEntity {
 
     public void updateContent(String content) {
         this.content = content;
+    }
+
+    public void delete() {
+        if (!this.isDeleted) {
+            this.isDeleted = true;
+            this.deletedAt = LocalDateTime.now();
+        }
     }
 }

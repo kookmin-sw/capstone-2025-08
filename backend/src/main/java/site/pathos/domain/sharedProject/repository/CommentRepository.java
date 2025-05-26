@@ -17,6 +17,4 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             order by c.createdAt ASC
             """)
     List<Comment> findAllBySharedProjectIdWithUserOrderByCreatedAtAsc(@Param("sharedProjectId") Long sharedProjectId);
-
-    List<Comment> findBySharedProjectIdAndParentCommentIsNullOrderByCreatedAtDesc(Long sharedProjectId);
 }

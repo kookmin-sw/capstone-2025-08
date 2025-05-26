@@ -33,6 +33,8 @@ public enum ErrorCode {
     ALREADY_DOWNLOADED_MODEL(HttpStatus.CONFLICT, "이미 다운로드 받은 모델입니다"),
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "해당 댓글을 찾을 수 없습니다"),
     SHARED_PROJECT_COMMENT_MISMATCH(HttpStatus.BAD_REQUEST, "요청한 프로젝트와 댓글의 프로젝트가 일치하지 않습니다."),
+    NO_COMMENT_UPDATE_PERMISSION(HttpStatus.FORBIDDEN, "해당 댓글의 수정 권한이 없습니다"),
+    NO_COMMENT_DELETE_PERMISSION(HttpStatus.FORBIDDEN, "해당 댓글의 삭제 권한이 없습니다"),
     ;
 
     private final HttpStatus status;
