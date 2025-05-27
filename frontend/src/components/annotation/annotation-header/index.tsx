@@ -34,7 +34,6 @@ export default function AnnotationHeader() {
     useState<GetProjectAnnotationResponseDto | null>(null);
   const [selectedModelName, setSelectedModelName] = useState('none');
   const { selectedSubProject } = useAnnotationSharedStore();
-  const [showSplash, setShowSplash] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -47,8 +46,7 @@ export default function AnnotationHeader() {
         setProject(projectRes);
 
         // 모델 이름 설정
-        const firstModelName =
-          projectRes.modelsDto?.projectModels?.[0]?.name ?? 'none';
+        const firstModelName = projectRes.modelsDto?.modelName ?? 'none';
         setSelectedModelName(firstModelName);
       } catch (error) {
         console.error('프로젝트 정보를 불러오는 중 오류 발생:', error);
@@ -316,7 +314,7 @@ export default function AnnotationHeader() {
 
         {/* 모델 타입 */}
         <div className="flex h-9 w-40 items-center whitespace-nowrap rounded-md border px-3 py-2">
-          {project.modelsDto?.modelType?.toLowerCase()}
+          {selectedSubProject?.modelType?.toLowerCase()}
         </div>
 
         {/* 모델 이름 */}

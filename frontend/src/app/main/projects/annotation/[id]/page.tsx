@@ -39,6 +39,7 @@ export default function ProjectAnnotationPage() {
   const selectedAnnotationHistoryId = useAnnotationSharedStore(
     (s) => s.selectedAnnotationHistoryId,
   );
+  const { selectedSubProject } = useAnnotationSharedStore();
 
   // 최초 1회 - 프로젝트 전체 정보와 첫 서브프로젝트 선택
   useEffect(() => {
@@ -137,7 +138,7 @@ export default function ProjectAnnotationPage() {
           setSubProject={setSelected}
           subProjects={subProjects}
           inferenceResult={inferenceResult}
-          modelType={project.modelsDto?.modelType || ''}
+          modelType={selectedSubProject?.modelType || ''}
           initialLabels={project.labels}
         />
       ) : (
