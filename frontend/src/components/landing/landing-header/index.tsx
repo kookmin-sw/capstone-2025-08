@@ -1,15 +1,34 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { PathosLogoHorizontal } from '@/components/icons/pathos-logo-horizontal';
+import { useRouter } from 'next/navigation';
+import { useUserStore } from '@/stores/use-user-store';
+import { useEffect, useState } from 'react';
 
 interface LandingHeaderProps {
   scrolled: boolean;
 }
 
 export default function LandingHeader({ scrolled }: LandingHeaderProps) {
+  const router = useRouter();
+  const user = useUserStore((state) => state.user);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('accessToken');
+    setToken(storedToken);
+  }, []);
+
+  const handleEnterPlatform = () => {
+    if (user && token) {
+      router.push('/main');
+    } else {
+      router.push('/auth');
+    }
+  };
+
   return (
     <header
       className={`fixed left-0 right-0 top-0 z-50 py-4 transition-all duration-300 ${
@@ -49,10 +68,10 @@ export default function LandingHeader({ scrolled }: LandingHeaderProps) {
           transition={{ duration: 0.5 }}
         >
           <Button
-            asChild
+            onClick={handleEnterPlatform}
             className="border-none bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg transition-all duration-300 hover:shadow-xl"
           >
-            <Link href="/auth">Enter Platform</Link>
+            Enter Platform
           </Button>
         </motion.div>
       </div>
