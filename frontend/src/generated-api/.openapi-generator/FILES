@@ -14,6 +14,8 @@ models/BestProjectDto.ts
 models/Cell.ts
 models/CellDetail.ts
 models/CellDto.ts
+models/CommentDto.ts
+models/CreateCommentRequestDto.ts
 models/CreateProjectRequestDto.ts
 models/CreateSharedProjectDto.ts
 models/GetNotificationsResponseDto.ts
@@ -23,6 +25,7 @@ models/GetProjectWithModelsResponseDto.ts
 models/GetProjectsResponseDetailDto.ts
 models/GetProjectsResponseDto.ts
 models/GetProjectsResponseModelsDto.ts
+models/GetSharedProjectCommentsResponseDto.ts
 models/GetSharedProjectDetailResponseDto.ts
 models/GetSharedProjectsResponseDetailDto.ts
 models/GetSharedProjectsResponseDto.ts
@@ -56,6 +59,7 @@ models/SubProjectResponseDto.ts
 models/SubProjectSummaryDto.ts
 models/TrainingRequestDto.ts
 models/TrainingResultRequestDto.ts
+models/UpdateCommentRequestDto.ts
 models/UpdateNotificationSettingsRequestDto.ts
 models/UpdateProjectRequestDto.ts
 models/UpdateUserNameRequestDto.ts
