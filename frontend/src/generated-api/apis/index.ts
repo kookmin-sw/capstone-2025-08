@@ -6,3 +6,4 @@ export * from './NotificationAPIApi';
 export * from './ProfileAPIApi';
 export * from './ProjectAPIApi';
 export * from './ProjectAnnotationAPIApi';
+export * from './PublicSpaceAPIApi';

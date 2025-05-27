@@ -16,35 +16,35 @@ import { mapValues } from '../runtime';
 /**
  * 모델 정보 DTO
  * @export
- * @interface ModelsDto
+ * @interface ModelInfo
  */
-export interface ModelsDto {
+export interface ModelInfo {
     /**
      * 모델 ID
      * @type {number}
-     * @memberof ModelsDto
+     * @memberof ModelInfo
      */
     modelId?: number;
     /**
      * 모델명
      * @type {string}
-     * @memberof ModelsDto
+     * @memberof ModelInfo
      */
     modelName?: string;
 }
 
 /**
- * Check if a given object implements the ModelsDto interface.
+ * Check if a given object implements the ModelInfo interface.
  */
-export function instanceOfModelsDto(value: object): value is ModelsDto {
+export function instanceOfModelInfo(value: object): value is ModelInfo {
     return true;
 }
 
-export function ModelsDtoFromJSON(json: any): ModelsDto {
-    return ModelsDtoFromJSONTyped(json, false);
+export function ModelInfoFromJSON(json: any): ModelInfo {
+    return ModelInfoFromJSONTyped(json, false);
 }
 
-export function ModelsDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): ModelsDto {
+export function ModelInfoFromJSONTyped(json: any, ignoreDiscriminator: boolean): ModelInfo {
     if (json == null) {
         return json;
     }
@@ -55,11 +55,11 @@ export function ModelsDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     };
 }
 
-export function ModelsDtoToJSON(json: any): ModelsDto {
-    return ModelsDtoToJSONTyped(json, false);
+export function ModelInfoToJSON(json: any): ModelInfo {
+    return ModelInfoToJSONTyped(json, false);
 }
 
-export function ModelsDtoToJSONTyped(value?: ModelsDto | null, ignoreDiscriminator: boolean = false): any {
+export function ModelInfoToJSONTyped(value?: ModelInfo | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
