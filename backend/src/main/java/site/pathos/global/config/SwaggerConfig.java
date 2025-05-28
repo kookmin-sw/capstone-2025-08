@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @OpenAPIDefinition(
         info = @Info(title = "PlanList API", version = "v1"),
         servers = {
-                @Server(url = "https://api.pathos.o-r.kr", description = "Production server"),
+                @Server(url = "https://pathos.o-r.kr", description = "Production server"),
                 @Server(url = "http://localhost:8080", description = "Develop server")
         }
 )
