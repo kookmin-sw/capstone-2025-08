@@ -5,34 +5,18 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { Feature } from '@/types/landing';
-import { useEffect, useState } from 'react';
 
 interface HeroSectionProps {
   features: Feature[];
   activeFeature: number;
-  mousePosition: { x: number; y: number };
 }
 
 export default function HeroSection({
   features,
   activeFeature,
-  mousePosition,
 }: HeroSectionProps) {
   const feature = features[activeFeature];
   const FeatureIcon = feature.icon;
-
-  const [hasMounted, setHasMounted] = useState(false);
-
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  let offsetX = 0;
-  let offsetY = 0;
-  if (hasMounted && typeof window !== 'undefined') {
-    offsetX = (mousePosition.x - window.innerWidth / 2) * 0.02;
-    offsetY = (mousePosition.y - window.innerHeight / 2) * 0.02;
-  }
 
   return (
     <section className="to-primary relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-gray-950 via-gray-900">
@@ -40,9 +24,6 @@ export default function HeroSection({
       <motion.div
         className="absolute left-1/4 top-1/4 z-0 h-96 w-96 rounded-full bg-blue-500/10 blur-3xl"
         animate={{
-          scale: [1, 1.4, 1],
-          x: offsetX,
-          y: offsetY,
           opacity: [0.4, 0.9, 0.4],
         }}
         transition={{ duration: 8, repeat: Infinity }}
@@ -51,9 +32,6 @@ export default function HeroSection({
       <motion.div
         className="absolute bottom-1/3 right-1/3 z-0 h-80 w-80 rounded-full bg-purple-500/10 blur-3xl"
         animate={{
-          scale: [1, 1.4, 1],
-          x: offsetX,
-          y: offsetY,
           opacity: [0.4, 0.9, 0.4],
         }}
         transition={{ duration: 8, repeat: Infinity }}

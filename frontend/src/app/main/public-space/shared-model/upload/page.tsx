@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import PageTitle from '@/components/common/page-title';
@@ -19,6 +19,10 @@ import { UploadDropzone } from '@/components/common/upload-dropzone';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast, Toaster } from 'sonner';
+import {
+  GetProjectWithModelsResponseDto,
+  PublicSpaceAPIApi,
+} from '@/generated-api';
 
 const MarkdownEditor = dynamic(
   () => import('@/components/shared-model/markdown-editor'),
@@ -28,17 +32,46 @@ const MarkdownEditor = dynamic(
 );
 
 export default function UploadPage() {
+  const PublicSpaceApi = useMemo(() => new PublicSpaceAPIApi(), []);
   const router = useRouter();
+
+  // title
+  const [title, setTitle] = useState('');
+
+  // dataSet
   const [openDataSet, setOpenDataSet] = useState<boolean>(false);
+  const [originalFiles, setOriginalFiles] = useState<File[]>([]);
+  const [resultFiles, setResultFiles] = useState<File[]>([]);
+
+  // description
   const [markdownContent, setMarkdownContent] = useState('');
+
+  // tag
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [isTagLimitExceeded, setIsTagLimitExceeded] = useState(false);
   const [isComposing, setIsComposing] = useState(false); // 한국어, 중국어, 일본어 입력시 오류를 막기 위함
-
   const MAX_TAGS = 5;
 
-  console.log('markdownContent', markdownContent);
+  const [projectWithModels, setProjectWithModels] =
+    useState<GetProjectWithModelsResponseDto | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    null,
+  );
+  const [selectedModelId, setSelectedModelId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await PublicSpaceApi.getProjectWithModels();
+        setProjectWithModels(data);
+      } catch (error) {
+        console.error('Error fetching projects and models:', error);
+        toast.error('Failed to load project and model list.');
+      }
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (tagInput === '' && isTagLimitExceeded) {
@@ -69,19 +102,66 @@ export default function UploadPage() {
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
-  // const handleSubmit = () => {
-  //   const data = {
-  //     title,
-  //     markdownContent,
-  //     tags,
-  //     datasetFiles, // 파일은 FileList 또는 URL로
-  //     projectId,
-  //     modelId,
-  //   };
-  //
-  //   console.log('제출할 데이터:', data);
-  //   // 🔜 API 호출 또는 저장 처리
-  // };
+  const handleSubmit = async () => {
+    if (
+      !selectedProjectId ||
+      !selectedModelId ||
+      tags.length === 0 ||
+      !markdownContent ||
+      !title ||
+      originalFiles.length === 0 ||
+      resultFiles.length === 0
+    ) {
+      toast.error('모든 필수 항목을 입력해주세요.');
+      return;
+    }
+
+    const formData = new FormData();
+
+    // 1. requestDto → JSON Blob으로 감싸기
+    const requestDto = {
+      projectId: selectedProjectId,
+      modelId: selectedModelId,
+      title: title,
+      description: markdownContent,
+      tags: tags,
+    };
+
+    formData.append(
+      'requestDto',
+      new Blob([JSON.stringify(requestDto)], {
+        type: 'application/json',
+      }),
+    );
+
+    // 2. originalImages
+    originalFiles.forEach((file) => {
+      formData.append('originalImages', file);
+    });
+
+    // 3. resultImages
+    resultFiles.forEach((file) => {
+      formData.append('resultImages', file);
+    });
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/public-space`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+      );
+
+      if (!response.ok) throw new Error('업로드 실패');
+
+      toast.success('Model has been successfully shared!');
+      router.push('/main/public-space/shared-model');
+    } catch (error) {
+      console.error(error);
+      toast.error('업로드 중 오류가 발생했습니다.');
+    }
+  };
 
   return (
     <div className="space-y-10">
@@ -91,28 +171,41 @@ export default function UploadPage() {
 
       <div className="flex flex-col gap-1.5">
         <div className="text-xl">Project</div>
-        <Select>
+        <Select onValueChange={(value) => setSelectedProjectId(Number(value))}>
           <SelectTrigger className="w-1/2">
             <SelectValue placeholder="Select Project" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="light">Light</SelectItem>
-            <SelectItem value="dark">Dark</SelectItem>
-            <SelectItem value="system">System</SelectItem>
+            {projectWithModels?.projects?.map((item) => (
+              <SelectItem
+                key={item.projectId}
+                value={item.projectId?.toString() || ''}
+              >
+                {item.projectTitle}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
       <div className="flex flex-col gap-1.5">
         <div className="text-xl">Model</div>
-        <Select>
+        <Select onValueChange={(value) => setSelectedModelId(Number(value))}>
           <SelectTrigger className="w-1/2">
             <SelectValue placeholder="Select Model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="light">Light</SelectItem>
-            <SelectItem value="dark">Dark</SelectItem>
-            <SelectItem value="system">System</SelectItem>
+            {projectWithModels?.projects &&
+              projectWithModels.projects
+                .find((p) => p.projectId === selectedProjectId)
+                ?.models?.map((model) => (
+                  <SelectItem
+                    key={model.modelId}
+                    value={model.modelId?.toString() || ''}
+                  >
+                    {model.modelName}
+                  </SelectItem>
+                ))}
           </SelectContent>
         </Select>
       </div>
@@ -123,8 +216,9 @@ export default function UploadPage() {
         </Label>
         <Input
           id="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
           placeholder="Input your project title"
-          defaultValue="default value"
           className="col-span-3 w-1/2"
         />
       </div>
@@ -197,12 +291,12 @@ export default function UploadPage() {
             </div>
             <div className="flex w-full gap-4">
               <UploadDropzone
-                onFilesSelected={() => console.log('gkdlgkdl')}
+                onFilesSelected={(files) => setOriginalFiles(files)}
                 contents={`Click to browse or drag and drop your image files`}
                 showPreview={true}
               />
               <UploadDropzone
-                onFilesSelected={() => console.log('gkdlgkdl')}
+                onFilesSelected={(files) => setResultFiles(files)}
                 contents={`Click to browse or drag and drop your image files`}
                 showPreview={true}
               />
@@ -221,7 +315,7 @@ export default function UploadPage() {
         </Button>
         <Button
           onClick={() => {
-            toast('Model has been successfully shared!');
+            handleSubmit();
             // router.push('/main/public-space/shared-model');
           }}
           className="min-w-[80px]"

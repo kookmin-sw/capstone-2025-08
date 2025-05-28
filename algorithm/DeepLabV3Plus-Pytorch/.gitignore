@@ -1,0 +1,15 @@
+__pycache__
+VOCdevkit
+checkpoints
+.vscode
+*.pyc
+.idea/
+__pycache__
+results
+checkpoints_bak
+cityscapes
+test_results
+scale_evaluation
+datasets/data
+datasets/dataset_sample
+models
