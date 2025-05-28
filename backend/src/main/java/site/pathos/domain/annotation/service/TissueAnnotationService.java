@@ -94,6 +94,22 @@ public class TissueAnnotationService {
     public void saveResultAnnotation(Roi roi, String imagePath) {
         BufferedImage resultImage = s3Service.downloadBufferedImage(imagePath);
 
+        // 1. MERGED 타입 업로드 및 저장
+        String mergedKey = "sub-project/" + roi.getAnnotationHistory().getSubProject().getId() +
+                "/annotation-history/" + roi.getAnnotationHistory().getId() +
+                "/roi" + roi.getId() + "/merged.png";
+
+        s3Service.uploadBufferedImage(resultImage, mergedKey);
+
+        TissueAnnotation mergedAnnotation = TissueAnnotation.builder()
+                .roi(roi)
+                .annotationImagePath(mergedKey)
+                .annotationType(AnnotationType.MERGED)
+                .build();
+
+        tissueAnnotationRepository.save(mergedAnnotation);
+
+        // 2. TILE 타입 업로드 및 저장
         List<ImageTile> tiles = ImageUtils.sliceImageByROIWithPosition(
                 resultImage,
                 roi.getWidth(),
@@ -103,15 +119,15 @@ public class TissueAnnotationService {
         for (ImageTile tile : tiles) {
             String tileKey = "sub-project/" + roi.getAnnotationHistory().getSubProject().getId() +
                     "/annotation-history/" + roi.getAnnotationHistory().getId() +
-                    "/roi-" + roi.getId() +
-                    "/result/" + roi.getId() + "_" + tile.row() + "_" + tile.col() + ".png";
+                    "/roi" + roi.getId() + "/tile/" + roi.getId() +
+                    "_" + tile.row() + "_" + tile.col() + ".png";
 
             s3Service.uploadBufferedImage(tile.image(), tileKey);
 
             TissueAnnotation tileAnnotation = TissueAnnotation.builder()
                     .roi(roi)
                     .annotationImagePath(tileKey)
-                    .annotationType(AnnotationType.RESULT)
+                    .annotationType(AnnotationType.TILE)
                     .build();
 
             tissueAnnotationRepository.save(tileAnnotation);
