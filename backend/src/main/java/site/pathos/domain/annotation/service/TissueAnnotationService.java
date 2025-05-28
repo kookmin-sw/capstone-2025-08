@@ -104,7 +104,7 @@ public class TissueAnnotationService {
             String tileKey = "sub-project/" + roi.getAnnotationHistory().getSubProject().getId() +
                     "/annotation-history/" + roi.getAnnotationHistory().getId() +
                     "/roi-" + roi.getId() +
-                    "/result/" + tile.row() + "_" + tile.col() + ".png";
+                    "/result/" + roi.getId() + "_" + tile.row() + "_" + tile.col() + ".png";
 
             s3Service.uploadBufferedImage(tile.image(), tileKey);
 
