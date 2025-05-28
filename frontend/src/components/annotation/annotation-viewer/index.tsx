@@ -1675,7 +1675,7 @@ const AnnotationViewer: React.FC<{
                   : 'pointer-events-none'
               }`}
               style={{
-                opacity: 0.3,
+                opacity: 0.5,
               }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
