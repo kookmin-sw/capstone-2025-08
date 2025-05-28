@@ -1,6 +1,12 @@
 package site.pathos.domain.sharedProject.service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,9 +29,18 @@ import site.pathos.domain.sharedProject.dto.response.GetProjectWithModelsRespons
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectCommentsResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectDetailResponseDto;
 import site.pathos.domain.sharedProject.dto.response.GetSharedProjectsResponseDto;
-import site.pathos.domain.sharedProject.entity.*;
+import site.pathos.domain.sharedProject.entity.Comment;
+import site.pathos.domain.sharedProject.entity.DataSet;
+import site.pathos.domain.sharedProject.entity.DownloadLog;
+import site.pathos.domain.sharedProject.entity.SharedProject;
+import site.pathos.domain.sharedProject.entity.Tag;
 import site.pathos.domain.sharedProject.enums.DataType;
-import site.pathos.domain.sharedProject.repository.*;
+import site.pathos.domain.sharedProject.event.SharedProjectCommentReceivedEvent;
+import site.pathos.domain.sharedProject.repository.CommentRepository;
+import site.pathos.domain.sharedProject.repository.DataSetRepository;
+import site.pathos.domain.sharedProject.repository.DownloadLogRepository;
+import site.pathos.domain.sharedProject.repository.SharedProjectRepository;
+import site.pathos.domain.sharedProject.repository.TagRepository;
 import site.pathos.domain.user.entity.User;
 import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.aws.s3.S3Service;
@@ -33,8 +48,6 @@ import site.pathos.global.common.PaginationResponse;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 import site.pathos.global.security.util.SecurityUtil;
-
-import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -52,6 +65,7 @@ public class PublicSpaceService {
     private final UserModelRepository userModelRepository;
     private final DownloadLogRepository downloadLogRepository;
     private final CommentRepository commentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void createSharedProject(CreateSharedProjectDto requestDto,
@@ -324,6 +338,8 @@ public class PublicSpaceService {
                 .commentTag(createCommentRequestDto.commentTag())
                 .build();
         commentRepository.save(comment);
+
+        publishSharedProjectCommentReceivedEvent(sharedProject, comment);
     }
 
     private Comment getComment(Long commentId, Long sharedProjectId){
@@ -389,5 +405,16 @@ public class PublicSpaceService {
             throw new BusinessException(ErrorCode.NO_COMMENT_DELETE_PERMISSION);
         }
         comment.delete();
+    }
+
+    private void publishSharedProjectCommentReceivedEvent(SharedProject sharedProject, Comment comment) {
+        eventPublisher.publishEvent(
+                new SharedProjectCommentReceivedEvent(
+                        sharedProject.getUser(),
+                        comment.getUser(),
+                        sharedProject.getId(),
+                        sharedProject.getTitle()
+                )
+        );
     }
 }

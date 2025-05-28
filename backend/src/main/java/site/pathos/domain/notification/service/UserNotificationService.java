@@ -1,5 +1,8 @@
 package site.pathos.domain.notification.service;
 
+import static site.pathos.domain.notification.constants.NotificationsConstants.NOTIFICATION_CHANNEL_PREFIX;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import site.pathos.domain.notification.dto.response.GetNotificationsResponseDto;
@@ -33,6 +37,8 @@ public class UserNotificationService {
     private final UserNotificationSettingRepository userNotificationSettingRepository;
     private final UserNotificationRepository userNotificationRepository;
     private final UserService userService;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper;
     private static final int DEFAULT_PAGE_SIZE = 20;
 
     @Transactional
@@ -48,11 +54,10 @@ public class UserNotificationService {
             return;
         }
 
-        // 템플릿 치환
         String message = render(notificationType.getMessageTemplate(), templateVariables);
         String redirectPath = render(notificationType.getRedirectPathTemplate(), templateVariables);
 
-        UserNotification notif = UserNotification.builder()
+        UserNotification notification = UserNotification.builder()
                 .user(user)
                 .notificationType(notificationType)
                 .title(type.getDisplayName())
@@ -60,12 +65,17 @@ public class UserNotificationService {
                 .redirectPath(redirectPath)
                 .build();
 
-        userNotificationRepository.save(notif);
+        userNotificationRepository.save(notification);
+
+        publishToNotificationChannel(user.getId(), notification);
     }
 
     private String render(String template, Map<String, Object> params) {
         for (Map.Entry<String, Object> entry : params.entrySet()) {
-            template = template.replace("{" + entry.getKey() + "}", entry.getValue().toString());
+            template = template.replace(
+                    String.format("{%s}", entry.getKey()),
+                    entry.getValue().toString()
+            );
         }
         return template;
     }
@@ -107,5 +117,22 @@ public class UserNotificationService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
 
         notification.readBy(userId);
+    }
+
+    public void publishToNotificationChannel(Long userId, UserNotification notification) {
+        GetNotificationsResponseDto dto = new GetNotificationsResponseDto(
+                notification.getId(),
+                notification.getTitle(),
+                notification.getMessage(),
+                notification.getRedirectPath(),
+                notification.getIsRead(),
+                DateTimeUtils.dateTimeToAgoFormat(notification.getCreatedAt())
+        );
+        try {
+            String json = objectMapper.writeValueAsString(dto);
+            redisTemplate.convertAndSend(NOTIFICATION_CHANNEL_PREFIX + userId, json);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.REDIS_PUBLISH_FAILED);
+        }
     }
 }
