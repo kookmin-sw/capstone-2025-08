@@ -47,6 +47,7 @@ export * from './RoiResponsePayload';
 export * from './RoiSaveRequestDto';
 export * from './SlideDto';
 export * from './SlideSummaryDto';
+export * from './SseEmitter';
 export * from './SubProjectInfo';
 export * from './SubProjectResponseDto';
 export * from './SubProjectSummaryDto';

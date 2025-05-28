@@ -54,6 +54,7 @@ models/RoiResponsePayload.ts
 models/RoiSaveRequestDto.ts
 models/SlideDto.ts
 models/SlideSummaryDto.ts
+models/SseEmitter.ts
 models/SubProjectInfo.ts
 models/SubProjectResponseDto.ts
 models/SubProjectSummaryDto.ts
