@@ -13,45 +13,25 @@
  */
 
 import { mapValues } from '../runtime';
-import type { ProjectModelsDto } from './ProjectModelsDto';
-import {
-    ProjectModelsDtoFromJSON,
-    ProjectModelsDtoFromJSONTyped,
-    ProjectModelsDtoToJSON,
-    ProjectModelsDtoToJSONTyped,
-} from './ProjectModelsDto';
-
 /**
- * 프로젝트에서 사용 가능한 모델 목록 DTO
+ * 모델 정보 DTO
  * @export
  * @interface ModelsDto
  */
 export interface ModelsDto {
     /**
-     * 모델 타입
+     * 모델 ID
+     * @type {number}
+     * @memberof ModelsDto
+     */
+    modelId?: number;
+    /**
+     * 모델명
      * @type {string}
      * @memberof ModelsDto
      */
-    modelType?: ModelsDtoModelTypeEnum;
-    /**
-     * 프로젝트에 연결된 모델 목록
-     * @type {Array<ProjectModelsDto>}
-     * @memberof ModelsDto
-     */
-    projectModels?: Array<ProjectModelsDto>;
+    modelName?: string;
 }
-
-
-/**
- * @export
- */
-export const ModelsDtoModelTypeEnum = {
-    Tissue: 'TISSUE',
-    Cell: 'CELL',
-    Multi: 'MULTI'
-} as const;
-export type ModelsDtoModelTypeEnum = typeof ModelsDtoModelTypeEnum[keyof typeof ModelsDtoModelTypeEnum];
-
 
 /**
  * Check if a given object implements the ModelsDto interface.
@@ -70,8 +50,8 @@ export function ModelsDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean):
     }
     return {
         
-        'modelType': json['modelType'] == null ? undefined : json['modelType'],
-        'projectModels': json['projectModels'] == null ? undefined : ((json['projectModels'] as Array<any>).map(ProjectModelsDtoFromJSON)),
+        'modelId': json['modelId'] == null ? undefined : json['modelId'],
+        'modelName': json['modelName'] == null ? undefined : json['modelName'],
     };
 }
 
@@ -86,8 +66,8 @@ export function ModelsDtoToJSONTyped(value?: ModelsDto | null, ignoreDiscriminat
 
     return {
         
-        'modelType': value['modelType'],
-        'projectModels': value['projectModels'] == null ? undefined : ((value['projectModels'] as Array<any>).map(ProjectModelsDtoToJSON)),
+        'modelId': value['modelId'],
+        'modelName': value['modelName'],
     };
 }
 

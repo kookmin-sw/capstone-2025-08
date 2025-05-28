@@ -1,0 +1,15 @@
+torch
+torchvision
+numpy
+pillow
+scikit-learn
+tqdm
+matplotlib
+visdom
+requests
+pydantic-settings
+boto3
+openslide-python
+openslide-bin
+uvicorn
+fastapi

@@ -14,6 +14,8 @@ import {
 } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { useUserStore } from '@/stores/use-user-store';
+import { ProfileAPIApi } from '@/generated-api';
 
 interface FormValues {
   file_upload_completed?: boolean;
@@ -24,8 +26,9 @@ interface FormValues {
 
 interface PreferencesProps {
   defaultValues: FormValues;
+  api: ProfileAPIApi;
 }
-export default function Preferences({ defaultValues }: PreferencesProps) {
+export default function Preferences({ defaultValues, api }: PreferencesProps) {
   const form = useForm<FormValues>({
     defaultValues,
   });
@@ -57,8 +60,39 @@ export default function Preferences({ defaultValues }: PreferencesProps) {
     },
   ];
 
-  function onSubmit(data: FormValues) {
-    toast('Your preferences have been updated.');
+  async function onSubmit(data: FormValues) {
+    const payload = {
+      settings: [
+        {
+          type: 'File Upload Completed',
+          enabled: data.file_upload_completed ?? false,
+        },
+        {
+          type: 'Model Train Completed',
+          enabled: data.model_train_completed ?? false,
+        },
+        {
+          type: 'Model Run Completed',
+          enabled: data.model_run_completed ?? false,
+        },
+        {
+          type: 'New Comments',
+          enabled: data.new_comments ?? false,
+        },
+      ],
+    };
+
+    try {
+      await api.updateNotificationSettings({
+        updateNotificationSettingsRequestDto: payload,
+      });
+
+      const updatedUser = await api.getUserSettings();
+      useUserStore.getState().setUser(updatedUser);
+      toast.success('Preferences updated successfully!');
+    } catch (err) {
+      toast.error('Failed to update preferences. Please try again.');
+    }
   }
 
   return (
