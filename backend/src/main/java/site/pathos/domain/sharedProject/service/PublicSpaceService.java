@@ -267,7 +267,7 @@ public class PublicSpaceService {
                         sharedProject.getId(),
                         sharedProject.getTitle(),
                         getAuthor(sharedProject).getName(),
-                        sharedProject.getThumbnailImagePath(),
+                        s3Service.getPresignedUrl(sharedProject.getThumbnailImagePath()),
                         getTags(sharedProject.getId()),
                         sharedProject.getDownloadCount()
                 ))
