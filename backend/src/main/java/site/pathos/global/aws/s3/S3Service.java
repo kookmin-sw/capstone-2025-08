@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -37,7 +36,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 @Slf4j
 @Service
@@ -118,17 +116,18 @@ public class S3Service {
     }
 
     public String getPresignedUrl(String key) {
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(awsProperty.s3().bucket())
-                .key(key)
-                .build();
-
-        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
-                .getObjectRequest(getObjectRequest)
-                .signatureDuration(Duration.ofMinutes(5000))
-                .build();
-
-        return s3Presigner.presignGetObject(presignRequest).url().toString();
+        return getStaticUrl(key);
+//        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+//                .bucket(awsProperty.s3().bucket())
+//                .key(key)
+//                .build();
+//
+//        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+//                .getObjectRequest(getObjectRequest)
+//                .signatureDuration(Duration.ofMinutes(5000))
+//                .build();
+//
+//        return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
     public String getStaticUrl(String key) {
