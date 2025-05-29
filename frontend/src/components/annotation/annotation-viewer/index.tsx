@@ -1127,17 +1127,17 @@ const AnnotationViewer: React.FC<{
         const roiIndex = loadedROIs.findIndex(
           (roi) => roi.cell && adjustedIndex < roi.cell.length,
         );
-        if (roiIndex !== -1) {
-          const updatedLoadedROIs = [...loadedROIs];
-          const updatedCells = [...(updatedLoadedROIs[roiIndex].cell || [])];
-          updatedCells[adjustedIndex] = {
-            ...updatedCells[adjustedIndex],
-            points: [...updatedCells[adjustedIndex].points],
-          };
-          updatedCells[adjustedIndex].points[pointIndex] = viewportPoint;
-          updatedLoadedROIs[roiIndex].cell = updatedCells;
-          setLoadedROIs(updatedLoadedROIs);
-        }
+        // if (roiIndex !== -1) {
+        //   const updatedLoadedROIs = [...loadedROIs];
+        //   const updatedCells = [...(updatedLoadedROIs[roiIndex].cell || [])];
+        //   updatedCells[adjustedIndex] = {
+        //     ...updatedCells[adjustedIndex],
+        //     points: [...updatedCells[adjustedIndex].points],
+        //   };
+        //   updatedCells[adjustedIndex].points[pointIndex] = viewportPoint;
+        //   updatedLoadedROIs[roiIndex].cell = updatedCells;
+        //   setLoadedROIs(updatedLoadedROIs);
+        // }
       }
 
       setMousePosition(viewportPoint);
@@ -1330,22 +1330,22 @@ const AnnotationViewer: React.FC<{
       ...loadedROIs.flatMap((roi) => roi.cell ?? []),
     ];
 
-    for (let i = 0; i < allCellPolygons.length; i++) {
-      const poly = allCellPolygons[i];
-      for (const pt of poly.points) {
-        const pixel = viewerInstance.current.viewport.pixelFromPoint(
-          new OpenSeadragon.Point(pt.x, pt.y),
-        );
-        const dist = Math.hypot(pixel.x - x, pixel.y - y);
-        if (dist <= 6) {
-          const source = i < cellPolygons.length ? 'new' : 'loaded';
-          const polygonIndex =
-            i < cellPolygons.length ? i : i - cellPolygons.length;
-          setSelectedPolygonForDeletion({ source, polygonIndex });
-          return;
-        }
-      }
-    }
+    // for (let i = 0; i < allCellPolygons.length; i++) {
+    //   const poly = allCellPolygons[i];
+    //   for (const pt of poly.points) {
+    //     const pixel = viewerInstance.current.viewport.pixelFromPoint(
+    //       new OpenSeadragon.Point(pt.x, pt.y),
+    //     );
+    //     const dist = Math.hypot(pixel.x - x, pixel.y - y);
+    //     if (dist <= 6) {
+    //       const source = i < cellPolygons.length ? 'new' : 'loaded';
+    //       const polygonIndex =
+    //         i < cellPolygons.length ? i : i - cellPolygons.length;
+    //       setSelectedPolygonForDeletion({ source, polygonIndex });
+    //       return;
+    //     }
+    //   }
+    // }
   };
 
   /* =============================================

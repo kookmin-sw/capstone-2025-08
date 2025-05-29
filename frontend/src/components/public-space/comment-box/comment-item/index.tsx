@@ -4,13 +4,14 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { CommentType } from '@/types/public-space-comment';
-import ReplyInput from '@/components/public-space/comment-box/reply-input';
 import { Badge } from '@/components/ui/badge';
+import { CommentDto } from '@/generated-api';
+import ReplyInput from '@/components/public-space/comment-box/reply-input';
+import { formatDateToSimple } from '@/utils/date-utils';
 
 interface CommentItemProps {
-  comment: CommentType;
-  currentUserId: number;
+  comment: CommentDto;
+  currentUser: string;
   onReply: (commentId: number, text: string, replyTo: string) => void;
   onEdit: (
     id: number,
@@ -21,16 +22,20 @@ interface CommentItemProps {
   onDelete: (id: number, isReply: boolean, parentId?: number) => void;
   onRequestReply: (commentId: number | null) => void;
   replyToId: number | null;
+  depth?: number;
+  parentId?: number;
 }
 
 export default function CommentItem({
   comment,
-  currentUserId,
+  currentUser,
   onReply,
   onEdit,
   onDelete,
   onRequestReply,
   replyToId,
+  depth = 0,
+  parentId,
 }: CommentItemProps) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
@@ -46,24 +51,25 @@ export default function CommentItem({
     setEditingText('');
   };
 
+  const isReply = parentId !== undefined;
+
   return (
-    <div className="border-b py-4">
+    <div className="mt-4" style={{ marginLeft: `${depth * 16}px` }}>
       <div className="flex items-start gap-3">
         <Image
-          src={comment.avatar}
-          alt={comment.name}
+          src="/images/test-profile-image.png"
+          alt={comment.authorName ?? 'profile image'}
           width={40}
           height={40}
           className="rounded-full"
         />
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold">{comment.name}</span>
-            <Badge className="bg-destructive">{comment.tag}</Badge>
+            <span className="font-semibold">{comment.authorName}</span>
+            <Badge variant="secondary">{comment.commentTag}</Badge>
           </div>
 
-          {/* 댓글 수정할 때 */}
-          {editingId === comment.id ? (
+          {editingId === comment.commentId ? (
             <>
               <Textarea
                 value={editingText}
@@ -72,7 +78,9 @@ export default function CommentItem({
               <div className="mt-2 flex justify-end gap-2">
                 <Button
                   size="sm"
-                  onClick={() => handleSaveEdit(comment.id, false)}
+                  onClick={() =>
+                    handleSaveEdit(comment.commentId!, isReply, parentId)
+                  }
                 >
                   Save
                 </Button>
@@ -87,6 +95,11 @@ export default function CommentItem({
             </>
           ) : (
             <p className="text-muted-foreground mt-1 text-sm">
+              {/*{comment.replyToName && (*/}
+              {/*  <span className="text-primary mr-1 font-semibold">*/}
+              {/*    @{comment.replyToName}*/}
+              {/*  </span>*/}
+              {/*)}*/}
               {comment.content}
             </p>
           )}
@@ -95,23 +108,28 @@ export default function CommentItem({
             <Button
               variant="link"
               size="sm"
-              onClick={() => onRequestReply(comment.id)}
+              onClick={() => onRequestReply(comment.commentId ?? -1)}
             >
               Reply
             </Button>
-            {comment.userId === currentUserId && (
+            {/* 이름이 같을 경우, 본인 작성이므로 수정/삭제 버튼 보여주기 (추후에 유저id, 이메일처럼 겹치지 않는 값으로 수정해야할 거 같습니다.)  */}
+            {comment.authorName === currentUser && (
               <>
                 <Button
                   variant="link"
                   size="sm"
-                  onClick={() => handleEdit(comment.id, comment.content)}
+                  onClick={() =>
+                    handleEdit(comment.commentId!, comment.content!)
+                  }
                 >
                   Edit
                 </Button>
                 <Button
                   variant="link"
                   size="sm"
-                  onClick={() => onDelete(comment.id, false)}
+                  onClick={() =>
+                    onDelete(comment.commentId!, isReply, parentId)
+                  }
                 >
                   Delete
                 </Button>
@@ -119,99 +137,37 @@ export default function CommentItem({
             )}
           </div>
         </div>
-        <div className="text-muted-foreground text-sm">{comment.date}</div>
+        <div className="text-muted-foreground text-sm">
+          {formatDateToSimple(comment.createdAt?.toISOString() ?? '')}
+        </div>
       </div>
 
-      {comment.replies.map((reply) => (
-        <div key={reply.id} className="ml-12 mt-4 flex items-start gap-3">
-          <Image
-            src={reply.avatar}
-            alt={reply.name}
-            width={36}
-            height={36}
-            className="rounded-full"
-          />
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">{reply.name}</span>
-              <Badge>{reply.tag}</Badge>
-            </div>
-            {editingId === reply.id ? (
-              <>
-                <Textarea
-                  value={editingText}
-                  onChange={(e) => setEditingText(e.target.value)}
-                />
-                <div className="mt-2 flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleSaveEdit(reply.id, true, comment.id)}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setEditingId(null)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground mt-1 text-sm">
-                {reply.replyTo && (
-                  <span
-                    className="text-primary mr-1 cursor-pointer font-semibold"
-                    onClick={() => onRequestReply(comment.id)}
-                  >
-                    @{reply.replyTo}
-                  </span>
-                )}
-                {reply.content}
-              </p>
-            )}
-
-            <div className="text-muted-foreground mt-2 flex gap-2 text-xs">
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => onRequestReply(comment.id)}
-              >
-                Reply
-              </Button>
-              {reply.userId === currentUserId && (
-                <>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => handleEdit(reply.id, reply.content)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => onDelete(reply.id, true, comment.id)}
-                  >
-                    Delete
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-          <div className="text-muted-foreground text-sm">{reply.date}</div>
-        </div>
-      ))}
-
-      {replyToId === comment.id && (
+      {replyToId === comment.commentId && (
         <div className="ml-12 mt-2">
           <ReplyInput
             onCancel={() => onRequestReply(null)}
-            onPost={(text) => onReply(comment.id, text, comment.name)}
+            onPost={(text) =>
+              onReply(comment.commentId!, text, comment.authorName!)
+            }
           />
         </div>
       )}
+
+      {/* 재귀 렌더링 */}
+      {comment.replies?.map((child) => (
+        <CommentItem
+          key={child.commentId}
+          comment={child}
+          currentUser={currentUser}
+          onReply={onReply}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onRequestReply={onRequestReply}
+          replyToId={replyToId}
+          depth={depth + 1}
+          parentId={comment.commentId}
+        />
+      ))}
     </div>
   );
 }

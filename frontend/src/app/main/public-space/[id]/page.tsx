@@ -15,6 +15,7 @@ import Dataset from '@/components/public-space/project-tap-menu/dataset';
 import ProjectDownloadModal from '@/components/public-space/project-download-modal';
 import { toast, Toaster } from 'sonner';
 import {
+  GetSharedProjectCommentsResponseDto,
   GetSharedProjectDetailResponseDto,
   PublicSpaceAPIApi,
 } from '@/generated-api';
@@ -24,11 +25,34 @@ export default function PublicSpaceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const PublicSpaceApi = useMemo(() => new PublicSpaceAPIApi(), []);
 
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  // 상세 정보
   const [project, setProject] =
     useState<GetSharedProjectDetailResponseDto>(dummyProjectDetail);
   const [ready, setReady] = useState(false);
 
+  // 다운로드 모달
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+
+  // 댓글
+  const [comments, setComments] =
+    useState<GetSharedProjectCommentsResponseDto | null>(null);
+
+  // 댓글 다시 불러오는 함수 (refetch 역할)
+  const refetchComments = async () => {
+    if (!id) return;
+    const projectId = Number(id);
+    try {
+      const commentsRes = await PublicSpaceApi.getComments({
+        sharedProjectId: projectId,
+      });
+      setComments(commentsRes);
+      console.log('comments: ', commentsRes);
+    } catch (error) {
+      console.error('댓글 불러오기 실패:', error);
+    }
+  };
+
+  // 탭 메뉴
   const tabs = [
     {
       value: 'description',
@@ -52,6 +76,7 @@ export default function PublicSpaceDetailPage() {
     },
   ];
 
+  // 상세 정보 및 댓글 불러오기
   useEffect(() => {
     if (!id) return;
 
@@ -63,6 +88,8 @@ export default function PublicSpaceDetailPage() {
         });
         setProject(projectRes);
         console.log('project: ', projectRes);
+
+        await refetchComments();
       } catch (error) {
         console.error('프로젝트 정보를 불러오는 중 오류 발생:', error);
       } finally {
@@ -81,7 +108,6 @@ export default function PublicSpaceDetailPage() {
           sharedProjectId: project.sharedProjectId,
           modelId: project.model.modelId,
         });
-        console.log('Model download request succeeded.');
         toast.success('Model download has started.');
       } else {
         console.warn('Missing project ID or model ID.');
@@ -135,7 +161,13 @@ export default function PublicSpaceDetailPage() {
           <TabMenu tabs={tabs} bgColor="white" />
         </div>
 
-        <CommentBox />
+        {comments && (
+          <CommentBox
+            comments={comments}
+            sharedProjectId={project.sharedProjectId ?? -1}
+            refetchComments={refetchComments}
+          />
+        )}
       </div>
 
       {showDownloadModal && (

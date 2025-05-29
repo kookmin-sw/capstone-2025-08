@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import CommentItem from './comment-item';
 import {
   Select,
@@ -11,118 +11,133 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { formatDateToSimple } from '@/utils/date-utils';
-import { CommentType } from '@/types/public-space-comment';
+import { toast } from 'sonner';
+import {
+  CommentDto,
+  CreateCommentRequestDtoCommentTagEnum,
+  GetSharedProjectCommentsResponseDto,
+  PublicSpaceAPIApi,
+} from '@/generated-api';
+import { useUserStore } from '@/stores/use-user-store';
 
-const dummyComments: CommentType[] = [
-  {
-    id: 1,
-    userId: 2,
-    name: 'Yeonjin Wang',
-    avatar: '/images/test-profile-image.png',
-    tag: 'Fix',
-    content:
-      'Wow, this is the model I really needed, thank you. However, I found one error.',
-    date: '2025.03.10 02:51',
-    replies: [],
-  },
-];
+interface CommentBoxProps {
+  comments: GetSharedProjectCommentsResponseDto;
+  sharedProjectId: number;
+  refetchComments: () => void; // 부모에서 댓글 다시 불러오는 함수
+}
 
-export default function CommentBox() {
-  const [comments, setComments] = useState<CommentType[]>(dummyComments);
-  const [tag, setTag] = useState<string | null>(null);
+export default function CommentBox({
+  comments,
+  sharedProjectId,
+  refetchComments,
+}: CommentBoxProps) {
+  const PublicSpaceApi = useMemo(() => new PublicSpaceAPIApi(), []);
+
+  // 댓글
   const [newComment, setNewComment] = useState('');
-  const [tagError, setTagError] = useState(false);
-  const [replyTo, setReplyTo] = useState<number | null>(null);
-  const currentUserId = 1;
-  const currentUser = 'Hyeonjin Hwang';
 
-  // 댓글 달기
-  const handlePost = () => {
+  // 태그
+  const [tag, setTag] = useState<CreateCommentRequestDtoCommentTagEnum | null>(
+    null,
+  );
+  const [tagError, setTagError] = useState(false);
+
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+
+  // 유저
+  const user = useUserStore((state) => state.user);
+  const currentUser = user?.name ?? 'anonymous';
+
+  // 댓글 등록
+  const handlePost = async () => {
     if (!tag) {
       setTagError(true);
       return;
     }
 
-    const comment: CommentType = {
-      id: Date.now(),
-      userId: currentUserId,
-      name: currentUser,
-      avatar: '/images/test-profile-image.png',
-      tag,
-      content: newComment,
-      date: formatDateToSimple(new Date().toISOString()),
-      replies: [],
-    };
-    setComments([...comments, comment]);
-    setNewComment('');
-    setTag(null);
-    setTagError(false);
+    try {
+      await PublicSpaceApi.createComment({
+        sharedProjectId,
+        createCommentRequestDto: {
+          content: newComment,
+          commentTag: tag,
+        },
+      });
+      toast.success('Your comment has been posted.');
+      setNewComment('');
+      setTag(null);
+      setTagError(false);
+      refetchComments(); // 새로고침
+    } catch (e) {
+      toast.error('Failed to post comment.');
+      console.error(e);
+    }
   };
 
-  // 답글 달기
-  const handlePostReply = (
+  // 대댓글 등록
+  const handlePostReply = async (
     commentId: number,
     replyText: string,
     replyToName: string,
   ) => {
-    const newReply = {
-      id: Date.now(),
-      userId: currentUserId,
-      name: currentUser,
-      avatar: '/images/test-profile-image.png',
-      tag: 'Author',
-      content: replyText,
-      date: formatDateToSimple(new Date().toISOString()),
-      replyTo: replyToName,
-    };
-    setComments(
-      comments.map((c) =>
-        c.id === commentId ? { ...c, replies: [...c.replies, newReply] } : c,
-      ),
-    );
-    setReplyTo(null);
+    try {
+      await PublicSpaceApi.createComment({
+        sharedProjectId,
+        createCommentRequestDto: {
+          content: replyText,
+          commentTag: CreateCommentRequestDtoCommentTagEnum.Comment,
+          parentId: commentId,
+          // replyToName,
+        },
+      });
+      toast.success('Your reply has been posted.');
+      setReplyTo(null);
+      refetchComments();
+    } catch (e) {
+      toast.error('Failed to post reply.');
+      console.error(e);
+    }
   };
 
   // 댓글 수정
-  const handleEdit = (
+  const handleEdit = async (
     id: number,
     text: string,
     isReply: boolean,
     parentId?: number,
   ) => {
-    if (isReply && parentId) {
-      setComments(
-        comments.map((c) =>
-          c.id === parentId
-            ? {
-                ...c,
-                replies: c.replies.map((r) =>
-                  r.id === id ? { ...r, content: text } : r,
-                ),
-              }
-            : c,
-        ),
-      );
-    } else {
-      setComments(
-        comments.map((c) => (c.id === id ? { ...c, content: text } : c)),
-      );
+    try {
+      await PublicSpaceApi.updateComment({
+        sharedProjectId,
+        commentId: id,
+        updateCommentRequestDto: {
+          content: text,
+        },
+      });
+      toast.success('Your comment has been updated.');
+      refetchComments();
+    } catch (e) {
+      toast.error('Failed to update comment.');
+      console.error(e);
     }
   };
 
   // 댓글 삭제
-  const handleDelete = (id: number, isReply: boolean, parentId?: number) => {
-    if (isReply && parentId) {
-      setComments(
-        comments.map((c) =>
-          c.id === parentId
-            ? { ...c, replies: c.replies.filter((r) => r.id !== id) }
-            : c,
-        ),
-      );
-    } else {
-      setComments(comments.filter((c) => c.id !== id));
+  const handleDelete = async (
+    id: number,
+    isReply: boolean,
+    parentId?: number,
+  ) => {
+    try {
+      await PublicSpaceApi.deleteComment({
+        sharedProjectId,
+        commentId: id,
+      });
+      toast.success('Your comment has been deleted.');
+      refetchComments();
+    } catch (e) {
+      toast.error('Failed to delete comment.');
+      console.error(e);
     }
   };
 
@@ -130,11 +145,11 @@ export default function CommentBox() {
     <div className="rounded-lg border p-6">
       <h2 className="text-xl font-semibold">Comments</h2>
 
-      {comments.map((comment) => (
+      {comments?.comments?.map((comment: CommentDto) => (
         <CommentItem
-          key={comment.id}
+          key={comment.commentId}
           comment={comment}
-          currentUserId={currentUserId}
+          currentUser={currentUser}
           onReply={handlePostReply}
           onEdit={handleEdit}
           onDelete={handleDelete}
@@ -144,14 +159,25 @@ export default function CommentBox() {
       ))}
 
       <div className="mt-6 space-y-3">
-        <Select onValueChange={(value) => setTag(value)}>
+        <Select
+          onValueChange={(value) =>
+            setTag(value as CreateCommentRequestDtoCommentTagEnum)
+          }
+        >
           <SelectTrigger className={`w-40 ${tagError ? 'border-red-500' : ''}`}>
             <SelectValue placeholder="Select Tag" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Fix">Fix</SelectItem>
-            <SelectItem value="Question">Question</SelectItem>
-            <SelectItem value="Comment">Comment</SelectItem>
+            {/* TODO: 현진 / 백엔드랑 이야기해서 태그 고치기 */}
+            {/*<SelectItem value={CreateCommentRequestDtoCommentTagEnum.Fix}>*/}
+            {/*  Fix*/}
+            {/*</SelectItem>*/}
+            {/*<SelectItem value={CreateCommentRequestDtoCommentTagEnum.Question}>*/}
+            {/*  Question*/}
+            {/*</SelectItem>*/}
+            <SelectItem value={CreateCommentRequestDtoCommentTagEnum.Comment}>
+              Comment
+            </SelectItem>
           </SelectContent>
         </Select>
         {tagError && (
