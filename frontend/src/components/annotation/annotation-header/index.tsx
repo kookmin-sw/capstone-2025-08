@@ -17,12 +17,15 @@ import { useState, useEffect, useMemo } from 'react';
 import AnnotationModelExportModal from '@/components/annotation/annotation-model-export-modal';
 import {
   GetProjectAnnotationResponseDto,
+  ModelsDtoWrapper,
   ModelServerAPIApi,
   ProjectAnnotationAPIApi,
   RoiSaveRequestDto,
 } from '@/generated-api';
 import { convertViewportToImageROIs } from '@/utils/canvas-roi-utils';
 import { toast } from 'sonner';
+import SplashScreen from '@/components/splash-screen';
+import { formatModelType } from '@/utils/model-type-label';
 
 export default function AnnotationHeader() {
   const ProjectAnnotationApi = useMemo(() => new ProjectAnnotationAPIApi(), []);
@@ -35,6 +38,7 @@ export default function AnnotationHeader() {
     useState<GetProjectAnnotationResponseDto | null>(null);
   const [selectedModelName, setSelectedModelName] = useState('none');
   const { selectedSubProject } = useAnnotationSharedStore();
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -46,9 +50,10 @@ export default function AnnotationHeader() {
         const projectRes = await ProjectAnnotationApi.getProject({ projectId });
         setProject(projectRes);
 
-        // 모델 이름 설정
-        const firstModelName = projectRes.modelsDto?.modelName ?? 'none';
-        setSelectedModelName(firstModelName);
+        const modelsDto = projectRes.modelsDto as ModelsDtoWrapper;
+        const lastModelName = modelsDto?.projectModels?.at(-1)?.name ?? 'none';
+
+        setSelectedModelName(lastModelName);
       } catch (error) {
         console.error('프로젝트 정보를 불러오는 중 오류 발생:', error);
       }
@@ -97,11 +102,18 @@ export default function AnnotationHeader() {
   };
 
   const handleSave = async () => {
+    const start = Date.now();
+    setIsSaving(true);
+
     const { viewer, canvas, loadedROIs, userDefinedROIs, labels } =
       useAnnotationSharedStore.getState();
 
     if (!viewer || !canvas || !selectedSubProject || !project) {
-      alert('저장할 수 있는 정보가 부족합니다.');
+      toast.error('Insufficient information to save.');
+      const elapsed = Date.now() - start;
+      if (elapsed < 2500)
+        await new Promise((r) => setTimeout(r, 2500 - elapsed));
+      setIsSaving(false);
       return;
     }
 
@@ -163,31 +175,6 @@ export default function AnnotationHeader() {
         }),
       );
 
-      // requestDto 내용을 콘솔로 확인
-      console.log('📦 requestDto:', JSON.stringify(requestDto, null, 2));
-
-      // formData 내용을 출력
-      console.log('📦 FormData 내용:');
-      for (const [key, value] of formData.entries()) {
-        if (value instanceof Blob) {
-          console.log(
-            ` 🖼️ ${key}:`,
-            value.name,
-            value.type,
-            value.size + ' bytes',
-          );
-          if (key === 'requestDto') {
-            value.text().then((text) => {
-              console.log('📝 requestDto JSON:', JSON.parse(text));
-            });
-          }
-        } else {
-          console.log(`🔹 ${key}:`, value);
-        }
-      }
-
-      console.log('🖼️ FormData 이미지 확인용 링크 ↓');
-
       exportedImages.forEach(({ filename, blob }) => {
         const url = URL.createObjectURL(blob);
 
@@ -197,7 +184,7 @@ export default function AnnotationHeader() {
         a.style.display = 'none';
 
         document.body.appendChild(a);
-        a.click(); // ✅ 자동 다운로드 실행
+        a.click(); // 자동 다운로드 실행
         document.body.removeChild(a);
         URL.revokeObjectURL(url); // 메모리 누수 방지
       });
@@ -211,20 +198,28 @@ export default function AnnotationHeader() {
         },
       );
 
-      alert('ROI 저장 및 이미지 업로드가 완료되었습니다.');
-
-      window.location.reload(); // 저장 완료 후 새로고침
+      await router.refresh();
+      toast.success('ROIs and images saved successfully.');
     } catch (error) {
+      setIsSaving(false);
       console.error('저장 오류:', error);
-      alert('저장 중 오류가 발생했습니다.');
+      toast.error('Failed to save ROIs and upload images.');
+    } finally {
+      const elapsed = Date.now() - start;
+      if (elapsed < 2500) {
+        await new Promise((r) => setTimeout(r, 2500 - elapsed));
+      }
+      setIsSaving(false);
     }
   };
 
   const handleTrain = async (modelName: string) => {
     if (!project || !selectedSubProject) {
-      alert('학습 요청에 필요한 정보가 없습니다.');
+      toast.error('Missing information for training request.');
       return;
     }
+
+    const toastId = toast.loading('Submitting training request...');
 
     try {
       await modelApi.requestTraining({
@@ -234,12 +229,23 @@ export default function AnnotationHeader() {
         },
       });
 
-      alert('모델 학습 요청이 완료되었습니다.');
+      toast.success('Training request submitted successfully!', {
+        id: toastId,
+      });
     } catch (err) {
       console.error('모델 학습 요청 오류:', err);
-      alert('모델 학습 요청 중 오류가 발생했습니다.');
+      toast.error('Failed to submit training request.', { id: toastId });
     }
   };
+
+  if (isSaving) {
+    return (
+      <SplashScreen
+        useNavigate={false}
+        text="Saving your changes... please wait."
+      />
+    );
+  }
 
   return (
     <div className="bg-primary fixed right-0 top-0 flex w-full flex-row items-center justify-between p-4 text-white">
@@ -315,7 +321,7 @@ export default function AnnotationHeader() {
 
         {/* 모델 타입 */}
         <div className="flex h-9 w-40 items-center whitespace-nowrap rounded-md border px-3 py-2">
-          {selectedSubProject?.modelType?.toLowerCase()}
+          {formatModelType(selectedSubProject?.modelType)}
         </div>
 
         {/* 모델 이름 */}
