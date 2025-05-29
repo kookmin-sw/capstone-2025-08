@@ -41,4 +41,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     Optional<Project> findBySubProjectId(@Param("subProjectId") Long subProjectId);
 
     List<Project> findAllByUserId(Long userId);
+
+    @Query("SELECT p FROM Project p JOIN FETCH p.user WHERE p.id = :projectId")
+    Optional<Project> findByIdWithUser(Long projectId);
 }

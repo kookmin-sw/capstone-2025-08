@@ -31,27 +31,20 @@ import site.pathos.domain.annotation.service.TissueAnnotationService;
 import site.pathos.domain.model.dto.TrainingRequestDto;
 import site.pathos.domain.model.dto.TrainingRequestMessageDto;
 import site.pathos.domain.model.dto.TrainingResultRequestDto;
-import site.pathos.domain.model.entity.InferenceHistory;
-import site.pathos.domain.model.entity.Model;
-import site.pathos.domain.model.entity.ModelLabel;
-import site.pathos.domain.model.entity.ProjectMetric;
-import site.pathos.domain.model.entity.ProjectModel;
-import site.pathos.domain.model.entity.TrainingHistory;
+import site.pathos.domain.model.entity.*;
 import site.pathos.domain.model.enums.MetricType;
 import site.pathos.domain.model.enums.ModelRequestType;
 import site.pathos.domain.model.enums.ModelType;
 import site.pathos.domain.model.event.ProjectRunCompletedEvent;
 import site.pathos.domain.model.event.ProjectTrainCompletedEvent;
-import site.pathos.domain.model.repository.InferenceHistoryRepository;
-import site.pathos.domain.model.repository.ModelRepository;
-import site.pathos.domain.model.repository.ProjectMetricRepository;
-import site.pathos.domain.model.repository.ProjectModelRepository;
-import site.pathos.domain.model.repository.TrainingHistoryRepository;
+import site.pathos.domain.model.repository.*;
 import site.pathos.domain.project.entity.Project;
 import site.pathos.domain.project.entity.ProjectLabel;
 import site.pathos.domain.project.entity.SubProject;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.project.repository.SubProjectRepository;
+import site.pathos.domain.user.entity.User;
+import site.pathos.domain.user.repository.UserRepository;
 import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.aws.sqs.service.SqsService;
 import site.pathos.global.error.BusinessException;
@@ -85,6 +78,8 @@ public class ModelServerService {
     private final ApplicationEventPublisher eventPublisher;
     private final ProjectLabelRepository projectLabelRepository;
     private final ModelRepository modelRepository;
+    private final UserRepository userRepository;
+    private final UserModelRepository userModelRepository;
 
     @Transactional
     public void requestTraining(Long projectId, TrainingRequestDto trainingRequestDto) {
@@ -260,7 +255,7 @@ public class ModelServerService {
         InferenceHistory inferenceHistory = inferenceHistoryRepository.findById(resultRequestDto.inferenceHistoryId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INFERENCE_HISTORY_NOT_FOUND));
 
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findByIdWithUser(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
 
@@ -268,6 +263,12 @@ public class ModelServerService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MODEL_NOT_FOUND));
 
         newModel.saveResult(trainingHistory, resultRequestDto.tissueModelPath(), resultRequestDto.cellModelPath());
+
+        UserModel userModel = UserModel.builder()
+                .user(project.getUser())
+                .model(newModel)
+                .build();
+        userModelRepository.save(userModel);
 
         ProjectModel projectModel = ProjectModel.builder()
                 .name(resultRequestDto.modelName())
