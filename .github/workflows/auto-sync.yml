@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main
+      - name: Checkout master
         uses: actions/checkout@v4
         with: 
           token: ${{ secrets.AUTO_SYNC_TOKEN }}
           fetch-depth: 0
-          ref: main
+          ref: master
 
       - name: Add remote-url
         run: |
@@ -25,7 +25,7 @@ jobs:
       
       - name: Push changes to forked-repo 
         run: |
-          git push -f forked-repo main
+          git push -f forked-repo master
       
       - name: Clean up
         run: |
