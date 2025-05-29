@@ -4,31 +4,38 @@ import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { dummyProjectDetail } from '@/data/dummy';
 import Image from 'next/image';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import PageTitle from '@/components/common/page-title';
 import TabMenu from '@/components/common/tab-menu';
 import CommentBox from '@/components/public-space/comment-box';
-import Performance from '@/components/public-space/project-tap-menu/performance';
 import Description from '@/components/public-space/project-tap-menu/description';
 import Dataset from '@/components/public-space/project-tap-menu/dataset';
 import ProjectDownloadModal from '@/components/public-space/project-download-modal';
 import { toast, Toaster } from 'sonner';
 import {
+  GetProjectDetailResponseDto,
   GetSharedProjectCommentsResponseDto,
   GetSharedProjectDetailResponseDto,
+  ProjectAPIApi,
   PublicSpaceAPIApi,
 } from '@/generated-api';
 import { formatDateExceptTime } from '@/utils/date-utils';
+import ModelTrainingMetricsChart from '@/components/projects/model-training-metrics-chart';
 
 export default function PublicSpaceDetailPage() {
   const { id } = useParams<{ id: string }>();
   const PublicSpaceApi = useMemo(() => new PublicSpaceAPIApi(), []);
+  const projectApi = useMemo(() => new ProjectAPIApi(), []);
 
   // 상세 정보
   const [project, setProject] =
     useState<GetSharedProjectDetailResponseDto>(dummyProjectDetail);
   const [ready, setReady] = useState(false);
+
+  // 프로젝트 정보(모델 성능을 받아오기 위함)
+  const [projectForAnalytics, setProjectForAnalytics] =
+    useState<GetProjectDetailResponseDto>();
 
   // 다운로드 모달
   const [showDownloadModal, setShowDownloadModal] = useState(false);
@@ -52,6 +59,23 @@ export default function PublicSpaceDetailPage() {
     }
   };
 
+  // 모델 성능을 받아오기 위한 프로젝트 데이터 받아오기
+  const fetchProject = useCallback(async () => {
+    if (!project.projectId) return;
+    try {
+      const detail = await projectApi.getProjectDetail({
+        projectId: project.projectId,
+      });
+      setProjectForAnalytics(detail);
+    } catch (error) {
+      toast.error('Failed to load project details for model info.');
+    }
+  }, [id, projectApi]);
+
+  useEffect(() => {
+    fetchProject();
+  }, [fetchProject]);
+
   // 탭 메뉴
   const tabs = [
     {
@@ -62,7 +86,12 @@ export default function PublicSpaceDetailPage() {
     {
       value: 'performance',
       label: 'Performance',
-      content: <Performance />,
+      content: (
+        <ModelTrainingMetricsChart
+          data={projectForAnalytics?.analytics || {}}
+          f1Score={projectForAnalytics?.analytics?.f1Score ?? 0}
+        />
+      ),
     },
     {
       value: 'dataSet',
