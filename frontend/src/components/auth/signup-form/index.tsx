@@ -28,7 +28,6 @@ export function SignUpForm({
 
   const handleSubmit = () => {
     if (!agreed) return;
-    console.log('회원가입 완료');
   };
 
   return (

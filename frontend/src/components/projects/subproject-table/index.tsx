@@ -103,7 +103,6 @@ export default function SubProjectTable({
           onClose={() => setDeleteTarget(null)}
           subProjectFileName={deleteTarget.name || ''}
           onClickDelete={() => {
-            console.log(`Deleted: ${deleteTarget.subProjectId}`);
             setDeleteTarget(null);
           }}
         />
