@@ -24,10 +24,9 @@ interface ModelTrainingMetricsChartProps {
 }
 
 function prepareChartData(analytics: AnalyticsDto) {
-  const { epochs = [], loss = [], iou = [] } = analytics;
-  return epochs.map((epoch, index) => ({
-    epoch,
-    loss: loss[index] ?? null,
+  const { loss = [], iou = [] } = analytics;
+  return loss.map((loss, index) => ({
+    loss,
     iou: iou[index] ?? null,
   }));
 }
