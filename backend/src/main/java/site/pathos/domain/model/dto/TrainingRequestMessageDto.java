@@ -25,6 +25,9 @@ public record TrainingRequestMessageDto(
         @Schema(description = "모델 이름", example = "custom-model-v1")
         String modelName,
 
+        @Schema(description = "새로 생성할 모델", example = "42L")
+        Long newModelId,
+
         @Schema(description = "모델 경로 (S3 등)", example = "s3://my-bucket/models/deep-lab-v1.pt")
         String tissueModelPath,
 

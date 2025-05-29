@@ -40,33 +40,17 @@ public class Model {
     private LocalDateTime trainedAt;
 
     @Builder
-    public Model(TrainingHistory trainingHistory, String name,
+    public Model(String name,
                  ModelType modelType, String tissueModelPath, String cellModelPath) {
-        this.trainingHistory = trainingHistory;
         this.name = name;
         this.modelType = modelType;
+        this.tissueModelPath = tissueModelPath;
+        this.cellModelPath = cellModelPath;
+    }
 
-        if (modelType == ModelType.CELL) {
-            if (cellModelPath == null) {
-                throw new IllegalArgumentException("SINGLE_CELL 모델은 cellModelPath가 필요합니다.");
-            }
-            this.cellModelPath = cellModelPath;
-            this.tissueModelPath = null;
-        } else if (modelType == ModelType.TISSUE) {
-            if (tissueModelPath == null) {
-                throw new IllegalArgumentException("SINGLE_TISSUE 모델은 tissueModelPath가 필요합니다.");
-            }
-            this.tissueModelPath = tissueModelPath;
-            this.cellModelPath = null;
-
-        } else if (modelType == ModelType.MULTI) {
-            if (cellModelPath == null || tissueModelPath == null) {
-                throw new IllegalArgumentException("MULTI 모델은 cellModelPath와 tissueModelPath 모두 필요합니다.");
-            }
-            this.cellModelPath = cellModelPath;
-            this.tissueModelPath = tissueModelPath;
-        } else {
-            throw new IllegalArgumentException("지원하지 않는 ModelType입니다: " + modelType);
-        }
+    public void saveResult(TrainingHistory trainingHistory, String tissueModelPath, String cellModelPath){
+        this.trainingHistory = trainingHistory;
+        this.tissueModelPath = tissueModelPath;
+        this.cellModelPath = cellModelPath;
     }
 }

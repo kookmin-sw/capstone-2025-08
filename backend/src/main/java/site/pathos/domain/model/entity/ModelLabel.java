@@ -6,8 +6,7 @@ import site.pathos.domain.project.entity.ProjectLabel;
 
 @Entity
 @Table(
-        name = "model_label",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"model_id", "class_index"})
+        name = "model_label"
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

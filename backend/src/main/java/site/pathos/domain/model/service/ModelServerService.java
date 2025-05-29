@@ -39,6 +39,7 @@ import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.model.entity.TrainingHistory;
 import site.pathos.domain.model.enums.MetricType;
 import site.pathos.domain.model.enums.ModelRequestType;
+import site.pathos.domain.model.enums.ModelType;
 import site.pathos.domain.model.event.ProjectRunCompletedEvent;
 import site.pathos.domain.model.event.ProjectTrainCompletedEvent;
 import site.pathos.domain.model.repository.InferenceHistoryRepository;
@@ -99,20 +100,22 @@ public class ModelServerService {
 
         ProjectModel projectModel = projectModels.get(0);
 
+        Model newModel = createEmptyModel(project, trainingRequestDto.modelName(), project.getModelType());
+
         TrainingHistory trainingHistory = trainingHistoryService.createTrainingHistory(project, projectModel.getModel());
         InferenceHistory inferenceHistory = inferenceHistoryService.createInferenceHistory(project, projectModel.getModel());
 
         TrainingRequestMessageDto message = buildTrainingRequest(project, trainingRequestDto.modelName(), projectModel,
-                trainingHistory, inferenceHistory);
+                newModel, trainingHistory, inferenceHistory);
 
         sqsService.sendTrainingRequest(message);
     }
 
-    private TrainingRequestMessageDto buildTrainingRequest(Project project, String modelName, ProjectModel projectModel,
+    private TrainingRequestMessageDto buildTrainingRequest(Project project, String modelName, ProjectModel projectModel, Model newModel,
                                                            TrainingHistory trainingHistory, InferenceHistory inferenceHistory) {
 
         //프로젝트에서 사용된 라벨의 정보 불러오기
-        List<TrainingRequestMessageDto.LabelInfo> labelInfos = getLabelInfos(projectModel.getModel().getId(), project.getId());
+        List<TrainingRequestMessageDto.LabelInfo> labelInfos = getLabelInfos(projectModel.getModel().getId(), project.getId(), newModel);
         //프로젝트의 속한 서브프로젝트들의 하위 정보
         List<TrainingRequestMessageDto.SubProjectInfo> subProjectInfos = getSubProjectInfos(project);
 
@@ -123,6 +126,7 @@ public class ModelServerService {
                 "TRAINING_INFERENCE",
                 project.getModelType(),
                 modelName,
+                newModel.getId(),
                 projectModel.getModel().getTissueModelPath(),
                 projectModel.getModel().getCellModelPath(),
                 labelInfos,
@@ -130,20 +134,26 @@ public class ModelServerService {
         );
     }
 
-    private List<TrainingRequestMessageDto.LabelInfo> getLabelInfos(Long modelId, Long projectId) {
+    private Model createEmptyModel(Project project, String modelName, ModelType modelType) {
+        Model model = Model.builder()
+                .name(modelName)
+                .modelType(modelType)
+                .tissueModelPath(null)
+                .cellModelPath(null)
+                .build();
+        return modelRepository.save(model);
+    }
+
+    private List<TrainingRequestMessageDto.LabelInfo> getLabelInfos(Long modelId, Long projectId, Model newModel) {
         List<ModelLabel> modelLabels = modelProjectLabelRepository.findByModelIdAndProjectId(modelId, projectId);
 
         if (modelLabels.isEmpty()) {
-            // 기본 모델: 프로젝트 라벨 기반으로 ModelLabel 생성
-            Model model = modelRepository.findById(modelId)
-                    .orElseThrow(() -> new IllegalArgumentException("Invalid modelId"));
-
             List<ProjectLabel> projectLabels = projectLabelRepository.findAllByProjectId(projectId);
 
             // ModelLabel 생성 및 저장
             List<ModelLabel> newModelLabels = projectLabels.stream()
                     .map(pl -> ModelLabel.builder()
-                            .model(model)
+                            .model(newModel)
                             .projectLabel(pl)
                             .classIndex(pl.getDisplayOrder())
                             .build())
@@ -254,13 +264,10 @@ public class ModelServerService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
 
-        Model newModel = modelService.saveModel(
-                trainingHistory,
-                resultRequestDto.modelName(),
-                project.getModelType(),
-                resultRequestDto.tissueModelPath(),
-                resultRequestDto.cellModelPath()
-        );
+        Model newModel = modelRepository.findById(resultRequestDto.newModelId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MODEL_NOT_FOUND));
+
+        newModel.saveResult(trainingHistory, resultRequestDto.tissueModelPath(), resultRequestDto.cellModelPath());
 
         ProjectModel projectModel = ProjectModel.builder()
                 .name(resultRequestDto.modelName())
