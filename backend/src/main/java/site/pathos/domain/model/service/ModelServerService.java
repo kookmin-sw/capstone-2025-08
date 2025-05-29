@@ -358,7 +358,7 @@ public class ModelServerService {
                     if (currentLine.startsWith("Image Name:")) {
                         try {
                             String[] parts = currentLine.split(", Mean Entropy per-images:");
-                            String imagePart = parts[0].trim(); // "Image Name: 35_58_85199_18633"
+                            String imagePart = parts[0].trim();
                             String[] imageNameParts = imagePart.split("_");
                             long roiId = Long.parseLong(imageNameParts[1]);
                             double entropyValue = Double.parseDouble(parts[1].trim());
