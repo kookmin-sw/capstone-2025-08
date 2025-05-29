@@ -17,8 +17,6 @@ public interface ModelRepository extends JpaRepository<Model, Long> {
     WHERE um.user = :user
       AND m.trainingHistory IS NULL
       AND m.modelType = :modelType
-      AND m.tissueModelPath IS NOT NULL
-      AND m.cellModelPath IS NULL
     ORDER BY m.trainedAt DESC
     """)
     Optional<Model> findFirstTissueModelByUser(@Param("modelType") ModelType modelType, @Param("user") User user);
@@ -30,8 +28,6 @@ public interface ModelRepository extends JpaRepository<Model, Long> {
     WHERE um.user = :user
       AND m.trainingHistory IS NULL
       AND m.modelType = :modelType
-      AND m.cellModelPath IS NOT NULL
-      AND m.tissueModelPath IS NULL
     ORDER BY m.trainedAt DESC
     """)
     Optional<Model> findFirstCellModelByUser(@Param("modelType") ModelType modelType, @Param("user") User user);
@@ -43,8 +39,6 @@ public interface ModelRepository extends JpaRepository<Model, Long> {
     WHERE um.user = :user
       AND m.trainingHistory IS NULL
       AND m.modelType = :modelType
-      AND m.cellModelPath IS NOT NULL
-      AND m.tissueModelPath IS NOT NULL
     ORDER BY m.trainedAt DESC
     """)
     Optional<Model> findFirstMultiModelByUser(@Param("modelType") ModelType modelType, @Param("user") User user);
