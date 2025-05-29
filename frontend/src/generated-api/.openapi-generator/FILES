@@ -31,6 +31,7 @@ models/GetSharedProjectsResponseDetailDto.ts
 models/GetSharedProjectsResponseDto.ts
 models/GetUserSettingsResponseDto.ts
 models/GetUserSettingsResponseNotificationDto.ts
+models/InferenceResultRequestDto.ts
 models/JwtTokenDto.ts
 models/LabelDto.ts
 models/LabelInfo.ts

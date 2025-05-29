@@ -24,6 +24,7 @@ export * from './GetSharedProjectsResponseDetailDto';
 export * from './GetSharedProjectsResponseDto';
 export * from './GetUserSettingsResponseDto';
 export * from './GetUserSettingsResponseNotificationDto';
+export * from './InferenceResultRequestDto';
 export * from './JwtTokenDto';
 export * from './LabelDto';
 export * from './LabelInfo';
