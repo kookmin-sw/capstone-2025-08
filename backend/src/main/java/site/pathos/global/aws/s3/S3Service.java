@@ -131,6 +131,13 @@ public class S3Service {
         return s3Presigner.presignGetObject(presignRequest).url().toString();
     }
 
+    public String getStaticUrl(String key) {
+        String bucket = awsProperty.s3().bucket();
+        String region = awsProperty.region();
+
+        return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + key;
+    }
+
     public InputStream downloadFile(String key) {
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(awsProperty.s3().bucket())
