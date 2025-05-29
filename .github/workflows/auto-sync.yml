@@ -19,7 +19,7 @@ jobs:
 
       - name: Add remote-url
         run: |
-          git remote add forked-repo https://${{ secrets.AUTO_SYNC_USERNAME }}:${{ secrets.FORKED_REPO_TOKEN }}@github.com/${{ secrets.AUTO_SYNC_USERNAME }}/capstone-2025-08
+          git remote add forked-repo https://${{ secrets.AUTO_SYNC_USERNAME }}:${{ secrets.AUTO_SYNC_TOKEN }}@github.com/${{ secrets.AUTO_SYNC_USERNAME }}/capstone-2025-08
           git config user.name ${{ secrets.AUTO_SYNC_USERNAME }}
           git config user.email ${{ secrets.AUTO_SYNC_EMAIL }}
       
