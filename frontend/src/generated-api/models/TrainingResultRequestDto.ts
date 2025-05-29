@@ -72,6 +72,12 @@ export interface TrainingResultRequestDto {
      */
     modelName?: string;
     /**
+     * 
+     * @type {number}
+     * @memberof TrainingResultRequestDto
+     */
+    newModelId?: number;
+    /**
      * 생성된 티슈 모델 경로
      * @type {string}
      * @memberof TrainingResultRequestDto
@@ -146,6 +152,7 @@ export function TrainingResultRequestDtoFromJSONTyped(json: any, ignoreDiscrimin
         'type': json['type'] == null ? undefined : json['type'],
         'modelType': json['modelType'] == null ? undefined : json['modelType'],
         'modelName': json['modelName'] == null ? undefined : json['modelName'],
+        'newModelId': json['newModelId'] == null ? undefined : json['newModelId'],
         'tissueModelPath': json['tissueModelPath'] == null ? undefined : json['tissueModelPath'],
         'cellModelPath': json['cellModelPath'] == null ? undefined : json['cellModelPath'],
         'labels': json['labels'] == null ? undefined : ((json['labels'] as Array<any>).map(LabelInfoFromJSON)),
@@ -170,6 +177,7 @@ export function TrainingResultRequestDtoToJSONTyped(value?: TrainingResultReques
         'type': value['type'],
         'modelType': value['modelType'],
         'modelName': value['modelName'],
+        'newModelId': value['newModelId'],
         'tissueModelPath': value['tissueModelPath'],
         'cellModelPath': value['cellModelPath'],
         'labels': value['labels'] == null ? undefined : ((value['labels'] as Array<any>).map(LabelInfoToJSON)),
