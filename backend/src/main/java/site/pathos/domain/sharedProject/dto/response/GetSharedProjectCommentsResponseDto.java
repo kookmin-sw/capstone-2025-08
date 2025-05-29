@@ -48,6 +48,9 @@ public record GetSharedProjectCommentsResponseDto(
             @Schema(description = "작성자 이름", example = "Jane Doe")
             String authorName,
 
+            @Schema(description = "작성자 프로필")
+            String profileImageUrl,
+
             @Schema(description = "댓글 내용", example = "이 프로젝트 정말 유용하네요!")
             String content,
 
@@ -64,6 +67,7 @@ public record GetSharedProjectCommentsResponseDto(
             return new CommentDto(
                     comment.getId(),
                     comment.getUser().getName(),
+                    comment.getUser().getProfileImagePath(),
                     comment.getContent(),
                     comment.getCommentTag(),
                     comment.getCreatedAt(),
