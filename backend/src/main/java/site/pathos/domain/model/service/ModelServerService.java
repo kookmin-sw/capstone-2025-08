@@ -1,9 +1,16 @@
 package site.pathos.domain.model.service;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,12 +27,15 @@ import site.pathos.domain.model.dto.TrainingResultRequestDto;
 import site.pathos.domain.model.entity.InferenceHistory;
 import site.pathos.domain.model.entity.Model;
 import site.pathos.domain.model.entity.ModelLabel;
+import site.pathos.domain.model.entity.ProjectMetric;
 import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.model.entity.TrainingHistory;
+import site.pathos.domain.model.enums.MetricType;
 import site.pathos.domain.model.enums.ModelRequestType;
 import site.pathos.domain.model.event.ProjectRunCompletedEvent;
 import site.pathos.domain.model.event.ProjectTrainCompletedEvent;
 import site.pathos.domain.model.repository.InferenceHistoryRepository;
+import site.pathos.domain.model.repository.ProjectMetricRepository;
 import site.pathos.domain.model.repository.ModelRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.repository.TrainingHistoryRepository;
@@ -34,19 +44,23 @@ import site.pathos.domain.project.entity.ProjectLabel;
 import site.pathos.domain.project.entity.SubProject;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.project.repository.SubProjectRepository;
+import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.aws.sqs.service.SqsService;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
 import site.pathos.global.util.color.ColorUtils;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ModelServerService {
     private final AnnotationHistoryRepository annotationHistoryRepository;
     private final TissueAnnotationRepository tissueAnnotationRepository;
     private final CellAnnotationRepository cellAnnotationRepository;
     private final TrainingHistoryRepository trainingHistoryRepository;
     private final InferenceHistoryRepository inferenceHistoryRepository;
+    private final ProjectMetricRepository projectMetricRepository;
 
     private final ModelService modelService;
     private final SqsService sqsService;
@@ -58,6 +72,7 @@ public class ModelServerService {
     private final RoiRepository roiRepository;
     private final TrainingHistoryService trainingHistoryService;
     private final TissueAnnotationService tissueAnnotationService;
+    private final S3Service s3Service;
 
     private final ApplicationEventPublisher eventPublisher;
     private final ProjectLabelRepository projectLabelRepository;
@@ -65,6 +80,7 @@ public class ModelServerService {
 
     @Transactional
     public void requestTraining(Long projectId, TrainingRequestDto trainingRequestDto) {
+
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
@@ -227,9 +243,6 @@ public class ModelServerService {
         InferenceHistory inferenceHistory = inferenceHistoryRepository.findById(resultRequestDto.inferenceHistoryId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INFERENCE_HISTORY_NOT_FOUND));
 
-        TrainingResultRequestDto.Performance performance = resultRequestDto.performance();
-        inferenceHistory.updateResult(performance.accuracy(), performance.loss(), performance.loopPerformance());
-
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
@@ -286,6 +299,7 @@ public class ModelServerService {
                 tissueAnnotationService.saveResultAnnotation(roi, roiDto.tissuePath());
             }
         }
+        createMetric(project, inferenceHistory);
         publishCompletedEvent(resultRequestDto.type(), project);
     }
 
@@ -307,5 +321,56 @@ public class ModelServerService {
                     )
             );
         }
+    }
+
+    public void createMetric(Project project, InferenceHistory inferenceHistory) {
+        String key = "log.txt";
+        try {
+            InputStream inputStream = s3Service.downloadFile(key);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            try (inputStream; reader) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    final String currentLine = line;
+
+                    Optional<MetricType> optionalType = MetricType.parseLine(currentLine);
+                    if (optionalType.isEmpty()) {
+                        continue;
+                    }
+
+                    MetricType type = optionalType.get();
+                    double value = type.parseValue(currentLine);
+                    ProjectMetric projectMetric = ProjectMetric.builder()
+                            .project(project)
+                            .metricType(type)
+                            .score(value)
+                            .build();
+                    projectMetricRepository.save(projectMetric);
+                }
+            }
+            updateProjectMetric(project, inferenceHistory);
+        } catch (FileNotFoundException | S3Exception e) {
+            log.warn("S3에 log.txt 파일이 존재하지 않아 Metric 생성을 건너뜁니다. key={}", key);
+        } catch (IOException e) {
+            log.error("프로젝트 Metric 업데이트에 실패했습니다. I/O 에러", e);
+        }
+    }
+
+    private void updateProjectMetric(Project project, InferenceHistory inferenceHistory) {
+        List<ProjectMetric> projectMetrics = projectMetricRepository.findAllByProject(project);
+
+        double accuracyAverage = calculateAverage(projectMetrics, MetricType.ACCURACY);
+        double lossAverage = calculateAverage(projectMetrics, MetricType.LOSS);
+        double iouAverage = calculateAverage(projectMetrics, MetricType.IOU);
+
+        inferenceHistory.updateResult(accuracyAverage, lossAverage, iouAverage);
+    }
+
+    private double calculateAverage(List<ProjectMetric> projectMetrics, MetricType type) {
+        return projectMetrics.stream()
+                .filter(projectMetric -> projectMetric.getMetricType() == type)
+                .mapToDouble(ProjectMetric::getScore)
+                .average()
+                .orElse(0.0);
     }
 }
