@@ -57,7 +57,7 @@ export default function CommentItem({
     <div className="mt-4" style={{ marginLeft: `${depth * 16}px` }}>
       <div className="flex items-start gap-3">
         <Image
-          src="/images/test-profile-image.png"
+          src={comment.profileImageUrl ?? '/images/default-profile-image.png'}
           alt={comment.authorName ?? 'profile image'}
           width={40}
           height={40}
@@ -94,12 +94,10 @@ export default function CommentItem({
               </div>
             </>
           ) : (
-            <p className="text-muted-foreground mt-1 text-sm">
-              {/*{comment.replyToName && (*/}
-              {/*  <span className="text-primary mr-1 font-semibold">*/}
-              {/*    @{comment.replyToName}*/}
-              {/*  </span>*/}
-              {/*)}*/}
+            <p
+              className="mt-1 text-sm"
+              style={{ color: comment.isDeleted ? 'gray' : '' }}
+            >
               {comment.content}
             </p>
           )}
