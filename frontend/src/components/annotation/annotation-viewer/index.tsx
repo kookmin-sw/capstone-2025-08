@@ -801,9 +801,9 @@ const AnnotationViewer: React.FC<{
 
     // 새 타일 이미지 로딩
     viewer.addTiledImage({
-      // tileSource: subProject.tileImageUrl,
-      tileSource:
-        'https://pathos-images.s3.ap-northeast-2.amazonaws.com/sub-project/25/tiles/output_slide.dzi',
+      tileSource: subProject.tileImageUrl,
+      // tileSource:
+      //   'https://pathos-images.s3.ap-northeast-2.amazonaws.com/sub-project/25/tiles/output_slide.dzi',
       success: {
         'AnnotationTestViewer.useEffect': () => {},
       }['AnnotationTestViewer.useEffect'],

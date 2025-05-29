@@ -40,6 +40,13 @@ export default function CommentItem({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingText, setEditingText] = useState('');
 
+  // 태그별 뱃지 색상 변경
+  const variantMap = {
+    FIX: 'destructive',
+    QUESTION: 'outline',
+    COMMENT: 'secondary',
+  } as const;
+
   const handleEdit = (id: number, content: string) => {
     setEditingId(id);
     setEditingText(content);
@@ -57,7 +64,7 @@ export default function CommentItem({
     <div className="mt-4" style={{ marginLeft: `${depth * 16}px` }}>
       <div className="flex items-start gap-3">
         <Image
-          src="/images/test-profile-image.png"
+          src={comment.profileImageUrl ?? '/images/default-profile-image.png'}
           alt={comment.authorName ?? 'profile image'}
           width={40}
           height={40}
@@ -66,7 +73,15 @@ export default function CommentItem({
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="font-semibold">{comment.authorName}</span>
-            <Badge variant="secondary">{comment.commentTag}</Badge>
+            <Badge
+              variant={variantMap[comment.commentTag ?? 'COMMENT']}
+              className="text-[10px]"
+            >
+              {comment.commentTag}
+            </Badge>
+            {comment.authorName === currentUser && (
+              <Badge className="text-[10px]">AUTHOR</Badge>
+            )}
           </div>
 
           {editingId === comment.commentId ? (
@@ -94,12 +109,10 @@ export default function CommentItem({
               </div>
             </>
           ) : (
-            <p className="text-muted-foreground mt-1 text-sm">
-              {/*{comment.replyToName && (*/}
-              {/*  <span className="text-primary mr-1 font-semibold">*/}
-              {/*    @{comment.replyToName}*/}
-              {/*  </span>*/}
-              {/*)}*/}
+            <p
+              className="mt-1 text-sm"
+              style={{ color: comment.isDeleted ? 'gray' : '' }}
+            >
               {comment.content}
             </p>
           )}
@@ -112,7 +125,7 @@ export default function CommentItem({
             >
               Reply
             </Button>
-            {/* 이름이 같을 경우, 본인 작성이므로 수정/삭제 버튼 보여주기 (추후에 유저id, 이메일처럼 겹치지 않는 값으로 수정해야할 거 같습니다.)  */}
+            {/* 이름이 같을 경우, 본인 작성이므로 수정/삭제 버튼 보여주기 (추후에 유저 id, 이메일처럼 겹치지 않는 값으로 수정해야할 거 같습니다.)  */}
             {comment.authorName === currentUser && (
               <>
                 <Button

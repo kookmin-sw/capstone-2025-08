@@ -398,11 +398,6 @@ function ProjectSidebar({
           <Pencil className="h-3 w-3" /> Edit Project
         </Button>
       </div>
-
-      <div className="rounded-md border p-6">
-        <h3 className="text-lg font-bold">Recent Activity</h3>
-        <div className="my-4 border-b" />
-      </div>
     </div>
   );
 }

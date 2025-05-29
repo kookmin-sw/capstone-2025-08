@@ -8,14 +8,16 @@
   • ⚙️ Dual-Branch 멀티 파이프라인 세그멘테이션 엔진
 	
   • 📡 대용량 이미지 처리에 특화된 통신 구조
+
+#### 🔗 [PathOs 소개 페이지 바로 가기](https://kookmin-sw.github.io/capstone-2025-08/)
   
 ![PathOs 포스터 (최종)](https://github.com/user-attachments/assets/44c39da4-060d-436c-8973-51ab5b8389ce)
 
+
 ## 🚀 핵심 기능
 
-![14](https://github.com/user-attachments/assets/cf02a7c7-eb18-4986-b497-fa5072f1d000)
 ![13](https://github.com/user-attachments/assets/0701b3e9-db5e-4988-9712-8fea9f772684)
-
+![14](https://github.com/user-attachments/assets/cf02a7c7-eb18-4986-b497-fa5072f1d000)
 
 ## 👫 팀원 소개
 
@@ -135,4 +137,4 @@
 <br>
 
 ## 🦠 PathOs 바로가기
-- 배포링크
+- [배포링크](https://pathos.io.kr/)
