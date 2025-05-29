@@ -4,11 +4,11 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 
-interface SplashScreenProps {
+type SplashScreenProps = {
   useNavigate?: boolean;
   routePath?: string;
   text?: string;
-}
+};
 
 export default function SplashScreen({
   useNavigate = true,

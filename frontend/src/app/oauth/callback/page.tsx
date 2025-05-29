@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Configuration, ProfileAPIApi } from '@/generated-api';
 import { useUserStore } from '@/stores/use-user-store';
 import { toast } from 'sonner';
-import SplashScreen from '@/app/splash/page';
+import SplashScreen from '@/components/splash-screen';
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
