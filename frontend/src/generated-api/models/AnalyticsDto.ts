@@ -20,12 +20,6 @@ import { mapValues } from '../runtime';
  */
 export interface AnalyticsDto {
     /**
-     * epoch 목록
-     * @type {Array<number>}
-     * @memberof AnalyticsDto
-     */
-    epochs?: Array<number>;
-    /**
      * epoch별 loss 값
      * @type {Array<number>}
      * @memberof AnalyticsDto
@@ -62,7 +56,6 @@ export function AnalyticsDtoFromJSONTyped(json: any, ignoreDiscriminator: boolea
     }
     return {
         
-        'epochs': json['epochs'] == null ? undefined : json['epochs'],
         'loss': json['loss'] == null ? undefined : json['loss'],
         'iou': json['iou'] == null ? undefined : json['iou'],
         'f1Score': json['f1Score'] == null ? undefined : json['f1Score'],
@@ -80,7 +73,6 @@ export function AnalyticsDtoToJSONTyped(value?: AnalyticsDto | null, ignoreDiscr
 
     return {
         
-        'epochs': value['epochs'],
         'loss': value['loss'],
         'iou': value['iou'],
         'f1Score': value['f1Score'],

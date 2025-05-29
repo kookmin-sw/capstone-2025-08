@@ -32,6 +32,12 @@ export interface CommentDto {
      */
     authorName?: string;
     /**
+     * 작성자 프로필
+     * @type {string}
+     * @memberof CommentDto
+     */
+    profileImageUrl?: string;
+    /**
      * 댓글 내용
      * @type {string}
      * @memberof CommentDto
@@ -55,6 +61,12 @@ export interface CommentDto {
      * @memberof CommentDto
      */
     replies?: Array<CommentDto>;
+    /**
+     * 댓글 삭제 여부
+     * @type {boolean}
+     * @memberof CommentDto
+     */
+    isDeleted?: boolean;
 }
 
 
@@ -63,7 +75,8 @@ export interface CommentDto {
  */
 export const CommentDtoCommentTagEnum = {
     Comment: 'COMMENT',
-    Tag: 'TAG'
+    Fix: 'FIX',
+    Question: 'QUESTION'
 } as const;
 export type CommentDtoCommentTagEnum = typeof CommentDtoCommentTagEnum[keyof typeof CommentDtoCommentTagEnum];
 
@@ -87,10 +100,12 @@ export function CommentDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean)
         
         'commentId': json['commentId'] == null ? undefined : json['commentId'],
         'authorName': json['authorName'] == null ? undefined : json['authorName'],
+        'profileImageUrl': json['profileImageUrl'] == null ? undefined : json['profileImageUrl'],
         'content': json['content'] == null ? undefined : json['content'],
         'commentTag': json['commentTag'] == null ? undefined : json['commentTag'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
         'replies': json['replies'] == null ? undefined : ((json['replies'] as Array<any>).map(CommentDtoFromJSON)),
+        'isDeleted': json['isDeleted'] == null ? undefined : json['isDeleted'],
     };
 }
 
@@ -107,10 +122,12 @@ export function CommentDtoToJSONTyped(value?: CommentDto | null, ignoreDiscrimin
         
         'commentId': value['commentId'],
         'authorName': value['authorName'],
+        'profileImageUrl': value['profileImageUrl'],
         'content': value['content'],
         'commentTag': value['commentTag'],
         'createdAt': value['createdAt'] == null ? undefined : ((value['createdAt']).toISOString()),
         'replies': value['replies'] == null ? undefined : ((value['replies'] as Array<any>).map(CommentDtoToJSON)),
+        'isDeleted': value['isDeleted'],
     };
 }
 
