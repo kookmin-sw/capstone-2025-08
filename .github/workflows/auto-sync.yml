@@ -1,0 +1,32 @@
+name: Synchronize to forked repo
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  sync:
+    name: Sync forked repo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with: 
+          token: ${{ secrets.FORKED_REPO_TOKEN }}
+          fetch-depth: 0
+          ref: main
+
+      - name: Add remote-url
+        run: |
+          git remote add forked-repo https://${{ secrets.AUTO_SYNC_USERNAME }}:${{ secrets.FORKED_REPO_TOKEN }}@github.com/${{ secrets.AUTO_SYNC_USERNAME }}/capstone-2025-08
+          git config user.name ${{ secrets.AUTO_SYNC_USERNAME }}
+          git config user.email ${{ secrets.AUTO_SYNC_EMAIL }}
+      
+      - name: Push changes to forked-repo 
+        run: |
+          git push -f forked-repo main
+      
+      - name: Clean up
+        run: |
+          git remote remove forked-repo
