@@ -54,11 +54,11 @@ export default function AnnotationSidebar({
         />
       ),
     },
-    {
-      value: 'uncertainRois',
-      label: 'Uncertain ROIs',
-      content: <SidebarUncertainROI uncertainROIs={dummyUncertainROIs} />,
-    },
+    // {
+    //   value: 'uncertainRois',
+    //   label: 'Uncertain ROIs',
+    //   content: <SidebarUncertainROI uncertainROIs={dummyUncertainROIs} />,
+    // },
   ];
 
   return (
