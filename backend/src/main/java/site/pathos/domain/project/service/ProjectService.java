@@ -406,7 +406,7 @@ public class ProjectService {
                 .filter(projectMetric -> projectMetric.getMetricType() == MetricType.IOU)
                 .mapToDouble(ProjectMetric::getScore)
                 .average()
-                .orElse(0.0) * 100;
+                .orElse(0.0);
     }
 
     //TODO svs 이미지 추가 업로드 구현 필요
