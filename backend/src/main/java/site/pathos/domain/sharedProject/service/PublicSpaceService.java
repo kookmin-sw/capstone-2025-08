@@ -360,7 +360,7 @@ public class PublicSpaceService {
         List<GetSharedProjectCommentsResponseDto.CommentDto> rootComments = new ArrayList<>();
 
         for (Comment comment : allComments) {
-            dtoMap.put(comment.getId(), GetSharedProjectCommentsResponseDto.CommentDto.from(comment));
+            dtoMap.put(comment.getId(), GetSharedProjectCommentsResponseDto.CommentDto.from(comment, s3Service));
         }
 
         for (Comment comment : allComments) {

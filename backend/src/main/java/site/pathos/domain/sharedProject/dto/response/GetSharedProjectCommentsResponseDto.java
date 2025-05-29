@@ -3,6 +3,7 @@ package site.pathos.domain.sharedProject.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import site.pathos.domain.sharedProject.entity.Comment;
 import site.pathos.domain.sharedProject.enums.CommentTag;
+import site.pathos.global.aws.s3.S3Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -61,17 +62,21 @@ public record GetSharedProjectCommentsResponseDto(
             LocalDateTime createdAt,
 
             @Schema(description = "대댓글 리스트")
-            List<CommentDto> replies
+            List<CommentDto> replies,
+
+            @Schema(description = "댓글 삭제 여부", example = "false")
+            boolean isDeleted
     ) {
-        public static CommentDto from(Comment comment) {
+        public static CommentDto from(Comment comment, S3Service s3Service) {
             return new CommentDto(
                     comment.getId(),
                     comment.getUser().getName(),
-                    comment.getUser().getProfileImagePath(),
-                    comment.getContent(),
+                    s3Service.getPresignedUrl(comment.getUser().getProfileImagePath()),
+                    comment.isDeleted() ? "삭제된 메시지입니다" : comment.getContent(),
                     comment.getCommentTag(),
                     comment.getCreatedAt(),
-                    new ArrayList<>()
+                    new ArrayList<>(),
+                    comment.isDeleted()
             );
         }
     }
