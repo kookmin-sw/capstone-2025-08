@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Configuration, ProfileAPIApi } from '@/generated-api';
 import { useUserStore } from '@/stores/use-user-store';
 import { toast } from 'sonner';
 import SplashScreen from '@/components/splash-screen';
 
-export default function OAuthCallbackPage() {
+export const dynamic = 'force-dynamic';
+
+function OAuthCallbackPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setUser = useUserStore((state) => state.setUser);
@@ -45,5 +47,13 @@ export default function OAuthCallbackPage() {
 
   return (
     <SplashScreen useNavigate={false} text="Signing in to your account..." />
+  );
+}
+
+export default function OAuthCallbackPage() {
+  return (
+    <Suspense fallback={<SplashScreen useNavigate={false} text="Loading..." />}>
+      <OAuthCallbackPageInner />
+    </Suspense>
   );
 }
