@@ -71,7 +71,6 @@ export const redrawCanvas = (
 
   const tiledImage = viewerInstance.world.getItemAt(0);
   if (!tiledImage) {
-    console.warn('tiledImage가 아직 준비되지 않음');
     return;
   }
 

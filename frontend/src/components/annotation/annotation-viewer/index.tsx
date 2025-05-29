@@ -48,6 +48,7 @@ import {
   RoiResponsePayload,
   SubProjectSummaryDto,
 } from '@/generated-api';
+import { toast } from 'sonner';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
@@ -589,7 +590,6 @@ const AnnotationViewer: React.FC<{
   useEffect(() => {
     // Roi 잔상 에러를 해결하기 위해 조건 제거
     // if (!inferenceResult) {
-    console.log('[subProject 변경 감지 - 초기화]', subProjectId);
     setLoadedROIs([]);
     setUserDefinedROIs([]);
     setROI(null);
@@ -805,9 +805,7 @@ const AnnotationViewer: React.FC<{
       tileSource:
         'https://pathos-images.s3.ap-northeast-2.amazonaws.com/sub-project/25/tiles/output_slide.dzi',
       success: {
-        'AnnotationTestViewer.useEffect': () => {
-          console.log('DZI image loaded successfully');
-        },
+        'AnnotationTestViewer.useEffect': () => {},
       }['AnnotationTestViewer.useEffect'],
     });
   }, [viewerInstance, subProject]);
@@ -984,14 +982,6 @@ const AnnotationViewer: React.FC<{
             ) {
               currentCellPolygonRef.current.closed = true;
               setCellPolygons([...cellPolygons, currentCellPolygonRef.current]);
-              console.log(
-                '셀 폴리곤 이미지 좌표:',
-                currentCellPolygonRef.current.points.map((pt) =>
-                  viewerInstance.current!.viewport.viewportToImageCoordinates(
-                    new OpenSeadragon.Point(pt.x, pt.y),
-                  ),
-                ),
-              );
               currentCellPolygonRef.current = null;
               setMousePosition(null);
               redraw();
@@ -1362,7 +1352,7 @@ const AnnotationViewer: React.FC<{
       loadedROIs.length === 0 &&
       userDefinedROIs.length === 0
     ) {
-      alert('먼저 ROI를 선택하세요.');
+      toast.error('Please select an ROI first.');
       return false;
     }
 
@@ -1479,7 +1469,7 @@ const AnnotationViewer: React.FC<{
       currentStrokeRef.current ||
       currentPolygonRef.current
     ) {
-      alert('어노테이션 중에는 ROI를 수정할 수 없습니다.');
+      toast.error('Cannot modify ROI during annotation.');
       return;
     }
 

@@ -50,7 +50,6 @@ export default function ProjectAnnotationPage() {
         const projectId = Number(id);
         const projectRes = await ProjectAnnotationApi.getProject({ projectId });
         setProject(projectRes);
-        console.log('project: ', projectRes);
 
         useAnnotationSharedStore.getState().setProject(projectRes);
 
@@ -97,7 +96,6 @@ export default function ProjectAnnotationPage() {
             annotationHistoryId: latestAnnotationHistoryId,
           });
         setInferenceResult(annotationHistory);
-        console.log('inferenceResult: ', annotationHistory);
       } catch (err) {
         console.error('서브프로젝트 변경 후 inference 불러오기 실패:', err);
       }

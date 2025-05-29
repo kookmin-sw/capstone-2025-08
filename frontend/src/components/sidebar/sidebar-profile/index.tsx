@@ -30,7 +30,7 @@ export function Profile() {
       {/* 로그아웃 버튼 */}
       <div
         className="hover:bg-muted flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md group-data-[collapsible=icon]:hidden"
-        onClick={() => console.log('로그아웃 모달 띄우기')}
+        // onClick={() => console.log('로그아웃 모달 띄우기')}
       >
         <LogOut size={16} color="#6B7280" />
       </div>

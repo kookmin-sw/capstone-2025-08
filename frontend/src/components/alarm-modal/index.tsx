@@ -18,6 +18,7 @@ import {
   type GetNotificationsResponseDto,
   NotificationAPIApi,
 } from '@/generated-api';
+import { toast } from 'sonner';
 
 interface DeleteModalProps {
   open: boolean;
@@ -50,8 +51,7 @@ export default function AlarmModal({ open, onClose }: DeleteModalProps) {
         notificationId: notificationId,
       });
     } catch (error) {
-      console.error('알림 읽기 오류', error);
-      alert('알림 읽기 요청 중 오류가 발생했습니다.');
+      toast.error('Failed to fetch notifications.');
     }
   };
 

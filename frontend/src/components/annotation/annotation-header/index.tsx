@@ -22,6 +22,7 @@ import {
   RoiSaveRequestDto,
 } from '@/generated-api';
 import { convertViewportToImageROIs } from '@/utils/canvas-roi-utils';
+import { toast } from 'sonner';
 
 export default function AnnotationHeader() {
   const ProjectAnnotationApi = useMemo(() => new ProjectAnnotationAPIApi(), []);
@@ -100,9 +101,12 @@ export default function AnnotationHeader() {
       useAnnotationSharedStore.getState();
 
     if (!viewer || !canvas || !selectedSubProject || !project) {
-      alert('저장할 수 있는 정보가 부족합니다.');
+      toast.error('Insufficient information to save.');
       return;
     }
+
+    // 로딩 토스트 띄우기
+    const toastId = toast.loading('Saving ROIs and uploading images...');
 
     try {
       // 1. 이미지 export
@@ -113,17 +117,15 @@ export default function AnnotationHeader() {
         userDefinedROIs,
       );
 
-      // 2. 이미지 이름 매핑
+      // 2. 이미지 이름 매핑 & FormData 준비
       const imageNameMap = new Map<number, string[]>();
       const formData = new FormData();
-
       exportedImages.forEach(({ roiId, filename, blob }) => {
         if (!imageNameMap.has(roiId)) {
           imageNameMap.set(roiId, []);
         }
         imageNameMap.get(roiId)!.push(filename);
-
-        formData.append('images', blob, filename); // 이미지 추가
+        formData.append('images', blob, filename);
       });
 
       // 3. ROI 변환
@@ -131,77 +133,28 @@ export default function AnnotationHeader() {
         viewer,
         userDefinedROIs,
       );
-
       const rois = transformROIs(
         loadedROIs,
         imageUserDefinedROIs,
         imageNameMap,
       );
 
-      // 4. Label 변환 (원하는 구조로)
-      const transformedLabels = (labels ?? []).map(
-        (label: any, index: number) => ({
-          id: label.labelId,
-          name: label.name,
-          color: label.color,
-          displayOrder: label.displayOrder ?? index + 1, // 없으면 index+1로 fallback
-          createdAt: label.createdAt ?? new Date().toISOString(), // 없으면 현재 시각으로
-        }),
-      );
+      // 4. Label 변환
+      const transformedLabels = (labels ?? []).map((label, index) => ({
+        id: label.labelId,
+        name: label.name,
+        color: label.color,
+        displayOrder: label.displayOrder ?? index + 1,
+        createdAt: label.createdAt ?? new Date().toISOString(),
+      }));
 
-      const requestDto = {
-        rois: rois?.length ? rois : [],
-        labels: transformedLabels,
-      };
-
-      // 5. JSON 파트 FormData에 추가
+      const requestDto = { rois: rois ?? [], labels: transformedLabels };
       formData.append(
         'requestDto',
-        new Blob([JSON.stringify(requestDto)], {
-          type: 'application/json',
-        }),
+        new Blob([JSON.stringify(requestDto)], { type: 'application/json' }),
       );
 
-      // requestDto 내용을 콘솔로 확인
-      console.log('📦 requestDto:', JSON.stringify(requestDto, null, 2));
-
-      // formData 내용을 출력
-      console.log('📦 FormData 내용:');
-      for (const [key, value] of formData.entries()) {
-        if (value instanceof Blob) {
-          console.log(
-            ` 🖼️ ${key}:`,
-            value.name,
-            value.type,
-            value.size + ' bytes',
-          );
-          if (key === 'requestDto') {
-            value.text().then((text) => {
-              console.log('📝 requestDto JSON:', JSON.parse(text));
-            });
-          }
-        } else {
-          console.log(`🔹 ${key}:`, value);
-        }
-      }
-
-      console.log('🖼️ FormData 이미지 확인용 링크 ↓');
-
-      exportedImages.forEach(({ filename, blob }) => {
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename; // 저장될 파일명
-        a.style.display = 'none';
-
-        document.body.appendChild(a);
-        a.click(); // ✅ 자동 다운로드 실행
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url); // 메모리 누수 방지
-      });
-
-      // 6. API 호출 (openapi generator의 직렬화 오류로 인해 직접 호출하였습니다.)
+      // 5. API 호출
       await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/annotation/sub-projects/${selectedSubProject.subProjectId}/histories/${selectedSubProject.latestAnnotationHistoryId}/save`,
         {
@@ -210,33 +163,41 @@ export default function AnnotationHeader() {
         },
       );
 
-      alert('ROI 저장 및 이미지 업로드가 완료되었습니다.');
+      // 성공 토스트 업데이트
+      toast.success('ROIs saved and images uploaded successfully!', {
+        id: toastId,
+      });
 
-      window.location.reload(); // 저장 완료 후 새로고침
+      // 필요시 새로고침
+      window.location.reload();
     } catch (error) {
-      console.error('저장 오류:', error);
-      alert('저장 중 오류가 발생했습니다.');
+      // 실패 토스트 업데이트
+      toast.error('Failed to save ROIs and upload images.', { id: toastId });
     }
   };
 
   const handleTrain = async (modelName: string) => {
     if (!project || !selectedSubProject) {
-      alert('학습 요청에 필요한 정보가 없습니다.');
+      toast.error('Missing information for training request.');
       return;
     }
+
+    // 로딩 토스트 표시 (id를 기억해뒀다가 나중에 업데이트)
+    const toastId = toast.loading('Submitting training request...');
 
     try {
       await modelApi.requestTraining({
         projectId: Number(id),
-        trainingRequestDto: {
-          modelName,
-        },
+        trainingRequestDto: { modelName },
       });
 
-      alert('모델 학습 요청이 완료되었습니다.');
+      // 성공 토스트로 업데이트
+      toast.success('Training request submitted successfully!', {
+        id: toastId,
+      });
     } catch (err) {
-      console.error('모델 학습 요청 오류:', err);
-      alert('모델 학습 요청 중 오류가 발생했습니다.');
+      // 실패 토스트로 업데이트
+      toast.error('Failed to submit training request.', { id: toastId });
     }
   };
 
@@ -336,7 +297,6 @@ export default function AnnotationHeader() {
           onClose={() => setIsExportModalOpen(false)}
           onSave={(modelName) => {
             setIsExportModalOpen(false);
-            // handleSave(); // TODO: 규원 - 저장하는 동안 토스토로 로딩 처리 후 handleTrain 호출
             handleTrain(modelName);
           }}
         />
