@@ -33,8 +33,10 @@ public record GetSharedProjectDetailResponseDto(
         List<String> originalImagePaths,
 
         @Schema(description = "결과 이미지 경로 목록", example = "[\"https://pathos-bucket.s3.amazonaws.com/result1.png\"]")
-        List<String> resultImagePaths
+        List<String> resultImagePaths,
 
+        @Schema(description = "프로젝트 ID", example = "1")
+        Long projectId
 ) {
     @Schema(description = "모델 정보 DTO")
     public record ModelInfo(
