@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,7 +21,12 @@ import site.pathos.domain.annotation.entity.CellAnnotation;
 import site.pathos.domain.annotation.entity.Roi;
 import site.pathos.domain.annotation.entity.TissueAnnotation;
 import site.pathos.domain.annotation.enums.AnnotationType;
-import site.pathos.domain.annotation.repository.*;
+import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
+import site.pathos.domain.annotation.repository.CellAnnotationRepository;
+import site.pathos.domain.annotation.repository.ModelProjectLabelRepository;
+import site.pathos.domain.annotation.repository.ProjectLabelRepository;
+import site.pathos.domain.annotation.repository.RoiRepository;
+import site.pathos.domain.annotation.repository.TissueAnnotationRepository;
 import site.pathos.domain.annotation.service.TissueAnnotationService;
 import site.pathos.domain.model.dto.TrainingRequestDto;
 import site.pathos.domain.model.dto.TrainingRequestMessageDto;
@@ -35,8 +42,8 @@ import site.pathos.domain.model.enums.ModelRequestType;
 import site.pathos.domain.model.event.ProjectRunCompletedEvent;
 import site.pathos.domain.model.event.ProjectTrainCompletedEvent;
 import site.pathos.domain.model.repository.InferenceHistoryRepository;
-import site.pathos.domain.model.repository.ProjectMetricRepository;
 import site.pathos.domain.model.repository.ModelRepository;
+import site.pathos.domain.model.repository.ProjectMetricRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.repository.TrainingHistoryRepository;
 import site.pathos.domain.project.entity.Project;
@@ -324,8 +331,10 @@ public class ModelServerService {
     }
 
     public void createMetric(Project project, InferenceHistory inferenceHistory) {
-        String key = "log.txt";
         try {
+            String key = "log.txt";
+            Map<Long, List<Double>> roiEntropyMap = new HashMap<>();
+
             InputStream inputStream = s3Service.downloadFile(key);
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
             try (inputStream; reader) {
@@ -334,25 +343,53 @@ public class ModelServerService {
                     final String currentLine = line;
 
                     Optional<MetricType> optionalType = MetricType.parseLine(currentLine);
-                    if (optionalType.isEmpty()) {
+                    if (optionalType.isPresent()) {
+                        MetricType type = optionalType.get();
+                        double value = type.parseValue(currentLine);
+                        ProjectMetric projectMetric = ProjectMetric.builder()
+                                .project(project)
+                                .metricType(type)
+                                .score(value)
+                                .build();
+                        projectMetricRepository.save(projectMetric);
                         continue;
                     }
 
-                    MetricType type = optionalType.get();
-                    double value = type.parseValue(currentLine);
-                    ProjectMetric projectMetric = ProjectMetric.builder()
-                            .project(project)
-                            .metricType(type)
-                            .score(value)
-                            .build();
-                    projectMetricRepository.save(projectMetric);
+                    if (currentLine.startsWith("Image Name:")) {
+                        try {
+                            String[] parts = currentLine.split(", Mean Entropy per-images:");
+                            String imagePart = parts[0].trim(); // "Image Name: 35_58_85199_18633"
+                            String[] imageNameParts = imagePart.split("_");
+                            long roiId = Long.parseLong(imageNameParts[1]);
+                            double entropyValue = Double.parseDouble(parts[1].trim());
+                            roiEntropyMap.computeIfAbsent(roiId, k -> new ArrayList<>()).add(entropyValue);
+                        } catch (Exception e) {
+                            log.warn("엔트로피 파싱 중 오류 발생: {}", currentLine, e);
+                        }
+                    }
                 }
             }
             updateProjectMetric(project, inferenceHistory);
+            updateRoiMetric(roiEntropyMap);
+
         } catch (FileNotFoundException | S3Exception e) {
-            log.warn("S3에 log.txt 파일이 존재하지 않아 Metric 생성을 건너뜁니다. key={}", key);
+            log.warn("S3에 log.txt 파일이 존재하지 않아 Metric 생성을 건너뜁니다.");
         } catch (IOException e) {
             log.error("프로젝트 Metric 업데이트에 실패했습니다. I/O 에러", e);
+        }
+    }
+
+    private void updateRoiMetric(Map<Long, List<Double>> roiEntropyMap) {
+        for (long roiId : roiEntropyMap.keySet()) {
+            Roi roi = roiRepository.findById(roiId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
+            List<Double> scores = roiEntropyMap.get(roiId);
+            int score = (int) Math.round(
+                    scores.stream()
+                            .mapToDouble(it -> it)
+                            .average()
+                            .orElse(0.0) * 100);
+            roi.changeFaulty(score);
         }
     }
 

@@ -68,4 +68,8 @@ public class Roi {
     public void changeDisplayOrder(int displayOrder){
         this.displayOrder = displayOrder;
     }
+
+    public void changeFaulty(int faulty) {
+        this.faulty = faulty;
+    }
 }
