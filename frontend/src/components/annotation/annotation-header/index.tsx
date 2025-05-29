@@ -26,6 +26,7 @@ import { convertViewportToImageROIs } from '@/utils/canvas-roi-utils';
 import { toast } from 'sonner';
 import SplashScreen from '@/components/splash-screen';
 import { formatModelType } from '@/utils/model-type-label';
+import { createPortal } from 'react-dom';
 
 export default function AnnotationHeader() {
   const ProjectAnnotationApi = useMemo(() => new ProjectAnnotationAPIApi(), []);
@@ -117,6 +118,8 @@ export default function AnnotationHeader() {
       return;
     }
 
+    let isError = false;
+
     try {
       // 1. 이미지 export
       const exportedImages = await exportROIAsPNG(
@@ -199,17 +202,21 @@ export default function AnnotationHeader() {
       );
 
       await router.refresh();
-      toast.success('ROIs and images saved successfully.');
     } catch (error) {
-      setIsSaving(false);
       console.error('저장 오류:', error);
-      toast.error('Failed to save ROIs and upload images.');
+      isError = true;
     } finally {
       const elapsed = Date.now() - start;
       if (elapsed < 2500) {
         await new Promise((r) => setTimeout(r, 2500 - elapsed));
       }
       setIsSaving(false);
+
+      if (isError) {
+        toast.error('Failed to save ROIs and upload images.');
+      } else {
+        toast.success('ROIs and images saved successfully.');
+      }
     }
   };
 
@@ -239,12 +246,7 @@ export default function AnnotationHeader() {
   };
 
   if (isSaving) {
-    return (
-      <SplashScreen
-        useNavigate={false}
-        text="Saving your changes... please wait."
-      />
-    );
+    return <SavingOverlay />;
   }
 
   return (
@@ -348,5 +350,17 @@ export default function AnnotationHeader() {
         />
       </div>
     </div>
+  );
+}
+
+function SavingOverlay() {
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/80">
+      <SplashScreen
+        useNavigate={false}
+        text="Saving your changes... please wait."
+      />
+    </div>,
+    document.body,
   );
 }
