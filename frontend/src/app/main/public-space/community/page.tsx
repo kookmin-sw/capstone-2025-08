@@ -7,7 +7,6 @@ import SubTitle from '@/components/public-space/sub-title';
 import ProjectCard from '@/components/public-space/project-card';
 import BestProjectBox from '@/components/public-space/best-project-box';
 import SearchBar from '@/components/common/search-bar';
-import { Button } from '@/components/ui/button';
 import { Plus, Award, Clock } from 'lucide-react';
 import {
   Pagination,
