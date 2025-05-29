@@ -23,7 +23,7 @@ export function Profile() {
 
       {/* 프로필 info(이름, email) */}
       <div className="w-full group-data-[collapsible=icon]:hidden">
-        <div className="text-sm font-semibold">{user.name}</div>
+        <div className="text-xs font-semibold">{user.name}</div>
         <div className="text-xs">{user.email}</div>
       </div>
 
