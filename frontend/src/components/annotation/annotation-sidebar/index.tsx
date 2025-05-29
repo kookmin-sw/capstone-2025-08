@@ -1,21 +1,20 @@
 import TabMenu from '@/components/common/tab-menu';
-import { ROI } from '@/types/annotation';
 import SidebarRoi from '@/components/annotation/annotation-sidebar/roi-list';
 import SidebarUncertainROI from '@/components/annotation/annotation-sidebar/uncertain-roi-list';
 import SidebarLabel from '@/components/annotation/annotation-sidebar/label-list';
 import { dummyUncertainROIs } from '@/data/dummy';
-import { Label } from '@/types/annotation-sidebar';
+import { ProjectLabelDto, RoiResponseDto } from '@/generated-api';
 
 interface AnnotationSidebarProps {
-  rois: ROI[];
+  rois: RoiResponseDto[];
   onClickROI: (index: number) => void;
   onEditROI: (index: number) => void;
   onDeleteROI: (index: number) => void;
-  labels: Label[];
+  labels: ProjectLabelDto[];
   onRenameLabel: (id: string, newName: string) => void;
   onDeleteLabel: (id: string) => void;
   onSelectLabelColor: (color: string) => void;
-  onReorderLabels: (labels: Label[]) => void;
+  onReorderLabels: (labels: ProjectLabelDto[]) => void;
 }
 
 export default function AnnotationSidebar({

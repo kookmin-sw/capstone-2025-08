@@ -2,14 +2,14 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { SubProject } from '@/types/project-schema';
 import { Plus } from 'lucide-react';
 import ImageUploadModal from '@/components/projects/image-upload-modal';
+import { SubProjectSummaryDto } from '@/generated-api';
 
 interface Props {
-  subProjects: SubProject[];
-  selected: SubProject | null;
-  onSelect: (sp: SubProject) => void;
+  subProjects: SubProjectSummaryDto[];
+  selected: SubProjectSummaryDto | null;
+  onSelect: (sp: SubProjectSummaryDto) => void;
 }
 
 export default function AnnotationSubProjectSlider({
@@ -22,16 +22,16 @@ export default function AnnotationSubProjectSlider({
   return (
     <div className="bg-muted absolute bottom-0 flex overflow-x-auto border-b border-t">
       {subProjects.map((sp) => {
-        const isSelected = selected?.id === sp.id;
+        const isSelected = selected?.subProjectId === sp.subProjectId;
         return (
           <div
-            key={sp.id}
+            key={sp.subProjectId}
             onClick={() => onSelect(sp)}
             className="relative h-[140px] w-[140px] min-w-[140px] cursor-pointer overflow-hidden border-r transition-all"
           >
             <Image
-              src={sp.thumbnail}
-              alt={`Thumbnail ${sp.id}`}
+              src={sp.thumbnailUrl || ''}
+              alt={`Thumbnail ${sp.subProjectId}`}
               fill
               sizes="140px"
               className={`object-cover transition-opacity ${

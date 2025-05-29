@@ -1,30 +1,30 @@
+'use client';
+
 import Image from 'next/image';
 import { LogOut } from 'lucide-react';
-
-// profile dummy
-const profile = {
-  imageUrl: '/images/test-profile-image.png',
-  name: 'hyeonjin Hwang',
-  email: 'jjini6530@kookmin.ac.kr',
-};
+import { useUserStore } from '@/stores/use-user-store';
 
 export function Profile() {
+  const user = useUserStore((state) => state.user);
+
+  if (!user) return null; // 로그인 안 된 경우
+
   return (
     <div className="box-border flex items-center gap-2 p-2 group-data-[collapsible=icon]:p-0">
       {/* 프로필 이미지 */}
       <Image
         width={32}
         height={32}
-        src={profile.imageUrl}
-        alt={`${profile.name} profile image`}
+        src={user.profileImagePath || '/images/default-profile.png'}
+        alt={`${user.name} profile image`}
         priority
         className="rounded-full object-cover"
       />
 
       {/* 프로필 info(이름, email) */}
       <div className="w-full group-data-[collapsible=icon]:hidden">
-        <div className="text-sm font-semibold">{profile.name}</div>
-        <div className="text-xs">{profile.email}</div>
+        <div className="text-sm font-semibold">{user.name}</div>
+        <div className="text-xs">{user.email}</div>
       </div>
 
       {/* 로그아웃 버튼 */}

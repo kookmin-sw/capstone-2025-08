@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Dialog,
@@ -13,6 +14,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  type GetNotificationsResponseDto,
+  NotificationAPIApi,
+} from '@/generated-api';
 
 interface DeleteModalProps {
   open: boolean;
@@ -20,90 +25,35 @@ interface DeleteModalProps {
 }
 
 export default function AlarmModal({ open, onClose }: DeleteModalProps) {
+  const NotificationApi = useMemo(() => new NotificationAPIApi(), []);
+
   const router = useRouter();
 
-  const alarmList = [
-    {
-      id: 1,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: false,
-    },
-    {
-      id: 2,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: false,
-    },
-    {
-      id: 3,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: true,
-    },
-    {
-      id: 4,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: true,
-    },
-    {
-      id: 5,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: true,
-    },
-    {
-      id: 6,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: true,
-    },
-    {
-      id: 7,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: true,
-    },
-    {
-      id: 8,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: true,
-    },
-    {
-      id: 9,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: true,
-    },
-    {
-      id: 10,
-      title: 'File upload completed',
-      description: 'File upload completed. Try annotating it.',
-      time: '1 minute ago',
-      url: '/main/projects',
-      isSeen: true,
-    },
-  ];
+  const [alarmList, setAlarmList] = useState<GetNotificationsResponseDto[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const notificationRes = await NotificationApi.getNotifications();
+        setAlarmList(notificationRes.content ?? []);
+      } catch (error) {
+        console.error('알림 목록를 불러오는 중 오류 발생:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleRead = async (notificationId: number) => {
+    try {
+      await NotificationApi.readNotification({
+        notificationId: notificationId,
+      });
+    } catch (error) {
+      console.error('알림 읽기 오류', error);
+      alert('알림 읽기 요청 중 오류가 발생했습니다.');
+    }
+  };
 
   return (
     <div className="absolute top-0">
@@ -120,7 +70,8 @@ export default function AlarmModal({ open, onClose }: DeleteModalProps) {
                 key={item.id}
                 className="cursor-pointer py-5"
                 onClick={() => {
-                  router.push(item.url);
+                  handleRead(item.id ?? -1);
+                  router.push(item.redirectPath ?? '');
                   onClose();
                 }}
               >
@@ -128,17 +79,17 @@ export default function AlarmModal({ open, onClose }: DeleteModalProps) {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <CardTitle>{item.title}</CardTitle>
-                      {item.isSeen && (
+                      {!item.isRead && (
                         <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                       )}
                     </div>
 
                     <div className="text-muted-foreground text-sm">
-                      {item.time}
+                      {item.timeAgo}
                     </div>
                   </div>
 
-                  <CardDescription>{item.description}</CardDescription>
+                  <CardDescription>{item.message}</CardDescription>
                 </CardHeader>
               </Card>
             ))}

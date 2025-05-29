@@ -9,18 +9,14 @@ import { motion, Variants } from 'framer-motion';
 interface LoginFormProps extends React.HTMLAttributes<HTMLDivElement> {
   containerVariants: Variants;
   itemVariants: Variants;
-  onSwitch?: () => void;
 }
 
 export function LoginForm({
   containerVariants,
   itemVariants,
-  onSwitch,
   className,
   ...props
 }: LoginFormProps) {
-  // TODO: 로그인 API 연동
-
   return (
     <motion.div
       variants={containerVariants}
@@ -51,7 +47,14 @@ export function LoginForm({
           </motion.p>
         </div>
         <motion.div variants={itemVariants} className="grid gap-6">
-          <Button variant="outline" className="w-full">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              window.location.href =
+                'https://pathos.o-r.kr/oauth2/authorization/google';
+            }}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -77,18 +80,6 @@ export function LoginForm({
             </svg>
             Sign in with Google
           </Button>
-        </motion.div>
-        <motion.div
-          variants={itemVariants}
-          className="text-center text-sm text-white"
-        >
-          Don&apos;t have an account?{' '}
-          <button
-            onClick={onSwitch}
-            className="underline underline-offset-4 hover:cursor-pointer"
-          >
-            Sign up
-          </button>
         </motion.div>
       </div>
     </motion.div>

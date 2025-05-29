@@ -22,6 +22,6 @@ export interface Label {
   id: string;
   name: string;
   color: string;
-  order: number;
-  createdAt?: number;
+  // order: number;
+  // createdAt?: number;
 }

@@ -2,10 +2,10 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AlignJustify, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Label } from '@/types/annotation-sidebar';
+import { ProjectLabelDto } from '@/generated-api';
 
 interface LabelItemProps {
-  label: Label;
+  label: ProjectLabelDto;
   onRename: (id: string, newName: string) => void;
   onDelete: (id: string) => void;
   onSelect: (color: string) => void;
@@ -21,7 +21,7 @@ export default function LabelItem({
   const [editValue, setEditValue] = useState(label.name);
 
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: label.id });
+    useSortable({ id: label.labelId! });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -33,7 +33,7 @@ export default function LabelItem({
       ref={setNodeRef}
       style={style}
       className="flex cursor-pointer items-center gap-2.5 rounded-lg bg-white p-2.5 font-medium shadow"
-      onClick={() => onSelect(label.color)}
+      onClick={() => onSelect(label.color!)}
     >
       <AlignJustify
         {...attributes}
@@ -55,12 +55,16 @@ export default function LabelItem({
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={() => {
-              onRename(label.id, editValue);
+              if (editValue != null) {
+                onRename(String(label.labelId), editValue);
+              }
               setEditing(false);
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
-                onRename(label.id, editValue);
+                if (editValue != null) {
+                  onRename(String(label.labelId), editValue);
+                }
                 setEditing(false);
               }
             }}
@@ -87,7 +91,7 @@ export default function LabelItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onDelete(label.id);
+              onDelete(String(label.labelId));
             }}
           >
             <Trash2 className="text-muted-foreground h-4 w-4 cursor-pointer hover:text-[#CA0000]" />

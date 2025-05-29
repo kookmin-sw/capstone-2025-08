@@ -2,7 +2,6 @@
 
 import { useAutoRotateFeatures } from '@/hooks/use-auto-rotate-features';
 import { useScrollState } from '@/hooks/use-scroll-state';
-import { useMousePosition } from '@/hooks/use-mouse-position';
 import LandingHeader from '@/components/landing/landing-header';
 import LandingFooter from '@/components/landing/landing-footer';
 import HeroSection from '@/components/landing/hero-section';
@@ -16,16 +15,11 @@ export default function Main() {
     features.length,
   );
   const scrolled = useScrollState();
-  const mousePosition = useMousePosition();
 
   return (
     <div className="flex min-h-screen flex-col overflow-hidden">
       <LandingHeader scrolled={scrolled} />
-      <HeroSection
-        features={features}
-        activeFeature={activeFeature}
-        mousePosition={mousePosition}
-      />
+      <HeroSection features={features} activeFeature={activeFeature} />
       <FeaturesSection
         features={features}
         activeFeature={activeFeature}

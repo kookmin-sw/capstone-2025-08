@@ -32,23 +32,22 @@ import {
   Point,
   Stroke,
   ROI,
-  LoadedROI,
   Polygon,
   RenderItem,
   RenderSnapshot,
 } from '@/types/annotation';
-import { SubProject } from '@/types/project-schema';
-import {
-  dummyCellInferenceResults,
-  dummyTissueInferenceResults,
-  dummyMultiInferenceResults,
-} from '@/data/dummy';
 import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
 import AnnotationSubProjectSlider from '@/components/annotation/annotation-subproject-slider';
 import { convertViewportROIToImageROI } from '@/hooks/use-viewport-to-image';
-import { Label } from '@/types/annotation-sidebar';
 import { useAnnotationSharedStore } from '@/stores/annotation-shared';
 import AnnotationCellDeleteModal from '@/components/annotation/annotation-cell-delete-modal';
+import {
+  AnnotationHistoryResponseDto,
+  ProjectLabelDto,
+  RoiResponseDto,
+  RoiResponsePayload,
+  SubProjectSummaryDto,
+} from '@/generated-api';
 
 // ROI 선 두께 상수
 const BORDER_THICKNESS = 2;
@@ -56,21 +55,21 @@ const BORDER_THICKNESS = 2;
 type Tool = 'point' | 'polygon' | 'paintbrush' | 'eraser' | 'delete' | null;
 
 const AnnotationViewer: React.FC<{
-  subProject: SubProject | null;
-  setSubProject: (sp: SubProject) => void;
-  subProjects: SubProject[];
-  inferenceResult:
-    | (typeof dummyCellInferenceResults)[number]
-    | (typeof dummyTissueInferenceResults)[number]
-    | (typeof dummyMultiInferenceResults)[number]
-    | null;
+  projectId: string;
+  subProject: SubProjectSummaryDto | null;
+  setSubProject: (sp: SubProjectSummaryDto) => void;
+  subProjects: SubProjectSummaryDto[];
+  inferenceResult: AnnotationHistoryResponseDto | null;
   modelType: string;
+  initialLabels: ProjectLabelDto[];
 }> = ({
+  projectId,
   subProject,
   setSubProject,
   subProjects,
   inferenceResult,
   modelType,
+  initialLabels,
 }) => {
   /* =============================================
       Ref 및 State 선언
@@ -100,16 +99,16 @@ const AnnotationViewer: React.FC<{
   const [mousePosition, setMousePosition] = useState<Point | null>(null);
 
   // 현재 선택 중인 ROI 및 모드 상태
-  const [roi, setROI] = useState<ROI | null>(null);
+  const [roi, setROI] = useState<RoiResponseDto | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [isSelectingROI, setIsSelectingROI] = useState(false);
 
   // 모델 추론으로부터 로딩된 ROI
-  const [loadedROIs, setLoadedROIs] = useState<LoadedROI[]>([]);
+  const [loadedROIs, setLoadedROIs] = useState<RoiResponsePayload[]>([]);
 
   // 서브프로젝트 단위로 관리되는 상태들 (key = subProject.id)
   const [userDefinedROIsMap, setUserDefinedROIsMap] = useState<
-    Record<number, ROI[]>
+    Record<number, RoiResponseDto[]>
   >({});
   const [strokesMap, setStrokesMap] = useState<Record<number, Stroke[]>>({});
   const [polygonsMap, setPolygonsMap] = useState<Record<number, Polygon[]>>({});
@@ -131,7 +130,7 @@ const AnnotationViewer: React.FC<{
   } | null>(null);
 
   // 현재 서브프로젝트 ID 기준 상태 접근
-  const subProjectId = subProject?.id ?? -1;
+  const subProjectId = subProject?.subProjectId ?? -1;
 
   const userDefinedROIs = useMemo(
     () => userDefinedROIsMap[subProjectId] || [],
@@ -157,7 +156,7 @@ const AnnotationViewer: React.FC<{
   >({});
 
   // 현재 서브프로젝트 ID 기준 상태 업데이트 함수들
-  const setUserDefinedROIs = (rois: ROI[]) => {
+  const setUserDefinedROIs = (rois: RoiResponseDto[]) => {
     if (subProjectId == null) return;
     setUserDefinedROIsMap((prev) => ({ ...prev, [subProjectId]: rois }));
   };
@@ -252,10 +251,11 @@ const AnnotationViewer: React.FC<{
     const inferredROIs = viewerInstance.current
       ? getAllViewportROIs(viewerInstance.current, loadedROIs)
       : loadedROIs.map((roi) => ({
-          x: roi.bbox.x,
-          y: roi.bbox.y,
-          width: roi.bbox.w,
-          height: roi.bbox.h,
+          id: roi.detail?.id,
+          x: roi.detail?.x,
+          y: roi.detail?.y,
+          width: roi.detail?.width,
+          height: roi.detail?.height,
         }));
     return [...inferredROIs, ...userDefinedROIs];
   }, [viewerInstance, loadedROIs, userDefinedROIs]);
@@ -272,58 +272,98 @@ const AnnotationViewer: React.FC<{
   const labels = useAnnotationSharedStore((state) => state.labels);
   const setLabels = useAnnotationSharedStore((state) => state.setLabels);
 
-  // label 이름 수정
-  const handleRenameLabel = (id: string, newName: string) => {
-    const updated = labels.map((label) =>
-      label.id === id ? { ...label, name: newName } : label,
-    );
-    setLabels(updated);
-  };
-
-  // label 이름 삭제
-  const handleDeleteLabel = (id: string) => {
-    const updated = labels.filter((label) => label.id !== id);
-    setLabels(updated);
-  };
-
-  // 1. 최초 inference 로딩 시 (덮어쓰기 방지)
+  // 1. 최초 라벨 불러오기
   useEffect(() => {
-    if (!inferenceResult || !inferenceResult.labels) return;
-    if (labels.length > 0) return; // 이미 있으면 아무 것도 안함
-
-    setLabels(
-      inferenceResult.labels.map((label, idx) => ({
-        id: String(label.id ?? idx),
-        name: label.name,
-        color: label.color,
-        createdAt: Date.now(),
-        order: idx,
-      })),
-    );
-  }, [inferenceResult, labels, setLabels]);
+    if (initialLabels && projectId) {
+      setLabels(initialLabels);
+    }
+  }, [projectId]);
 
   // 2. 드로잉 시 새 색상이면 추가
   const ensureLabelForCurrentColor = () => {
     const exists = labels.find((l) => l.color === penColor);
     if (!exists) {
       const newLabel = {
-        id: crypto.randomUUID(),
+        labelId: -Date.now(),
         name: `Label ${labels.length + 1}`,
         color: penColor,
-        createdAt: Date.now(),
-        order: labels.length,
+        createdAt: new Date(),
+        displayOrder: labels.length,
       };
       setLabels([...labels, newLabel]);
     }
   };
 
+  // label 이름 수정
+  const handleRenameLabel = (id: string, newName: string) => {
+    const updated = labels.map((label) =>
+      label.labelId?.toString() === id ? { ...label, name: newName } : label,
+    );
+    setLabels(updated);
+  };
+
+  // label 삭제
+  const handleDeleteLabel = (id: string) => {
+    const deletedLabel = labels.find(
+      (label) => label.labelId?.toString() === id,
+    );
+    if (!deletedLabel) return;
+
+    const targetColor = deletedLabel.color;
+
+    // 1. label 삭제
+    const updatedLabels = labels.filter(
+      (label) => label.labelId?.toString() !== id,
+    );
+    setLabels(updatedLabels);
+
+    // 2. 해당 색상의 stroke 제거
+    const updatedStrokes = strokes.filter(
+      (stroke) => stroke.color !== targetColor,
+    );
+    setStrokes(updatedStrokes);
+
+    // 3. 해당 색상의 polygon 제거
+    const updatedPolygons = polygons.filter(
+      (polygon) => polygon.color !== targetColor,
+    );
+    setPolygons(updatedPolygons);
+
+    // 4. 해당 색상의 셀 폴리곤 제거
+    const updatedCellPolygons = cellPolygons.filter(
+      (polygon) => polygon.color !== targetColor,
+    );
+    setCellPolygons(updatedCellPolygons);
+
+    // 5. ROI 안의 불러온 셀들도 제거 (loadedROIs는 변경 불가능할 수 있으므로 복사)
+    const updatedLoaded = loadedROIs.map((roi) => ({
+      ...roi,
+      cell: roi.cell?.filter((c) => c.color !== targetColor),
+    }));
+    setLoadedROIs(updatedLoaded);
+
+    // 6. renderQueue도 정리
+    const updatedQueue = (renderQueueMap[subProjectId] || []).filter((item) => {
+      if (item.type === 'stroke') return item.stroke.color !== targetColor;
+      if (item.type === 'polygon') return item.polygon.color !== targetColor;
+      return true;
+    });
+    setRenderQueueMap((prev) => ({
+      ...prev,
+      [subProjectId]: updatedQueue,
+    }));
+
+    setRenderQueueVersion((v) => v + 1);
+    redraw();
+  };
+
   // label 순서 변경
-  const handleReorderLabels = (reordered: Label[]) => {
+  const handleReorderLabels = (reordered: ProjectLabelDto[]) => {
     setLabels(reordered);
   };
 
   // roi 수정
-  const currentROIRef = useRef<ROI | null>(null);
+  const currentROIRef = useRef<RoiResponseDto | null>(null);
   const isResizingRef = useRef(false);
   const resizingHandleRef = useRef<
     'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null
@@ -332,13 +372,22 @@ const AnnotationViewer: React.FC<{
 
   const getResizeHandleUnderCursor = (
     mouse: { x: number; y: number },
-    roi: ROI,
+    roi: RoiResponseDto,
     viewportPixelFromPoint: (pt: { x: number; y: number }) => {
       x: number;
       y: number;
     },
   ): 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | null => {
     const threshold = 10;
+
+    if (
+      typeof roi.x !== 'number' ||
+      typeof roi.y !== 'number' ||
+      typeof roi.width !== 'number' ||
+      typeof roi.height !== 'number'
+    ) {
+      return null;
+    }
 
     const corners = {
       'top-left': { x: roi.x, y: roi.y },
@@ -350,7 +399,12 @@ const AnnotationViewer: React.FC<{
     for (const [handle, pt] of Object.entries(corners)) {
       const pixel = viewportPixelFromPoint(pt);
       const dist = Math.hypot(pixel.x - mouse.x, pixel.y - mouse.y);
-      if (dist <= threshold) return handle as any;
+      if (dist <= threshold)
+        return handle as
+          | 'top-left'
+          | 'top-right'
+          | 'bottom-left'
+          | 'bottom-right';
     }
 
     return null;
@@ -361,11 +415,12 @@ const AnnotationViewer: React.FC<{
     const threshold = 6;
     const allCellPolygons = [
       ...cellPolygons,
-      ...loadedROIs.flatMap((roi) => roi.cells ?? []),
+      ...loadedROIs.flatMap((roi) => roi.cell ?? []),
     ];
 
     for (let pi = 0; pi < allCellPolygons.length; pi++) {
       const poly = allCellPolygons[pi];
+      if (!('points' in poly)) continue;
       for (let i = 0; i < poly.points.length; i++) {
         const pt = viewerInstance.current.viewport.pixelFromPoint(
           new OpenSeadragon.Point(poly.points[i].x, poly.points[i].y),
@@ -448,38 +503,61 @@ const AnnotationViewer: React.FC<{
     }
 
     const load = async () => {
-      const roiData: LoadedROI[] = [];
+      // TODO: 규원 Uncertain ROIs 구현
+      const roiData: RoiResponsePayload[] = [];
       const polygonsToLoad: Polygon[] = [];
 
-      for (const payload of inferenceResult.roiPayloads) {
+      if (!inferenceResult?.roiPayloads) return;
+
+      for (const payload of inferenceResult?.roiPayloads) {
+        if (!payload.detail) continue;
+
         const bbox = {
+          id: payload.detail.id,
           x: payload.detail.x,
           y: payload.detail.y,
-          w: payload.detail.width,
-          h: payload.detail.height,
+          width: payload.detail.width,
+          height: payload.detail.height,
         };
 
-        const roiItem: LoadedROI = { bbox, tiles: [], cells: [] };
+        const roiItem: RoiResponsePayload = {
+          detail: bbox,
+          tissuePath: [],
+          cell: [],
+        };
 
         // Tissue 처리
-        if (payload.tissue_path.length > 0) {
+        if (
+          Array.isArray(payload?.tissuePath) &&
+          payload.tissuePath.length > 0 &&
+          payload.detail &&
+          payload.detail.x !== undefined &&
+          payload.detail.y !== undefined &&
+          payload.detail.width !== undefined &&
+          payload.detail.height !== undefined
+        ) {
+          const { x, y, width, height } = payload.detail;
+
           const tiles = await Promise.all(
-            payload.tissue_path.map((url) =>
-              processMaskTile(payload.detail, url),
+            payload.tissuePath.map((url) =>
+              processMaskTile({ x, y, width, height }, url),
             ),
           );
-          roiItem.tiles = tiles;
+
+          roiItem.tissuePath = tiles.map((tile) => tile.img.src);
         }
 
         // Cell 처리
-        if (payload.cell.length > 0) {
+        if (Array.isArray(payload.cell) && payload.cell.length > 0) {
           const viewportPolygons = payload.cell.map((cellItem) => {
-            const viewportPoints = cellItem.points.map((pt) => {
-              const vp = viewer.viewport.imageToViewportCoordinates(
-                new OpenSeadragon.Point(pt.x, pt.y),
-              );
-              return { x: vp.x, y: vp.y };
-            });
+            const viewportPoints = (cellItem.polygon?.points ?? []).map(
+              (pt) => {
+                const vp = viewer.viewport.imageToViewportCoordinates(
+                  new OpenSeadragon.Point(pt.x, pt.y),
+                );
+                return { x: vp.x, y: vp.y };
+              },
+            );
 
             return {
               points: viewportPoints,
@@ -488,7 +566,7 @@ const AnnotationViewer: React.FC<{
             };
           });
 
-          roiItem.cells = viewportPolygons;
+          roiItem.cell = viewportPolygons;
           polygonsToLoad.push(...viewportPolygons);
         }
 
@@ -509,13 +587,15 @@ const AnnotationViewer: React.FC<{
       subProject가 바뀌면 ROI 초기화
   ============================================== */
   useEffect(() => {
-    if (!inferenceResult) {
-      console.log('[subProject 변경 감지 - 초기화]', subProjectId);
-      setLoadedROIs([]);
-      setROI(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [subProject, inferenceResult]);
+    // Roi 잔상 에러를 해결하기 위해 조건 제거
+    // if (!inferenceResult) {
+    console.log('[subProject 변경 감지 - 초기화]', subProjectId);
+    setLoadedROIs([]);
+    setUserDefinedROIs([]);
+    setROI(null);
+    redrawROICanvas();
+    // }
+  }, [subProject?.subProjectId, inferenceResult?.annotationHistoryId]);
 
   /* =============================================
       ROI 캔버스 그리기
@@ -543,7 +623,14 @@ const AnnotationViewer: React.FC<{
 
   useEffect(() => {
     redrawROICanvas();
-  }, [roi, userDefinedROIs, isSelectingROI, isEditingROI, redrawROICanvas]);
+  }, [
+    roi,
+    loadedROIs,
+    userDefinedROIs,
+    isSelectingROI,
+    isEditingROI,
+    redrawROICanvas,
+  ]);
 
   /* =============================================
       모델 ROI가 준비되면 첫 번째 ROI를 자동으로 선택
@@ -551,24 +638,40 @@ const AnnotationViewer: React.FC<{
   useEffect(() => {
     const viewer = viewerInstance.current;
     if (!viewer || !loadedROIs.length) return;
+
     const tiledImage = viewer.world.getItemAt(0);
+
     const applyROI = (img: any) => {
-      const bbox = loadedROIs[0].bbox;
-      const tl = img.imageToViewportCoordinates(
-        new OpenSeadragon.Point(bbox.x, bbox.y),
-      );
+      const bbox = loadedROIs[0].detail;
+      if (
+        !bbox ||
+        typeof bbox.x !== 'number' ||
+        typeof bbox.y !== 'number' ||
+        typeof bbox.width !== 'number' ||
+        typeof bbox.height !== 'number'
+      ) {
+        return;
+      }
+
+      const { x, y, width, height } = bbox;
+
+      const tl = img.imageToViewportCoordinates(new OpenSeadragon.Point(x, y));
       const br = img.imageToViewportCoordinates(
-        new OpenSeadragon.Point(bbox.x + bbox.w, bbox.y + bbox.h),
+        new OpenSeadragon.Point(x + width, y + height),
       );
+
       setROI({ x: tl.x, y: tl.y, width: br.x - tl.x, height: br.y - tl.y });
     };
+
     if (!tiledImage) {
       const retry = setTimeout(() => {
         const newTiledImage = viewer.world.getItemAt(0);
         if (newTiledImage) applyROI(newTiledImage);
       }, 500);
       return () => clearTimeout(retry);
-    } else applyROI(tiledImage);
+    } else {
+      applyROI(tiledImage);
+    }
   }, [viewerInstance, loadedROIs]);
 
   /* =============================================
@@ -697,13 +800,16 @@ const AnnotationViewer: React.FC<{
     viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
 
     // 새 타일 이미지 로딩
-    OpenSeadragon.GeoTIFFTileSource.getAllTileSources(subProject.svsPath).then(
-      ([tileSource]: [any]) => {
-        if (tileSource) {
-          viewer.addTiledImage({ tileSource });
-        }
-      },
-    );
+    viewer.addTiledImage({
+      // tileSource: subProject.tileImageUrl,
+      tileSource:
+        'https://pathos-images.s3.ap-northeast-2.amazonaws.com/sub-project/25/tiles/output_slide.dzi',
+      success: {
+        'AnnotationTestViewer.useEffect': () => {
+          console.log('DZI image loaded successfully');
+        },
+      }['AnnotationTestViewer.useEffect'],
+    });
   }, [viewerInstance, subProject]);
 
   /* =============================================
@@ -919,6 +1025,14 @@ const AnnotationViewer: React.FC<{
       currentROIRef.current
     ) {
       const updatedROI = { ...currentROIRef.current };
+      if (
+        updatedROI?.x == null ||
+        updatedROI?.y == null ||
+        updatedROI?.width == null ||
+        updatedROI?.height == null
+      ) {
+        return;
+      }
       switch (resizingHandleRef.current) {
         case 'top-left':
           updatedROI.width += updatedROI.x - viewportPoint.x;
@@ -1011,19 +1125,19 @@ const AnnotationViewer: React.FC<{
       else {
         const adjustedIndex = polygonIndex - cellPolygons.length;
         const roiIndex = loadedROIs.findIndex(
-          (roi) => roi.cells && adjustedIndex < roi.cells.length,
+          (roi) => roi.cell && adjustedIndex < roi.cell.length,
         );
-        if (roiIndex !== -1) {
-          const updatedLoadedROIs = [...loadedROIs];
-          const updatedCells = [...(updatedLoadedROIs[roiIndex].cells || [])];
-          updatedCells[adjustedIndex] = {
-            ...updatedCells[adjustedIndex],
-            points: [...updatedCells[adjustedIndex].points],
-          };
-          updatedCells[adjustedIndex].points[pointIndex] = viewportPoint;
-          updatedLoadedROIs[roiIndex].cells = updatedCells;
-          setLoadedROIs(updatedLoadedROIs);
-        }
+        // if (roiIndex !== -1) {
+        //   const updatedLoadedROIs = [...loadedROIs];
+        //   const updatedCells = [...(updatedLoadedROIs[roiIndex].cell || [])];
+        //   updatedCells[adjustedIndex] = {
+        //     ...updatedCells[adjustedIndex],
+        //     points: [...updatedCells[adjustedIndex].points],
+        //   };
+        //   updatedCells[adjustedIndex].points[pointIndex] = viewportPoint;
+        //   updatedLoadedROIs[roiIndex].cell = updatedCells;
+        //   setLoadedROIs(updatedLoadedROIs);
+        // }
       }
 
       setMousePosition(viewportPoint);
@@ -1058,8 +1172,19 @@ const AnnotationViewer: React.FC<{
         setUserDefinedROIs(updatedROIs);
 
         // ROI 안쪽이 아닌 드로잉 제거 (전체 ROI 기준으로 유지)
-        const isStrokeInsideAnyROI = (stroke: Stroke, rois: ROI[]) => {
-          return rois.some((roi) =>
+        const isStrokeInsideAnyROI = (
+          stroke: Stroke,
+          rois: RoiResponseDto[],
+        ) => {
+          const validROIs = rois.filter(
+            (roi) =>
+              typeof roi.x === 'number' &&
+              typeof roi.y === 'number' &&
+              typeof roi.width === 'number' &&
+              typeof roi.height === 'number',
+          ) as Required<Pick<RoiResponseDto, 'x' | 'y' | 'width' | 'height'>>[];
+
+          return validROIs.some((roi) =>
             stroke.points.every(
               (p) =>
                 p.x >= roi.x &&
@@ -1070,8 +1195,19 @@ const AnnotationViewer: React.FC<{
           );
         };
 
-        const isPolygonInsideAnyROI = (polygon: Polygon, rois: ROI[]) => {
-          return rois.some((roi) =>
+        const isPolygonInsideAnyROI = (
+          polygon: Polygon,
+          rois: RoiResponseDto[],
+        ) => {
+          const validROIs = rois.filter(
+            (roi) =>
+              typeof roi.x === 'number' &&
+              typeof roi.y === 'number' &&
+              typeof roi.width === 'number' &&
+              typeof roi.height === 'number',
+          ) as Required<Pick<RoiResponseDto, 'x' | 'y' | 'width' | 'height'>>[];
+
+          return validROIs.some((roi) =>
             polygon.points.every(
               (p) =>
                 p.x >= roi.x &&
@@ -1112,7 +1248,17 @@ const AnnotationViewer: React.FC<{
             true,
           );
 
+        if (
+          roi?.x == null ||
+          roi?.y == null ||
+          roi?.width == null ||
+          roi?.height == null
+        ) {
+          return;
+        }
+
         const adjustedROI = {
+          id: -Date.now(),
           x: roi.x + borderOffset.x,
           y: roi.y + borderOffset.y,
           width: roi.width - 2 * borderOffset.x,
@@ -1181,25 +1327,25 @@ const AnnotationViewer: React.FC<{
 
     const allCellPolygons = [
       ...cellPolygons,
-      ...loadedROIs.flatMap((roi) => roi.cells ?? []),
+      ...loadedROIs.flatMap((roi) => roi.cell ?? []),
     ];
 
-    for (let i = 0; i < allCellPolygons.length; i++) {
-      const poly = allCellPolygons[i];
-      for (const pt of poly.points) {
-        const pixel = viewerInstance.current.viewport.pixelFromPoint(
-          new OpenSeadragon.Point(pt.x, pt.y),
-        );
-        const dist = Math.hypot(pixel.x - x, pixel.y - y);
-        if (dist <= 6) {
-          const source = i < cellPolygons.length ? 'new' : 'loaded';
-          const polygonIndex =
-            i < cellPolygons.length ? i : i - cellPolygons.length;
-          setSelectedPolygonForDeletion({ source, polygonIndex });
-          return;
-        }
-      }
-    }
+    // for (let i = 0; i < allCellPolygons.length; i++) {
+    //   const poly = allCellPolygons[i];
+    //   for (const pt of poly.points) {
+    //     const pixel = viewerInstance.current.viewport.pixelFromPoint(
+    //       new OpenSeadragon.Point(pt.x, pt.y),
+    //     );
+    //     const dist = Math.hypot(pixel.x - x, pixel.y - y);
+    //     if (dist <= 6) {
+    //       const source = i < cellPolygons.length ? 'new' : 'loaded';
+    //       const polygonIndex =
+    //         i < cellPolygons.length ? i : i - cellPolygons.length;
+    //       setSelectedPolygonForDeletion({ source, polygonIndex });
+    //       return;
+    //     }
+    //   }
+    // }
   };
 
   /* =============================================
@@ -1260,6 +1406,9 @@ const AnnotationViewer: React.FC<{
       if (!deletedROI) return;
 
       const { x, y, width, height } = deletedROI;
+      if (x == null || y == null || width == null || height == null) {
+        return;
+      }
       const xMin = x;
       const xMax = x + width;
       const yMin = y;
@@ -1307,6 +1456,14 @@ const AnnotationViewer: React.FC<{
     if (!tiledImage) return;
 
     const roi = imageAllROIs[index];
+    if (
+      roi?.x == null ||
+      roi?.y == null ||
+      roi?.width == null ||
+      roi?.height == null
+    ) {
+      return;
+    }
     const imageCenter = new OpenSeadragon.Point(
       roi.x + roi.width / 2,
       roi.y + roi.height / 2,
@@ -1350,13 +1507,12 @@ const AnnotationViewer: React.FC<{
       const updatedLoadedROIs = [...loadedROIs];
       const roiIndex = updatedLoadedROIs.findIndex(
         (roi) =>
-          roi.cells &&
-          selectedPolygonForDeletion.polygonIndex < roi.cells.length,
+          roi.cell && selectedPolygonForDeletion.polygonIndex < roi.cell.length,
       );
       if (roiIndex !== -1) {
-        const updatedCells = [...(updatedLoadedROIs[roiIndex].cells || [])];
+        const updatedCells = [...(updatedLoadedROIs[roiIndex].cell || [])];
         updatedCells.splice(selectedPolygonForDeletion.polygonIndex, 1);
-        updatedLoadedROIs[roiIndex].cells = updatedCells;
+        updatedLoadedROIs[roiIndex].cell = updatedCells;
         setLoadedROIs(updatedLoadedROIs);
       }
     }
@@ -1519,7 +1675,7 @@ const AnnotationViewer: React.FC<{
                   : 'pointer-events-none'
               }`}
               style={{
-                opacity: 0.3,
+                opacity: 0.5,
               }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}

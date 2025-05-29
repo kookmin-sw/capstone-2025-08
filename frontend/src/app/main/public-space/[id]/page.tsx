@@ -4,27 +4,60 @@ import { Download } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { dummyProjectDetail } from '@/data/dummy';
 import Image from 'next/image';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams } from 'next/navigation';
 import PageTitle from '@/components/common/page-title';
 import TabMenu from '@/components/common/tab-menu';
 import CommentBox from '@/components/public-space/comment-box';
 import Performance from '@/components/public-space/project-tap-menu/performance';
-import ProjectCard from '@/components/public-space/project-card';
 import Description from '@/components/public-space/project-tap-menu/description';
 import Dataset from '@/components/public-space/project-tap-menu/dataset';
 import ProjectDownloadModal from '@/components/public-space/project-download-modal';
-import { Toaster } from 'sonner';
+import { toast, Toaster } from 'sonner';
+import {
+  GetSharedProjectCommentsResponseDto,
+  GetSharedProjectDetailResponseDto,
+  PublicSpaceAPIApi,
+} from '@/generated-api';
+import { formatDateExceptTime } from '@/utils/date-utils';
 
 export default function PublicSpaceDetailPage() {
-  const router = useRouter();
+  const { id } = useParams<{ id: string }>();
+  const PublicSpaceApi = useMemo(() => new PublicSpaceAPIApi(), []);
+
+  // 상세 정보
+  const [project, setProject] =
+    useState<GetSharedProjectDetailResponseDto>(dummyProjectDetail);
+  const [ready, setReady] = useState(false);
+
+  // 다운로드 모달
   const [showDownloadModal, setShowDownloadModal] = useState(false);
 
+  // 댓글
+  const [comments, setComments] =
+    useState<GetSharedProjectCommentsResponseDto | null>(null);
+
+  // 댓글 다시 불러오는 함수 (refetch 역할)
+  const refetchComments = async () => {
+    if (!id) return;
+    const projectId = Number(id);
+    try {
+      const commentsRes = await PublicSpaceApi.getComments({
+        sharedProjectId: projectId,
+      });
+      setComments(commentsRes);
+      console.log('comments: ', commentsRes);
+    } catch (error) {
+      console.error('댓글 불러오기 실패:', error);
+    }
+  };
+
+  // 탭 메뉴
   const tabs = [
     {
       value: 'description',
       label: 'Description',
-      content: <Description />,
+      content: <Description content={project.description ?? ''} />,
     },
     {
       value: 'performance',
@@ -34,9 +67,58 @@ export default function PublicSpaceDetailPage() {
     {
       value: 'dataSet',
       label: 'DataSet',
-      content: <Dataset />,
+      content: (
+        <Dataset
+          originalImage={project.originalImagePaths ?? []}
+          annotatedImage={project.resultImagePaths ?? []}
+        />
+      ),
     },
   ];
+
+  // 상세 정보 및 댓글 불러오기
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchData = async () => {
+      try {
+        const projectId = Number(id);
+        const projectRes = await PublicSpaceApi.getSharedProject({
+          sharedProjectId: projectId,
+        });
+        setProject(projectRes);
+        console.log('project: ', projectRes);
+
+        await refetchComments();
+      } catch (error) {
+        console.error('프로젝트 정보를 불러오는 중 오류 발생:', error);
+      } finally {
+        setReady(true);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  // 모델 다운로드 + 모달창 닫기
+  const handleDownloadAndCloseModal = async () => {
+    try {
+      if (project?.sharedProjectId && project?.model?.modelId) {
+        await PublicSpaceApi.downloadModel({
+          sharedProjectId: project.sharedProjectId,
+          modelId: project.model.modelId,
+        });
+        toast.success('Model download has started.');
+      } else {
+        console.warn('Missing project ID or model ID.');
+      }
+    } catch (e) {
+      console.error('An error occurred while requesting model download:', e);
+      toast.error('Failed to download the model. Please try again later.');
+    } finally {
+      setShowDownloadModal(false);
+    }
+  };
 
   return (
     <div>
@@ -44,7 +126,7 @@ export default function PublicSpaceDetailPage() {
         <Image
           fill
           src={dummyProjectDetail.coverImage}
-          alt={dummyProjectDetail.title}
+          alt={project.title ?? ''}
           className="object-cover"
         />
         <div className="bg-black/35 absolute inset-0" />
@@ -55,7 +137,7 @@ export default function PublicSpaceDetailPage() {
       <div className="space-y-10 px-16 py-9">
         <div className="space-y-3">
           <PageTitle
-            title={dummyProjectDetail.title}
+            title={project.title ?? ''}
             icon={<Download />}
             buttonName="Download"
             buttonSize="129px"
@@ -63,10 +145,11 @@ export default function PublicSpaceDetailPage() {
             showDivider={false}
           />
           <div className="text-muted-foreground text-sm">
-            {dummyProjectDetail.author} | {dummyProjectDetail.date}
+            {project.authorName} |{' '}
+            {formatDateExceptTime(project.createdAt?.toISOString() ?? '')}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {dummyProjectDetail.tags.map((tag) => (
+            {project.tags?.map((tag) => (
               <Badge key={tag} variant="secondary">
                 {tag}
               </Badge>
@@ -78,37 +161,20 @@ export default function PublicSpaceDetailPage() {
           <TabMenu tabs={tabs} bgColor="white" />
         </div>
 
-        <CommentBox />
-
-        <div className="my-8 border-b" />
-
-        <div className="space-y-5">
-          <div className="flex justify-between">
-            <div className="text-xl font-semibold">Similar Projects</div>
-            <div
-              onClick={() => router.push(`/main/public-space/community`)}
-              className="cursor-pointer underline"
-            >
-              See More
-            </div>
-          </div>
-          <div className="grid grid-cols-4 gap-6">
-            {dummyProjectDetail.similarProjects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onClick={() => router.push(`/main/public-space/${project.id}`)}
-              />
-            ))}
-          </div>
-        </div>
+        {comments && (
+          <CommentBox
+            comments={comments}
+            sharedProjectId={project.sharedProjectId ?? -1}
+            refetchComments={refetchComments}
+          />
+        )}
       </div>
 
       {showDownloadModal && (
         <ProjectDownloadModal
           open={showDownloadModal}
-          onClose={() => setShowDownloadModal(false)}
-          title={dummyProjectDetail.title}
+          onClose={handleDownloadAndCloseModal}
+          title={project.title ?? ''}
         />
       )}
     </div>

@@ -18,8 +18,6 @@ export function SignUpForm({
   itemVariants,
   onSwitch,
 }: SignUpFormProps) {
-  // TODO: 인증 정보 연결, 회원가입 API 연동
-
   const [agreed, setAgreed] = useState(false);
 
   const user = {
