@@ -21,19 +21,16 @@ function OAuthCallbackPageInner() {
     localStorage.setItem('accessToken', token);
 
     const config = new Configuration({
-      accessToken: () => token,
+      accessToken: () => `Bearer ${token}`,
     });
-
     const api = new ProfileAPIApi(config);
 
     const startTime = Date.now();
-
     api
       .getUserSettings()
       .then((userSettings) => {
         const elapsed = Date.now() - startTime;
         const delay = Math.max(2500 - elapsed, 0);
-
         setTimeout(() => {
           setUser(userSettings);
           router.replace('/main');
