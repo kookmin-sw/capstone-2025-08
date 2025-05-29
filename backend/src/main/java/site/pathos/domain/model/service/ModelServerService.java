@@ -19,11 +19,7 @@ import site.pathos.domain.annotation.entity.CellAnnotation;
 import site.pathos.domain.annotation.entity.Roi;
 import site.pathos.domain.annotation.entity.TissueAnnotation;
 import site.pathos.domain.annotation.enums.AnnotationType;
-import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
-import site.pathos.domain.annotation.repository.CellAnnotationRepository;
-import site.pathos.domain.annotation.repository.ModelProjectLabelRepository;
-import site.pathos.domain.annotation.repository.RoiRepository;
-import site.pathos.domain.annotation.repository.TissueAnnotationRepository;
+import site.pathos.domain.annotation.repository.*;
 import site.pathos.domain.annotation.service.TissueAnnotationService;
 import site.pathos.domain.model.dto.TrainingRequestDto;
 import site.pathos.domain.model.dto.TrainingRequestMessageDto;
@@ -40,9 +36,11 @@ import site.pathos.domain.model.event.ProjectRunCompletedEvent;
 import site.pathos.domain.model.event.ProjectTrainCompletedEvent;
 import site.pathos.domain.model.repository.InferenceHistoryRepository;
 import site.pathos.domain.model.repository.ProjectMetricRepository;
+import site.pathos.domain.model.repository.ModelRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.repository.TrainingHistoryRepository;
 import site.pathos.domain.project.entity.Project;
+import site.pathos.domain.project.entity.ProjectLabel;
 import site.pathos.domain.project.entity.SubProject;
 import site.pathos.domain.project.repository.ProjectRepository;
 import site.pathos.domain.project.repository.SubProjectRepository;
@@ -77,6 +75,8 @@ public class ModelServerService {
     private final S3Service s3Service;
 
     private final ApplicationEventPublisher eventPublisher;
+    private final ProjectLabelRepository projectLabelRepository;
+    private final ModelRepository modelRepository;
 
     @Transactional
     public void requestTraining(Long projectId, TrainingRequestDto trainingRequestDto) {
@@ -124,9 +124,37 @@ public class ModelServerService {
     }
 
     private List<TrainingRequestMessageDto.LabelInfo> getLabelInfos(Long modelId, Long projectId) {
-        List<ModelLabel> modelLabels = modelProjectLabelRepository
-                .findByModelIdAndProjectId(modelId, projectId);
+        List<ModelLabel> modelLabels = modelProjectLabelRepository.findByModelIdAndProjectId(modelId, projectId);
 
+        if (modelLabels.isEmpty()) {
+            // 기본 모델: 프로젝트 라벨 기반으로 ModelLabel 생성
+            Model model = modelRepository.findById(modelId)
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid modelId"));
+
+            List<ProjectLabel> projectLabels = projectLabelRepository.findAllByProjectId(projectId);
+
+            // ModelLabel 생성 및 저장
+            List<ModelLabel> newModelLabels = projectLabels.stream()
+                    .map(pl -> ModelLabel.builder()
+                            .model(model)
+                            .projectLabel(pl)
+                            .classIndex(pl.getDisplayOrder())
+                            .build())
+                    .toList();
+
+            modelProjectLabelRepository.saveAll(newModelLabels);
+
+            // DTO 반환
+            return newModelLabels.stream()
+                    .map(ml -> new TrainingRequestMessageDto.LabelInfo(
+                            ml.getClassIndex(),
+                            ml.getProjectLabel().getName(),
+                            ColorUtils.hexToRgb(ml.getProjectLabel().getColor())
+                    ))
+                    .toList();
+        }
+
+        // 커스텀 모델인 경우
         return modelLabels.stream()
                 .map(ml -> new TrainingRequestMessageDto.LabelInfo(
                         ml.getClassIndex(),
