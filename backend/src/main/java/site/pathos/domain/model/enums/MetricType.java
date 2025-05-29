@@ -42,17 +42,6 @@ public enum MetricType {
             String valuePart = line.substring(index + 5).trim().split("\\s")[0];
             return Double.parseDouble(valuePart);
         }
-    },
-    FAULTY {
-        @Override
-        public boolean matches(String line) {
-            return true;
-        }
-
-        @Override
-        public double parseValue(String line) {
-            return 0L;
-        }
     }
     ;
 
