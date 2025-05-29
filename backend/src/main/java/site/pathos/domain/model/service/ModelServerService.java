@@ -251,6 +251,7 @@ public class ModelServerService {
     public void resultTraining(Long projectId ,TrainingResultRequestDto resultRequestDto){
         TrainingHistory trainingHistory = trainingHistoryRepository.findById(resultRequestDto.trainingHistoryId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRAINING_HISTORY_NOT_FOUND));
+        trainingHistory.trainEnd();
 
         InferenceHistory inferenceHistory = inferenceHistoryRepository.findById(resultRequestDto.inferenceHistoryId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INFERENCE_HISTORY_NOT_FOUND));
