@@ -45,7 +45,8 @@ export interface CreateCommentRequestDto {
  */
 export const CreateCommentRequestDtoCommentTagEnum = {
     Comment: 'COMMENT',
-    Tag: 'TAG'
+    Fix: 'FIX',
+    Question: 'QUESTION'
 } as const;
 export type CreateCommentRequestDtoCommentTagEnum = typeof CreateCommentRequestDtoCommentTagEnum[keyof typeof CreateCommentRequestDtoCommentTagEnum];
 

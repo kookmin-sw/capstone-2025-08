@@ -35,10 +35,14 @@ export default function TabMenu({
       </TabsList>
 
       <div
-        className={`bg-${bgColor} border-accent-foreground h-full overflow-y-auto border-t p-4`}
+        className={`bg-${bgColor} border-accent-foreground h-full border-t p-4`}
       >
         {tabs.map((tab) => (
-          <TabsContent key={tab.value} value={tab.value}>
+          <TabsContent
+            key={tab.value}
+            value={tab.value}
+            className="max-h-[80vh] overflow-y-auto"
+          >
             {tab.content}
           </TabsContent>
         ))}

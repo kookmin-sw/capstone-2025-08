@@ -75,11 +75,7 @@ export default function CommentBox({
   };
 
   // 대댓글 등록
-  const handlePostReply = async (
-    commentId: number,
-    replyText: string,
-    replyToName: string,
-  ) => {
+  const handlePostReply = async (commentId: number, replyText: string) => {
     try {
       await PublicSpaceApi.createComment({
         sharedProjectId,
@@ -87,7 +83,6 @@ export default function CommentBox({
           content: replyText,
           commentTag: CreateCommentRequestDtoCommentTagEnum.Comment,
           parentId: commentId,
-          // replyToName,
         },
       });
       toast.success('Your reply has been posted.');
@@ -168,13 +163,12 @@ export default function CommentBox({
             <SelectValue placeholder="Select Tag" />
           </SelectTrigger>
           <SelectContent>
-            {/* TODO: 현진 / 백엔드랑 이야기해서 태그 고치기 */}
-            {/*<SelectItem value={CreateCommentRequestDtoCommentTagEnum.Fix}>*/}
-            {/*  Fix*/}
-            {/*</SelectItem>*/}
-            {/*<SelectItem value={CreateCommentRequestDtoCommentTagEnum.Question}>*/}
-            {/*  Question*/}
-            {/*</SelectItem>*/}
+            <SelectItem value={CreateCommentRequestDtoCommentTagEnum.Fix}>
+              Fix
+            </SelectItem>
+            <SelectItem value={CreateCommentRequestDtoCommentTagEnum.Question}>
+              Question
+            </SelectItem>
             <SelectItem value={CreateCommentRequestDtoCommentTagEnum.Comment}>
               Comment
             </SelectItem>
