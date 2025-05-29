@@ -28,9 +28,7 @@ import site.pathos.domain.annotation.repository.ProjectLabelRepository;
 import site.pathos.domain.annotation.repository.RoiRepository;
 import site.pathos.domain.annotation.repository.TissueAnnotationRepository;
 import site.pathos.domain.annotation.service.TissueAnnotationService;
-import site.pathos.domain.model.dto.TrainingRequestDto;
-import site.pathos.domain.model.dto.TrainingRequestMessageDto;
-import site.pathos.domain.model.dto.TrainingResultRequestDto;
+import site.pathos.domain.model.dto.*;
 import site.pathos.domain.model.entity.*;
 import site.pathos.domain.model.enums.MetricType;
 import site.pathos.domain.model.enums.ModelRequestType;
@@ -118,7 +116,7 @@ public class ModelServerService {
                 trainingHistory.getId(),
                 inferenceHistory.getId(),
                 project.getId(),
-                "TRAINING_INFERENCE",
+                ModelRequestType.TRAINING_INFERENCE,
                 project.getModelType(),
                 modelName,
                 newModel.getId(),
@@ -127,6 +125,35 @@ public class ModelServerService {
                 labelInfos,
                 subProjectInfos
         );
+    }
+
+    @Transactional
+    public void requestInference(Long projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+
+        List<ProjectModel> projectModels = projectModelRepository.findByProjectIdWithModelOrderByCreatedAtDesc(project.getId());
+
+        if (projectModels.isEmpty()) {
+            throw new BusinessException(ErrorCode.PROJECT_MODEL_NOT_FOUND);
+        }
+
+        ProjectModel projectModel = projectModels.get(0); // 최신 모델 사용
+
+        InferenceHistory inferenceHistory = inferenceHistoryService.createInferenceHistory(project, projectModel.getModel());
+
+        InferenceRequestMessageDto message = new InferenceRequestMessageDto(
+                inferenceHistory.getId(),
+                project.getId(),
+                ModelRequestType.INFERENCE,
+                project.getModelType(),
+                projectModel.getModel().getTissueModelPath(),
+                projectModel.getModel().getCellModelPath(),
+                getLabelInfos(projectModel.getModel().getId(), project.getId()),
+                getSubProjectInfos(project)
+        );
+
+        sqsService.sendInferenceRequest(message);
     }
 
     private Model createEmptyModel(Project project, String modelName, ModelType modelType) {
@@ -169,6 +196,23 @@ public class ModelServerService {
         // 커스텀 모델인 경우
         return modelLabels.stream()
                 .map(ml -> new TrainingRequestMessageDto.LabelInfo(
+                        ml.getClassIndex(),
+                        ml.getProjectLabel().getName(),
+                        ColorUtils.hexToRgb(ml.getProjectLabel().getColor())
+                ))
+                .toList();
+    }
+
+    private List<InferenceRequestMessageDto.LabelInfo> getLabelInfos(Long modelId, Long projectId) {
+        List<ModelLabel> modelLabels = modelProjectLabelRepository.findByModelIdAndProjectId(modelId, projectId);
+
+        if (modelLabels.isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_INFERENCE_REQUEST);
+        }
+
+        // 커스텀 모델인 경우
+        return modelLabels.stream()
+                .map(ml -> new InferenceRequestMessageDto.LabelInfo(
                         ml.getClassIndex(),
                         ml.getProjectLabel().getName(),
                         ColorUtils.hexToRgb(ml.getProjectLabel().getColor())
@@ -317,6 +361,55 @@ public class ModelServerService {
         }
         createMetric(project, inferenceHistory);
         publishCompletedEvent(resultRequestDto.type(), project);
+    }
+
+    @Transactional
+    public void resultInference(Long projectId, InferenceResultRequestDto resultRequestDto) {
+        InferenceHistory inferenceHistory = inferenceHistoryRepository.findById(resultRequestDto.inferenceHistoryId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INFERENCE_HISTORY_NOT_FOUND));
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+
+        for (InferenceResultRequestDto.SubProjectInfo sub : resultRequestDto.subProjects()) {
+            SubProject subProject = subProjectRepository.findById(sub.subProjectId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SUB_PROJECT_NOT_FOUND));
+
+            AnnotationHistory newHistory = AnnotationHistory.builder()
+                    .subProject(subProject)
+                    .trainingHistory(null) // 추론이므로 학습 없이
+                    .build();
+            annotationHistoryRepository.save(newHistory);
+
+            for (InferenceResultRequestDto.Roi roiDto : sub.roi()) {
+                Roi roi = Roi.builder()
+                        .annotationHistory(newHistory)
+                        .x(roiDto.detail().x())
+                        .y(roiDto.detail().y())
+                        .width(roiDto.detail().width())
+                        .height(roiDto.detail().height())
+                        .displayOrder(roiDto.displayOrder())
+                        .faulty(roiDto.detail().faulty())  // ★ detail() 안에서 faulty 값 꺼냄
+                        .build();
+                roiRepository.save(roi);
+
+                List<CellAnnotation> cellAnnotations = roiDto.cells().stream()
+                        .map(cell -> CellAnnotation.builder()
+                                .roi(roi)
+                                .classIndex(cell.classIndex())
+                                .polygon(cell.polygon().points().stream()
+                                        .map(p -> new CellAnnotation.Point(p.x(), p.y()))
+                                        .toList())
+                                .build())
+                        .toList();
+                cellAnnotationRepository.saveAll(cellAnnotations);
+
+                tissueAnnotationService.saveResultAnnotation(roi, roiDto.tissuePath());
+            }
+        }
+
+        createMetric(project, inferenceHistory);
+        publishCompletedEvent(ModelRequestType.INFERENCE, project);
     }
 
     private void publishCompletedEvent(ModelRequestType modelRequestType, Project project) {

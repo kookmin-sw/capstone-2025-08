@@ -36,7 +36,7 @@ public class Model {
     private String cellModelPath;
 
     @CreationTimestamp
-    @Column(name = "trained_at", nullable = false)
+    @Column(name = "trained_at")
     private LocalDateTime trainedAt;
 
     @Builder

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j; // Log4j 대신 Slf4j로 변경 (Spring Boot에서 선호)
 import org.springframework.stereotype.Service;
+import site.pathos.domain.model.dto.InferenceRequestMessageDto;
 import site.pathos.global.aws.config.AwsProperty;
 import site.pathos.domain.model.dto.TrainingRequestMessageDto;
 import software.amazon.awssdk.services.sqs.SqsClient;
@@ -20,6 +21,15 @@ public class SqsService {
     private final ObjectMapper objectMapper;
 
     public void sendTrainingRequest(TrainingRequestMessageDto message) {
+        try {
+            String messageBody = objectMapper.writeValueAsString(message);
+            sendMessage(messageBody);
+        } catch (Exception e) {
+            throw new RuntimeException("SQS 메시지 변환 실패", e);
+        }
+    }
+
+    public void sendInferenceRequest(InferenceRequestMessageDto message) {
         try {
             String messageBody = objectMapper.writeValueAsString(message);
             sendMessage(messageBody);

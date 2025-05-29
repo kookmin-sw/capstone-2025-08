@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import site.pathos.domain.model.dto.InferenceResultRequestDto;
 import site.pathos.domain.model.dto.TrainingRequestDto;
 import site.pathos.domain.model.dto.TrainingResultRequestDto;
 import site.pathos.domain.model.service.ModelServerService;
@@ -38,6 +39,25 @@ public class ModelServerController {
             @RequestBody TrainingResultRequestDto resultRequestDto) {
 
         modelServerService.resultTraining(projectId, resultRequestDto);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/projects/{projectId}/inference")
+    @Operation(summary = "모델 추론 요청", description = "프론트에서 프로젝트 ID만 넘기면, 백엔드가 추론 요청을 보냅니다.")
+    public ResponseEntity<Void> requestInference(
+            @Parameter(description = "프로젝트 ID") @PathVariable Long projectId) {
+
+        modelServerService.requestInference(projectId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/projects/{projectId}/inference/result")
+    @Operation(summary = "모델 추론 결과 수신", description = "모델 서버가 추론 결과를 서버에 전달합니다.")
+    public ResponseEntity<Void> responseInference(
+            @Parameter(description = "프로젝트 ID") @PathVariable Long projectId,
+            @RequestBody InferenceResultRequestDto resultRequestDto) {
+
+        modelServerService.resultInference(projectId, resultRequestDto);
         return ResponseEntity.ok().build();
     }
 }

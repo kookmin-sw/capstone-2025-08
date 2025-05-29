@@ -36,6 +36,7 @@ public enum ErrorCode {
     NO_COMMENT_UPDATE_PERMISSION(HttpStatus.FORBIDDEN, "해당 댓글의 수정 권한이 없습니다"),
     NO_COMMENT_DELETE_PERMISSION(HttpStatus.FORBIDDEN, "해당 댓글의 삭제 권한이 없습니다"),
     REDIS_PUBLISH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 알림 발송에 실패했습니다."),
+    BAD_INFERENCE_REQUEST(HttpStatus.BAD_REQUEST, "학습이 되지 않은 모델입니다"),
     ;
 
     private final HttpStatus status;
