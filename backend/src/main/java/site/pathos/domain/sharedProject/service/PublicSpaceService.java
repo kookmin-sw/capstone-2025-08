@@ -83,6 +83,7 @@ public class PublicSpaceService {
                 .model(model)
                 .title(requestDto.title())
                 .description(requestDto.description())
+                .projectId(requestDto.projectId())
                 .build();
         sharedProjectRepository.save(sharedProject);
 
@@ -202,7 +203,8 @@ public class PublicSpaceService {
                 modelInfo,
                 getTags(sharedProjectId),
                 getDataSets(sharedProjectId, DataType.ORIGINAL),
-                getDataSets(sharedProjectId, DataType.RESULT)
+                getDataSets(sharedProjectId, DataType.RESULT),
+                sharedProject.getProjectId()
         );
     }
 

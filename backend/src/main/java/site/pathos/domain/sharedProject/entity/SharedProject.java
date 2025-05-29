@@ -44,6 +44,9 @@ public class SharedProject {
     @Column(name = "download_count", nullable = false)
     private long downloadCount;
 
+    @Column(name = "project_id", nullable = false)
+    private long projectId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -53,13 +56,13 @@ public class SharedProject {
     private LocalDateTime updatedAt;
 
     @Builder
-    public SharedProject(User user,  Model model, String title, String description,
-                         String thumbnailImagePath){
+    public SharedProject(User user,  Model model, String title, String description, Long projectId){
         this.user = user;
         this.model = model;
         this.title = title;
         this.description = description;
         this.downloadCount = 0;
+        this.projectId = projectId;
     }
 
     public void assignThumbnailPath(String thumbnailImagePath){
