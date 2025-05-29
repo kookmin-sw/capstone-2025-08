@@ -137,4 +137,4 @@
 <br>
 
 ## 🦠 PathOs 바로가기
-- 배포링크
+- [배포링크](https://pathos.io.kr/)
