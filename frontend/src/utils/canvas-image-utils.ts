@@ -1,5 +1,4 @@
 import { MaskTile } from '@/types/annotation';
-import { getAllViewportROIs } from '@/utils/canvas-roi-utils';
 import { RoiResponseDto, RoiResponsePayload } from '@/generated-api';
 
 /**
@@ -8,6 +7,7 @@ import { RoiResponseDto, RoiResponsePayload } from '@/generated-api';
 export const processMaskTile = async (
   base: { x: number; y: number; width: number; height: number },
   url: string,
+  showRedMask = true,
 ): Promise<MaskTile> =>
   new Promise((res, rej) => {
     if (typeof window === 'undefined') {
@@ -45,17 +45,21 @@ export const processMaskTile = async (
       }
 
       ctx.drawImage(img, 0, 0);
+
       const d = ctx.getImageData(0, 0, off.width, off.height);
 
       for (let i = 0; i < d.data.length; i += 4) {
-        const r = d.data[i];
-        const g = d.data[i + 1];
-        const b = d.data[i + 2];
+        const [r, g, b] = [d.data[i], d.data[i + 1], d.data[i + 2]];
 
+        // 1) 항상: 검은색 픽셀은 투명
         if (r < 20 && g < 20 && b < 20) {
           d.data[i + 3] = 0;
-        } else {
-          d.data[i + 3] = 255;
+          continue;
+        }
+
+        // 2) showRedMask===false일 때만: 빨간색 픽셀 숨김
+        if (!showRedMask && r > 200 && g < 50 && b < 50) {
+          d.data[i + 3] = 0;
         }
       }
 

@@ -15,6 +15,7 @@ interface AnnotationSidebarProps {
   onDeleteLabel: (id: string) => void;
   onSelectLabelColor: (color: string) => void;
   onReorderLabels: (labels: ProjectLabelDto[]) => void;
+  onToggleRedMask?: (roiId: number, showRed: boolean) => void;
 }
 
 export default function AnnotationSidebar({
@@ -27,6 +28,7 @@ export default function AnnotationSidebar({
   onDeleteLabel,
   onSelectLabelColor,
   onReorderLabels,
+  onToggleRedMask,
 }: AnnotationSidebarProps) {
   const TopTabs = [
     {
@@ -57,7 +59,12 @@ export default function AnnotationSidebar({
     {
       value: 'uncertainRois',
       label: 'Uncertain ROIs',
-      content: <SidebarUncertainROI uncertainROIs={dummyUncertainROIs} />,
+      content: (
+        <SidebarUncertainROI
+          uncertainROIs={rois}
+          onToggleRedMask={onToggleRedMask}
+        />
+      ),
     },
   ];
 

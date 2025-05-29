@@ -32,7 +32,7 @@ export default function AnnotationHeader() {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [project, setProject] =
     useState<GetProjectAnnotationResponseDto | null>(null);
-  const [selectedModelName, setSelectedModelName] = useState('none');
+  const [selectedModelName, setSelectedModelName] = useState('Not Selected');
   const { selectedSubProject } = useAnnotationSharedStore();
 
   useEffect(() => {
@@ -46,8 +46,11 @@ export default function AnnotationHeader() {
         setProject(projectRes);
 
         // 모델 이름 설정
-        const firstModelName = projectRes.modelsDto?.modelName ?? 'none';
+        const firstModelName =
+          projectRes.modelsDto?.modelName ?? 'Not Selected';
         setSelectedModelName(firstModelName);
+
+        console.log(projectRes);
       } catch (error) {
         console.error('프로젝트 정보를 불러오는 중 오류 발생:', error);
       }

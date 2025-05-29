@@ -1,13 +1,34 @@
+'use client';
+
 import MiniBox from '@/components/annotation/annotation-sidebar/roi-list/roi-mini-box';
-import { UncertainROI } from '@/types/annotation-sidebar';
+import { RoiResponseDto } from '@/generated-api';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface UncertainROIListProps {
-  uncertainROIs: UncertainROI[];
+  uncertainROIs: RoiResponseDto[];
+  onToggleRedMask?: (roiId: number, showRed: boolean) => void;
 }
 
 export default function SidebarUncertainROI({
   uncertainROIs,
+  onToggleRedMask,
 }: UncertainROIListProps) {
+  const [visibilityMap, setVisibilityMap] = useState<Record<number, boolean>>(
+    {},
+  );
+
+  const toggle = (roiId: number) => {
+    if (roiId === undefined) return;
+
+    const next = !visibilityMap[roiId];
+    setVisibilityMap((prev) => ({ ...prev, [roiId]: next }));
+
+    console.log('toggle RedMask:', roiId, next);
+    onToggleRedMask?.(roiId, next);
+  };
+
   return (
     <div className="flex flex-col gap-2.5">
       {uncertainROIs.map((roi, index) => (
@@ -22,13 +43,26 @@ export default function SidebarUncertainROI({
           <div>
             <div className="flex items-center gap-1">
               <p className="text-sm">ROI Index {index + 1}</p>
-              <p className="text-xs text-[#CA0000]">{roi.UncertainRate}%</p>
+              <p className="text-xs text-[#CA0000]">30%</p>
             </div>
 
             <p className="text-muted-foreground text-xs">
               X: {roi.x} / Y: {roi.y} / W: {roi.width} / H: {roi.height}
             </p>
           </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => roi.id !== undefined && toggle(roi.id)}
+            disabled={roi.id === undefined}
+          >
+            {roi.id !== undefined && visibilityMap[roi.id] ? (
+              <Eye className="text-muted-foreground" />
+            ) : (
+              <EyeOff className="text-muted-foreground" />
+            )}
+          </Button>
         </div>
       ))}
     </div>

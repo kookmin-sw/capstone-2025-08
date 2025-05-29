@@ -35,6 +35,7 @@ import {
   Polygon,
   RenderItem,
   RenderSnapshot,
+  MaskTile,
 } from '@/types/annotation';
 import AnnotationSidebar from '@/components/annotation/annotation-sidebar';
 import AnnotationSubProjectSlider from '@/components/annotation/annotation-subproject-slider';
@@ -102,6 +103,15 @@ const AnnotationViewer: React.FC<{
   const [roi, setROI] = useState<RoiResponseDto | null>(null);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [isSelectingROI, setIsSelectingROI] = useState(false);
+
+  // Uncertain ROIs 시각화 상태
+  const [redMaskVisibleMap, setRedMaskVisibleMap] = useState<
+    Record<number, boolean>
+  >({});
+
+  const [processedTileMap, setProcessedTileMap] = useState<
+    Map<number, MaskTile[]>
+  >(new Map());
 
   // 모델 추론으로부터 로딩된 ROI
   const [loadedROIs, setLoadedROIs] = useState<RoiResponsePayload[]>([]);
@@ -503,7 +513,6 @@ const AnnotationViewer: React.FC<{
     }
 
     const load = async () => {
-      // TODO: 규원 Uncertain ROIs 구현
       const roiData: RoiResponsePayload[] = [];
       const polygonsToLoad: Polygon[] = [];
 
@@ -690,6 +699,10 @@ const AnnotationViewer: React.FC<{
       캔버스 및 뷰어 동기화
   ============================================== */
   const redraw = useCallback(() => {
+    console.log(
+      '🔄 redraw with processedTileMap:',
+      Array.from(processedTileMap.entries()),
+    );
     if (!viewerInstance.current) return;
 
     redrawCanvas(
@@ -698,6 +711,7 @@ const AnnotationViewer: React.FC<{
       loadedROIs,
       renderQueueMap[subProjectId] || [],
       currentPolygonRef.current,
+      redMaskVisibleMap,
       mousePosition,
     );
 
@@ -717,10 +731,12 @@ const AnnotationViewer: React.FC<{
     viewerInstance,
     canvasRef,
     loadedROIs,
+    renderQueueMap,
     strokes,
     polygons,
     cellPolygons,
     mousePosition,
+    redMaskVisibleMap,
   ]);
 
   useEffect(() => {
@@ -811,6 +827,16 @@ const AnnotationViewer: React.FC<{
       }['AnnotationTestViewer.useEffect'],
     });
   }, [viewerInstance, subProject]);
+
+  // Uncertain ROI 시각화 제어 함수
+  const handleToggleRedMask = (roiId: number, showRed: boolean) => {
+    setRedMaskVisibleMap((prev) => ({ ...prev, [roiId]: showRed }));
+  };
+
+  useEffect(() => {
+    if (!viewerInstance.current) return;
+    syncAllCanvases();
+  }, [redMaskVisibleMap, syncAllCanvases]);
 
   /* =============================================
       마우스 이벤트 핸들러
@@ -1637,6 +1663,7 @@ const AnnotationViewer: React.FC<{
         onDeleteLabel={handleDeleteLabel}
         onSelectLabelColor={(color) => setPenColor(color)}
         onReorderLabels={handleReorderLabels}
+        onToggleRedMask={handleToggleRedMask}
       />
 
       <div className="relative flex h-full flex-1 flex-col overflow-hidden">

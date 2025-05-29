@@ -1,6 +1,6 @@
 import OpenSeadragon from 'openseadragon';
 import React from 'react';
-import { Polygon, Point, RenderItem } from '@/types/annotation';
+import { Polygon, Point, RenderItem, MaskTile } from '@/types/annotation';
 import { drawStroke } from '@/utils/canvas-drawing-utils';
 import {
   drawCellInferencePoints,
@@ -48,6 +48,7 @@ export const redrawCanvas = (
   loadedROIs: RoiResponsePayload[],
   renderQueue: RenderItem[],
   currentPolygon: Polygon | null,
+  redMaskVisibleMap: Record<number, boolean>,
   mousePosition?: Point | null,
 ) => {
   if (!canvasRef.current || !viewerInstance) return;
@@ -75,7 +76,7 @@ export const redrawCanvas = (
     return;
   }
 
-  /* ========= 1. 모든 ROI의 PNG 타일만 표시 ========= */
+  /* ========= 1. 모든 ROI의 PNG 타일만 표시 (빨간색 토글 제거 포함) ========= */
   loadedROIs.forEach(({ detail, tissuePath }) => {
     if (
       !tissuePath ||
@@ -91,60 +92,60 @@ export const redrawCanvas = (
 
     const { x: baseX, y: baseY, width, height } = detail;
 
-    // 첫 이미지로 col/row 수 계산
-    const firstUrl = tissuePath[0];
-    const cachedFirstImg = tissueImageCache.get(firstUrl);
+    // 1) 모든 타일 URL을 미리 캐시에 로드
+    tissuePath.forEach((url) => {
+      if (!tissueImageCache.has(url)) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = url;
+        tissueImageCache.set(url, img);
+      }
+    });
 
-    const drawTissueTiles = (img: HTMLImageElement) => {
-      const cols = Math.round(width / img.width);
-      const rows = Math.round(height / img.height);
-      const tileW = width / cols;
-      const tileH = height / rows;
+    // 2) 각 타일을 그린 뒤, 토글 상태에 따라 빨간 픽셀만 지우기
+    //    (가장 첫 URL을 써서 cols/rows 계산)
+    const sample = tissueImageCache.get(tissuePath[0]);
+    if (!sample || !sample.complete) return;
+    const cols = Math.round(width / sample.width);
+    const rows = Math.round(height / sample.height);
+    const tileW = width / cols;
+    const tileH = height / rows;
 
-      tissuePath.forEach((url, idx) => {
-        const cachedImg = tissueImageCache.get(url);
+    tissuePath.forEach((url, idx) => {
+      const img = tissueImageCache.get(url);
+      if (!img || !img.complete) return;
 
-        if (cachedImg && cachedImg.complete) {
-          const row = Math.floor(idx / cols);
-          const col = idx % cols;
-          const x = baseX + col * tileW;
-          const y = baseY + row * tileH;
+      const row = Math.floor(idx / cols);
+      const col = idx % cols;
+      const x = baseX + col * tileW;
+      const y = baseY + row * tileH;
 
-          const tlVp = tiledImage.imageToViewportCoordinates(
-            new OpenSeadragon.Point(x, y),
-          );
-          const brVp = tiledImage.imageToViewportCoordinates(
-            new OpenSeadragon.Point(x + tileW, y + tileH),
-          );
-          const p1 = viewerInstance.viewport.pixelFromPoint(tlVp);
-          const p2 = viewerInstance.viewport.pixelFromPoint(brVp);
+      const tlVp = tiledImage.imageToViewportCoordinates(
+        new OpenSeadragon.Point(x, y),
+      );
+      const brVp = tiledImage.imageToViewportCoordinates(
+        new OpenSeadragon.Point(x + tileW, y + tileH),
+      );
+      const p1 = viewerInstance.viewport.pixelFromPoint(tlVp);
+      const p2 = viewerInstance.viewport.pixelFromPoint(brVp);
 
-          ctx.drawImage(cachedImg, p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
-        } else if (!cachedImg) {
-          const newImg = new Image();
-          newImg.src = url;
-          tissueImageCache.set(url, newImg);
+      // (2-a) 원본 타일 그리기
+      ctx.drawImage(img, p1.x, p1.y, p2.x - p1.x, p2.y - p1.y);
 
-          newImg.onload = () => {
-            // 다음 redraw 시점에 자연스럽게 반영됨 (비동기)
-          };
+      // (2-b) 토글 상태가 false일 때만 빨간 픽셀 제거
+      if (redMaskVisibleMap[detail.id!] === false) {
+        const W = p2.x - p1.x;
+        const H = p2.y - p1.y;
+        const data = ctx.getImageData(p1.x, p1.y, W, H);
+        for (let i = 0; i < data.data.length; i += 4) {
+          const [r, g, b] = [data.data[i], data.data[i + 1], data.data[i + 2]];
+          if (r > 200 && g < 50 && b < 50) {
+            data.data[i + 3] = 0;
+          }
         }
-      });
-    };
-
-    if (cachedFirstImg && cachedFirstImg.complete) {
-      // 이미 캐시에 이미지가 있으면 그리기
-      drawTissueTiles(cachedFirstImg);
-    } else if (!cachedFirstImg) {
-      // 캐시에 없으면 새로 만들고 저장만 함(그리지 않음)
-      const img = new Image();
-      img.src = firstUrl;
-      tissueImageCache.set(firstUrl, img);
-
-      img.onload = () => {
-        drawTissueTiles(img);
-      };
-    }
+        ctx.putImageData(data, p1.x, p1.y);
+      }
+    });
   });
 
   /* ========= 2. 드로잉, 폴리곤, 지우개를 하나의 큐로 렌더링 ========= */
