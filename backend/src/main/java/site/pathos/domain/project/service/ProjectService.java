@@ -3,6 +3,7 @@ package site.pathos.domain.project.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,9 +16,12 @@ import site.pathos.domain.annotation.entity.AnnotationHistory;
 import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
 import site.pathos.domain.annotation.repository.ProjectLabelRepository;
 import site.pathos.domain.model.entity.Model;
+import site.pathos.domain.model.entity.ProjectMetric;
 import site.pathos.domain.model.entity.ProjectModel;
+import site.pathos.domain.model.enums.MetricType;
 import site.pathos.domain.model.enums.ModelType;
 import site.pathos.domain.model.repository.ModelRepository;
+import site.pathos.domain.model.repository.ProjectMetricRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.repository.UserModelRepository;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
@@ -63,6 +67,7 @@ public class ProjectService {
     private static final int PROJECTS_PAGE_SIZE = 9;
     private final ProjectModelRepository projectModelRepository;
     private final ProjectLabelRepository projectLabelRepository;
+    private final ProjectMetricRepository projectMetricRepository;
 
     @Transactional
     public void createProject(CreateProjectRequestDto requestDto, List<MultipartFile> files) {
@@ -246,6 +251,7 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public GetProjectDetailResponseDto getProjectDetail(Long projectId) {
+
         Long userId = SecurityUtil.getCurrentUserId();
         Project project = getProject(projectId, userId);
 
@@ -257,7 +263,7 @@ public class ProjectService {
         ModelProcessDto modelProcessDto = getModelProcessDto();
         List<LabelDto> labels = getLabelDtos(projectId);
         List<SlideDto> slides = getSlideDtos(subProjects);
-        AnalyticsDto analytics = getAnalyticsDto();
+        AnalyticsDto analytics = getAnalyticsDto(project);
 
         return new GetProjectDetailResponseDto(
                 projectId,
@@ -368,14 +374,39 @@ public class ProjectService {
                 .toList();
     }
 
-    private AnalyticsDto getAnalyticsDto() {
-        // TODO 모델 학습 지표 필요
+    private AnalyticsDto getAnalyticsDto(Project project) {
+        List<ProjectMetric> projectMetrics = projectMetricRepository.findAllByProject(project);
         return new AnalyticsDto(
-                List.of(),
-                List.of(),
-                List.of(),
-                0
+                getMetricLoss(projectMetrics),
+                getMetricIou(projectMetrics),
+                getF1Score(projectMetrics)
         );
+    }
+
+    private List<Double> getMetricLoss(List<ProjectMetric> projectMetrics) {
+        return projectMetrics.stream()
+                .filter(projectMetric -> projectMetric.getMetricType() == MetricType.LOSS)
+                .mapToDouble(ProjectMetric::getScore)
+                .boxed()
+                .sorted(Comparator.reverseOrder())
+                .toList();
+    }
+
+    private List<Double> getMetricIou(List<ProjectMetric> projectMetrics) {
+        return projectMetrics.stream()
+                .filter(projectMetric -> projectMetric.getMetricType() == MetricType.IOU)
+                .mapToDouble(ProjectMetric::getScore)
+                .boxed()
+                .sorted()
+                .toList();
+    }
+
+    private double getF1Score(List<ProjectMetric> projectMetrics) {
+        return projectMetrics.stream()
+                .filter(projectMetric -> projectMetric.getMetricType() == MetricType.IOU)
+                .mapToDouble(ProjectMetric::getScore)
+                .average()
+                .orElse(0.0) * 100;
     }
 
     //TODO svs 이미지 추가 업로드 구현 필요

@@ -72,8 +72,6 @@ public record GetProjectDetailResponseDto(
     }
 
     public record AnalyticsDto(
-            @Schema(description = "epoch 목록", example = "[1, 2, 3, 4, 5]")
-            List<Integer> epochs,
             @Schema(description = "epoch별 loss 값", example = "[0.9, 0.75, 0.5, 0.3, 0.25]")
             List<Double> loss,
             @Schema(description = "epoch별 IoU 값", example = "[0.4, 0.6, 0.65, 0.73, 0.75]")
