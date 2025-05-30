@@ -245,6 +245,28 @@ export default function AnnotationHeader() {
     }
   };
 
+  const handleInference = async () => {
+    if (!project?.projectId) {
+      toast.error('Missing project ID for inference.');
+      return;
+    }
+
+    const toastId = toast.loading('Submitting inference request...');
+
+    try {
+      await modelApi.requestInference({
+        projectId: project.projectId,
+      });
+
+      toast.success('Inference completed successfully!', { id: toastId });
+
+      // await router.refresh(); // 필요 시
+    } catch (error) {
+      console.error('Inference request failed:', error);
+      toast.error('Failed to run inference.', { id: toastId });
+    }
+  };
+
   if (isSaving) {
     return <SavingOverlay />;
   }
@@ -335,7 +357,9 @@ export default function AnnotationHeader() {
         <Button variant="secondary" onClick={() => setIsExportModalOpen(true)}>
           Train
         </Button>
-        <Button variant="secondary">Run</Button>
+        <Button variant="secondary" onClick={handleInference}>
+          Run
+        </Button>
         <Button variant="secondary" onClick={handleSave}>
           Save
         </Button>
