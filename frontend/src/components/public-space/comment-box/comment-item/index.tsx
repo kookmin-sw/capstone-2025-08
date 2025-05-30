@@ -69,6 +69,7 @@ export default function CommentItem({
           width={40}
           height={40}
           className="rounded-full"
+          unoptimized
         />
         <div className="flex-1">
           <div className="flex items-center gap-2">

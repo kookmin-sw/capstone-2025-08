@@ -25,6 +25,7 @@ export default function Dataset({
               height={0}
               sizes="100%"
               className="h-auto w-full"
+              unoptimized
             />
           </div>
           <MoveRight className="hidden md:block" />
@@ -36,6 +37,7 @@ export default function Dataset({
               height={0}
               sizes="100%"
               className="h-auto w-full"
+              unoptimized
             />
           </div>
         </div>

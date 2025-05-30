@@ -23,6 +23,7 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
           src={project.thumbnailUrl ?? '/images/test-public-space-image.png'}
           alt={project.title ?? ''}
           className="object-cover"
+          unoptimized
         />
       </div>
       <div className="flex items-center justify-between">
