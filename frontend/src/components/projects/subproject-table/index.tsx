@@ -61,6 +61,7 @@ export default function SubProjectTable({
                   width={50}
                   height={50}
                   className="rounded-md object-cover"
+                  unoptimized
                 />
               </TableCell>
               <TableCell className="truncate">{sp.name}</TableCell>
