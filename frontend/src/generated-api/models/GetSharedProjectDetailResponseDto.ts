@@ -81,6 +81,12 @@ export interface GetSharedProjectDetailResponseDto {
      * @memberof GetSharedProjectDetailResponseDto
      */
     resultImagePaths?: Array<string>;
+    /**
+     * 프로젝트 ID
+     * @type {number}
+     * @memberof GetSharedProjectDetailResponseDto
+     */
+    projectId?: number;
 }
 
 /**
@@ -109,6 +115,7 @@ export function GetSharedProjectDetailResponseDtoFromJSONTyped(json: any, ignore
         'tags': json['tags'] == null ? undefined : json['tags'],
         'originalImagePaths': json['originalImagePaths'] == null ? undefined : json['originalImagePaths'],
         'resultImagePaths': json['resultImagePaths'] == null ? undefined : json['resultImagePaths'],
+        'projectId': json['projectId'] == null ? undefined : json['projectId'],
     };
 }
 
@@ -132,6 +139,7 @@ export function GetSharedProjectDetailResponseDtoToJSONTyped(value?: GetSharedPr
         'tags': value['tags'],
         'originalImagePaths': value['originalImagePaths'],
         'resultImagePaths': value['resultImagePaths'],
+        'projectId': value['projectId'],
     };
 }
 

@@ -322,12 +322,12 @@ export default function AnnotationHeader() {
         </Select>
 
         {/* 모델 타입 */}
-        <div className="flex h-9 w-40 items-center whitespace-nowrap rounded-md border px-3 py-2">
+        <div className="flex h-9 w-44 items-center whitespace-nowrap rounded-md border px-3 py-2">
           {formatModelType(selectedSubProject?.modelType)}
         </div>
 
         {/* 모델 이름 */}
-        <div className="flex h-9 w-40 items-center whitespace-nowrap rounded-md border px-3 py-2">
+        <div className="flex h-9 w-44 items-center whitespace-nowrap rounded-md border px-3 py-2">
           {selectedModelName}
         </div>
 

@@ -20,13 +20,6 @@ import {
     LabelInfoToJSON,
     LabelInfoToJSONTyped,
 } from './LabelInfo';
-import type { Performance } from './Performance';
-import {
-    PerformanceFromJSON,
-    PerformanceFromJSONTyped,
-    PerformanceToJSON,
-    PerformanceToJSONTyped,
-} from './Performance';
 import type { SubProjectInfo } from './SubProjectInfo';
 import {
     SubProjectInfoFromJSON,
@@ -36,153 +29,137 @@ import {
 } from './SubProjectInfo';
 
 /**
- * 모델 학습 결과 데이터
+ * 
  * @export
- * @interface TrainingResultRequestDto
+ * @interface InferenceResultRequestDto
  */
-export interface TrainingResultRequestDto {
-    /**
-     * 학습 기록 ID
-     * @type {number}
-     * @memberof TrainingResultRequestDto
-     */
-    trainingHistoryId?: number;
+export interface InferenceResultRequestDto {
     /**
      * 추론 기록 ID
      * @type {number}
-     * @memberof TrainingResultRequestDto
+     * @memberof InferenceResultRequestDto
      */
     inferenceHistoryId?: number;
     /**
+     * 프로젝트 ID
+     * @type {number}
+     * @memberof InferenceResultRequestDto
+     */
+    projectId?: number;
+    /**
      * 요청 타입
      * @type {string}
-     * @memberof TrainingResultRequestDto
+     * @memberof InferenceResultRequestDto
      */
-    type?: TrainingResultRequestDtoTypeEnum;
+    modelRequestType?: InferenceResultRequestDtoModelRequestTypeEnum;
     /**
      * 모델 종류
      * @type {string}
-     * @memberof TrainingResultRequestDto
+     * @memberof InferenceResultRequestDto
      */
-    modelType?: TrainingResultRequestDtoModelTypeEnum;
+    modelType?: InferenceResultRequestDtoModelTypeEnum;
     /**
      * 모델 이름
      * @type {string}
-     * @memberof TrainingResultRequestDto
+     * @memberof InferenceResultRequestDto
      */
     modelName?: string;
     /**
-     * 
-     * @type {number}
-     * @memberof TrainingResultRequestDto
-     */
-    newModelId?: number;
-    /**
-     * 생성된 티슈 모델 경로
+     * 조직 모델 경로
      * @type {string}
-     * @memberof TrainingResultRequestDto
+     * @memberof InferenceResultRequestDto
      */
     tissueModelPath?: string;
     /**
-     * 생성된 셀 모델 경로
+     * 세포 모델 경로
      * @type {string}
-     * @memberof TrainingResultRequestDto
+     * @memberof InferenceResultRequestDto
      */
     cellModelPath?: string;
     /**
      * 모델 라벨 정보 목록
      * @type {Array<LabelInfo>}
-     * @memberof TrainingResultRequestDto
+     * @memberof InferenceResultRequestDto
      */
     labels?: Array<LabelInfo>;
     /**
      * SubProject 정보 목록
      * @type {Array<SubProjectInfo>}
-     * @memberof TrainingResultRequestDto
+     * @memberof InferenceResultRequestDto
      */
     subProjects?: Array<SubProjectInfo>;
-    /**
-     * 
-     * @type {Performance}
-     * @memberof TrainingResultRequestDto
-     */
-    performance?: Performance;
 }
 
 
 /**
  * @export
  */
-export const TrainingResultRequestDtoTypeEnum = {
+export const InferenceResultRequestDtoModelRequestTypeEnum = {
     Inference: 'INFERENCE',
     TrainingInference: 'TRAINING_INFERENCE'
 } as const;
-export type TrainingResultRequestDtoTypeEnum = typeof TrainingResultRequestDtoTypeEnum[keyof typeof TrainingResultRequestDtoTypeEnum];
+export type InferenceResultRequestDtoModelRequestTypeEnum = typeof InferenceResultRequestDtoModelRequestTypeEnum[keyof typeof InferenceResultRequestDtoModelRequestTypeEnum];
 
 /**
  * @export
  */
-export const TrainingResultRequestDtoModelTypeEnum = {
+export const InferenceResultRequestDtoModelTypeEnum = {
     Tissue: 'TISSUE',
     Cell: 'CELL',
     Multi: 'MULTI'
 } as const;
-export type TrainingResultRequestDtoModelTypeEnum = typeof TrainingResultRequestDtoModelTypeEnum[keyof typeof TrainingResultRequestDtoModelTypeEnum];
+export type InferenceResultRequestDtoModelTypeEnum = typeof InferenceResultRequestDtoModelTypeEnum[keyof typeof InferenceResultRequestDtoModelTypeEnum];
 
 
 /**
- * Check if a given object implements the TrainingResultRequestDto interface.
+ * Check if a given object implements the InferenceResultRequestDto interface.
  */
-export function instanceOfTrainingResultRequestDto(value: object): value is TrainingResultRequestDto {
+export function instanceOfInferenceResultRequestDto(value: object): value is InferenceResultRequestDto {
     return true;
 }
 
-export function TrainingResultRequestDtoFromJSON(json: any): TrainingResultRequestDto {
-    return TrainingResultRequestDtoFromJSONTyped(json, false);
+export function InferenceResultRequestDtoFromJSON(json: any): InferenceResultRequestDto {
+    return InferenceResultRequestDtoFromJSONTyped(json, false);
 }
 
-export function TrainingResultRequestDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): TrainingResultRequestDto {
+export function InferenceResultRequestDtoFromJSONTyped(json: any, ignoreDiscriminator: boolean): InferenceResultRequestDto {
     if (json == null) {
         return json;
     }
     return {
         
-        'trainingHistoryId': json['trainingHistoryId'] == null ? undefined : json['trainingHistoryId'],
         'inferenceHistoryId': json['inferenceHistoryId'] == null ? undefined : json['inferenceHistoryId'],
-        'type': json['type'] == null ? undefined : json['type'],
+        'projectId': json['projectId'] == null ? undefined : json['projectId'],
+        'modelRequestType': json['modelRequestType'] == null ? undefined : json['modelRequestType'],
         'modelType': json['modelType'] == null ? undefined : json['modelType'],
         'modelName': json['modelName'] == null ? undefined : json['modelName'],
-        'newModelId': json['newModelId'] == null ? undefined : json['newModelId'],
         'tissueModelPath': json['tissueModelPath'] == null ? undefined : json['tissueModelPath'],
         'cellModelPath': json['cellModelPath'] == null ? undefined : json['cellModelPath'],
         'labels': json['labels'] == null ? undefined : ((json['labels'] as Array<any>).map(LabelInfoFromJSON)),
         'subProjects': json['subProjects'] == null ? undefined : ((json['subProjects'] as Array<any>).map(SubProjectInfoFromJSON)),
-        'performance': json['performance'] == null ? undefined : PerformanceFromJSON(json['performance']),
     };
 }
 
-export function TrainingResultRequestDtoToJSON(json: any): TrainingResultRequestDto {
-    return TrainingResultRequestDtoToJSONTyped(json, false);
+export function InferenceResultRequestDtoToJSON(json: any): InferenceResultRequestDto {
+    return InferenceResultRequestDtoToJSONTyped(json, false);
 }
 
-export function TrainingResultRequestDtoToJSONTyped(value?: TrainingResultRequestDto | null, ignoreDiscriminator: boolean = false): any {
+export function InferenceResultRequestDtoToJSONTyped(value?: InferenceResultRequestDto | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
 
     return {
         
-        'trainingHistoryId': value['trainingHistoryId'],
         'inferenceHistoryId': value['inferenceHistoryId'],
-        'type': value['type'],
+        'projectId': value['projectId'],
+        'modelRequestType': value['modelRequestType'],
         'modelType': value['modelType'],
         'modelName': value['modelName'],
-        'newModelId': value['newModelId'],
         'tissueModelPath': value['tissueModelPath'],
         'cellModelPath': value['cellModelPath'],
         'labels': value['labels'] == null ? undefined : ((value['labels'] as Array<any>).map(LabelInfoToJSON)),
         'subProjects': value['subProjects'] == null ? undefined : ((value['subProjects'] as Array<any>).map(SubProjectInfoToJSON)),
-        'performance': PerformanceToJSON(value['performance']),
     };
 }
 

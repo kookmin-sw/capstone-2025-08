@@ -15,19 +15,31 @@
 
 import * as runtime from '../runtime';
 import type {
+  InferenceResultRequestDto,
   TrainingRequestDto,
   TrainingResultRequestDto,
 } from '../models/index';
 import {
+    InferenceResultRequestDtoFromJSON,
+    InferenceResultRequestDtoToJSON,
     TrainingRequestDtoFromJSON,
     TrainingRequestDtoToJSON,
     TrainingResultRequestDtoFromJSON,
     TrainingResultRequestDtoToJSON,
 } from '../models/index';
 
+export interface RequestInferenceRequest {
+    projectId: number;
+}
+
 export interface RequestTrainingRequest {
     projectId: number;
     trainingRequestDto: TrainingRequestDto;
+}
+
+export interface ResponseInferenceRequest {
+    projectId: number;
+    inferenceResultRequestDto: InferenceResultRequestDto;
 }
 
 export interface ResponseTrainingRequest {
@@ -39,6 +51,40 @@ export interface ResponseTrainingRequest {
  * 
  */
 export class ModelServerAPIApi extends runtime.BaseAPI {
+
+    /**
+     * 프론트에서 프로젝트 ID만 넘기면, 백엔드가 추론 요청을 보냅니다.
+     * 모델 추론 요청
+     */
+    async requestInferenceRaw(requestParameters: RequestInferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['projectId'] == null) {
+            throw new runtime.RequiredError(
+                'projectId',
+                'Required parameter "projectId" was null or undefined when calling requestInference().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const response = await this.request({
+            path: `/api/model-server/projects/{projectId}/inference`.replace(`{${"projectId"}}`, encodeURIComponent(String(requestParameters['projectId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 프론트에서 프로젝트 ID만 넘기면, 백엔드가 추론 요청을 보냅니다.
+     * 모델 추론 요청
+     */
+    async requestInference(requestParameters: RequestInferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.requestInferenceRaw(requestParameters, initOverrides);
+    }
 
     /**
      * 클라이언트가 모델 서버에 학습을 요청합니다.
@@ -82,6 +128,50 @@ export class ModelServerAPIApi extends runtime.BaseAPI {
      */
     async requestTraining(requestParameters: RequestTrainingRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.requestTrainingRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * 모델 서버가 추론 결과를 서버에 전달합니다.
+     * 모델 추론 결과 수신
+     */
+    async responseInferenceRaw(requestParameters: ResponseInferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        if (requestParameters['projectId'] == null) {
+            throw new runtime.RequiredError(
+                'projectId',
+                'Required parameter "projectId" was null or undefined when calling responseInference().'
+            );
+        }
+
+        if (requestParameters['inferenceResultRequestDto'] == null) {
+            throw new runtime.RequiredError(
+                'inferenceResultRequestDto',
+                'Required parameter "inferenceResultRequestDto" was null or undefined when calling responseInference().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        const response = await this.request({
+            path: `/api/model-server/projects/{projectId}/inference/result`.replace(`{${"projectId"}}`, encodeURIComponent(String(requestParameters['projectId']))),
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: InferenceResultRequestDtoToJSON(requestParameters['inferenceResultRequestDto']),
+        }, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * 모델 서버가 추론 결과를 서버에 전달합니다.
+     * 모델 추론 결과 수신
+     */
+    async responseInference(requestParameters: ResponseInferenceRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.responseInferenceRaw(requestParameters, initOverrides);
     }
 
     /**
