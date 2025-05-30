@@ -178,19 +178,19 @@ export default function AnnotationHeader() {
         }),
       );
 
-      exportedImages.forEach(({ filename, blob }) => {
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename; // 저장될 파일명
-        a.style.display = 'none';
-
-        document.body.appendChild(a);
-        a.click(); // 자동 다운로드 실행
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url); // 메모리 누수 방지
-      });
+      // exportedImages.forEach(({ filename, blob }) => {
+      //   const url = URL.createObjectURL(blob);
+      //
+      //   const a = document.createElement('a');
+      //   a.href = url;
+      //   a.download = filename; // 저장될 파일명
+      //   a.style.display = 'none';
+      //
+      //   document.body.appendChild(a);
+      //   a.click(); // 자동 다운로드 실행
+      //   document.body.removeChild(a);
+      //   URL.revokeObjectURL(url); // 메모리 누수 방지
+      // });
 
       // 6. API 호출 (openapi generator의 직렬화 오류로 인해 직접 호출하였습니다.)
       await fetch(
