@@ -38,6 +38,7 @@ export default function AnnotationSubProjectSlider({
                 isSelected ? '' : 'opacity-30'
               }`}
               priority={false}
+              unoptimized
             />
           </div>
         );
