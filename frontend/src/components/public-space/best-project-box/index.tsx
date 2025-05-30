@@ -47,6 +47,7 @@ export default function BestProjectBox({ projects }: BestProjectProps) {
                   alt={project.authorName ?? ''}
                   fill
                   className="rounded-full border-4 border-white object-cover shadow-md"
+                  unoptimized
                 />
                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white px-4 py-1.5 font-bold shadow">
                   {project.authorName}
