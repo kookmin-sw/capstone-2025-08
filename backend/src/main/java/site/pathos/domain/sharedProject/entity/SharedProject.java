@@ -35,7 +35,7 @@ public class SharedProject {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "thumbnail_image_path", nullable = false)
+    @Column(name = "thumbnail_image_path")
     private String thumbnailImagePath;
 
     @OneToMany(mappedBy = "sharedProject", cascade = CascadeType.ALL, orphanRemoval = true)
