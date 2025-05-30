@@ -110,6 +110,7 @@ export default function ProjectCard({
             width={50}
             height={50}
             className="size-11 rounded object-cover"
+            unoptimized
           />
         ))}
 
