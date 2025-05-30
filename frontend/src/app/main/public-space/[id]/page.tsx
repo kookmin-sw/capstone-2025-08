@@ -59,23 +59,6 @@ export default function PublicSpaceDetailPage() {
     }
   };
 
-  // 모델 성능을 받아오기 위한 프로젝트 데이터 받아오기
-  const fetchProject = useCallback(async () => {
-    if (!project.projectId) return;
-    try {
-      const detail = await projectApi.getProjectDetail({
-        projectId: project.projectId,
-      });
-      setProjectForAnalytics(detail);
-    } catch (error) {
-      toast.error('Failed to load project details for model info.');
-    }
-  }, [id, projectApi]);
-
-  useEffect(() => {
-    fetchProject();
-  }, [fetchProject]);
-
   // 탭 메뉴
   const tabs = [
     {
@@ -128,6 +111,25 @@ export default function PublicSpaceDetailPage() {
 
     fetchData();
   }, [id]);
+
+  // 모델 성능을 받아오기 위한 프로젝트 데이터 받아오기
+  useEffect(() => {
+    if (!project?.projectId) return;
+
+    const fetchProject = async () => {
+      try {
+        const detail = await projectApi.getProjectDetail({
+          projectId: project.projectId ?? -1,
+        });
+        setProjectForAnalytics(detail);
+        console.log('detail: ', detail);
+      } catch (error) {
+        toast.error('Failed to load project details for model info.');
+      }
+    };
+
+    fetchProject();
+  }, [project?.projectId]); // project.projectId가 바뀔 때 실행
 
   // 모델 다운로드 + 모달창 닫기
   const handleDownloadAndCloseModal = async () => {
