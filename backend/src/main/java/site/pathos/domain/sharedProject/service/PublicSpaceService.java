@@ -194,6 +194,15 @@ public class PublicSpaceService {
         GetSharedProjectDetailResponseDto.ModelInfo modelInfo
                 = new GetSharedProjectDetailResponseDto.ModelInfo(model.getId(), model.getName());
 
+        // S3 → static URL 변환
+        List<String> originalImageUrls = getDataSets(sharedProjectId, DataType.ORIGINAL).stream()
+                .map(s3Service::getPresignedUrl)
+                .toList();
+
+        List<String> resultImageUrls = getDataSets(sharedProjectId, DataType.RESULT).stream()
+                .map(s3Service::getPresignedUrl)
+                .toList();
+
         return new GetSharedProjectDetailResponseDto(
                 sharedProject.getId(),
                 sharedProject.getTitle(),
@@ -202,8 +211,8 @@ public class PublicSpaceService {
                 author.getName(),
                 modelInfo,
                 getTags(sharedProjectId),
-                getDataSets(sharedProjectId, DataType.ORIGINAL),
-                getDataSets(sharedProjectId, DataType.RESULT),
+                originalImageUrls,
+                resultImageUrls,
                 sharedProject.getProjectId()
         );
     }
