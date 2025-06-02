@@ -7,17 +7,14 @@ import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.dto.response.CellDetail;
 import site.pathos.domain.annotation.dto.response.PolygonDto;
 import site.pathos.domain.annotation.entity.CellAnnotation;
-import site.pathos.domain.annotation.repository.CellAnnotationRepository;
+import site.pathos.domain.annotation.enums.AnnotationType;
+import site.pathos.domain.annotation.repository.*;
 import site.pathos.domain.annotation.entity.TissueAnnotation;
 import site.pathos.domain.annotation.dto.response.AnnotationHistoryResponseDto;
 import site.pathos.domain.annotation.dto.response.AnnotationHistorySummaryDto;
 import site.pathos.domain.annotation.entity.AnnotationHistory;
-import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
 import site.pathos.domain.annotation.entity.Label;
-import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto;
 import site.pathos.domain.project.entity.ProjectLabel;
-import site.pathos.domain.annotation.repository.LabelRepository;
-import site.pathos.domain.annotation.repository.ProjectLabelRepository;
 import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.ProjectModel;
 import site.pathos.domain.annotation.dto.response.GetProjectAnnotationResponseDto;
@@ -27,7 +24,6 @@ import site.pathos.domain.annotation.dto.request.RoiLabelSaveRequestDto;
 import site.pathos.domain.annotation.dto.response.RoiResponseDto;
 import site.pathos.domain.annotation.dto.response.RoiResponsePayload;
 import site.pathos.domain.annotation.entity.Roi;
-import site.pathos.domain.annotation.repository.RoiRepository;
 import site.pathos.domain.project.dto.response.SubProjectResponseDto;
 import site.pathos.domain.project.dto.response.SubProjectSummaryDto;
 import site.pathos.domain.project.entity.SubProject;
@@ -54,6 +50,7 @@ public class AnnotationService {
     private final ProjectModelRepository projectModelRepository;
     private final CellAnnotationRepository cellAnnotationRepository;
     private final S3Service s3Service;
+    private final TissueAnnotationRepository tissueAnnotationRepository;
 
     @Transactional
     public AnnotationHistoryResponseDto saveWithAnnotations(Long subProjectId, Long annotationHistoryId,
@@ -74,7 +71,7 @@ public class AnnotationService {
         project.setUpdatedAt();
 
         for (RoiLabelSaveRequestDto.LabelDto labelDto : labels){
-            if(labelDto.id() == null){
+            if(labelDto.id() < 0){
                 createLabel(project, labelDto);
             } else {
                 updateLabel(project, labelDto);
@@ -85,15 +82,15 @@ public class AnnotationService {
             List<MultipartFile> matchedImages = images.stream()
                     .filter(img -> roiDto.imageNames().contains(img.getOriginalFilename()))
                     .toList();
-            if (roiDto.roiId() != null) {
+            if (roiDto.roiId() < 0) {
+                Roi roi = createRoi(history, roiDto);
+                tissueAnnotationService.uploadTissueAnnotations(subProjectId, annotationHistoryId,
+                        roi, matchedImages);
+            } else {
                 Roi roi = updateRoi(roiDto);
                 tissueAnnotationService.deleteTissueAnnotationsByRoiId(roi.getId());
                 tissueAnnotationService.uploadTissueAnnotations(subProjectId, annotationHistoryId,
-                        roi.getId(), matchedImages);
-            } else {
-                Roi roi = createRoi(history, roiDto);
-                tissueAnnotationService.uploadTissueAnnotations(subProjectId, annotationHistoryId,
-                        roi.getId(), matchedImages);
+                        roi, matchedImages);
             }
         }
 
@@ -109,20 +106,18 @@ public class AnnotationService {
                 roiDto.width(),
                 roiDto.height()
         );
+        roi.changeDisplayOrder(roiDto.displayOrder());
         return roi;
     }
 
     private Roi createRoi(AnnotationHistory history, RoiLabelSaveRequestDto.RoiSaveRequestDto roiDto) {
-        Integer max = roiRepository.findMaxDisplayOrderByAnnotationHistory(history.getId());
-        int displayOrder = (max == null) ? 0 : max + 1;
-
         Roi roi = Roi.builder()
                 .annotationHistory(history)
                 .x(roiDto.x())
                 .y(roiDto.y())
                 .width(roiDto.width())
                 .height(roiDto.height())
-                .displayOrder(displayOrder)
+                .displayOrder(roiDto.displayOrder())
                 .build();
         return roiRepository.save(roi);
     }
@@ -162,7 +157,7 @@ public class AnnotationService {
                 .map(sp -> new SubProjectSummaryDto(
                         sp.getId(),
                         s3Service.getPresignedUrl(sp.getThumbnailPath()),
-                        s3Service.getPresignedUrl(sp.getTileImagePath()),
+                        s3Service.getStaticUrl(sp.getTileImagePath()),
                         sp.isUploadComplete()
                 ))
                 .toList();
@@ -255,7 +250,10 @@ public class AnnotationService {
                     RoiResponseDto detail = new RoiResponseDto(
                             roi.getId(), roi.getX(), roi.getY(), roi.getWidth(), roi.getHeight(), roi.getFaulty());
 
-                    List<String> presignedTissuePaths = roi.getTissueAnnotations().stream()
+                    List<TissueAnnotation> tissueAnnotations = tissueAnnotationRepository.findByRoiId(roi.getId());
+
+                    List<String> presignedTissuePaths = tissueAnnotations.stream()
+                            .filter(ta -> ta.getAnnotationType() != AnnotationType.MERGED)
                             .map(TissueAnnotation::getAnnotationImagePath)
                             .map(s3Service::getPresignedUrl)
                             .toList();

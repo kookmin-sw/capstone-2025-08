@@ -13,17 +13,4 @@ import site.pathos.domain.model.enums.ModelType;
 public class ModelService {
     private final ModelRepository modelRepository;
 
-    @Transactional
-    public Model saveModel(TrainingHistory trainingHistory, String modelName,
-                           ModelType modelType, String tissueModelPath, String cellModelPath){
-        Model model = Model.builder()
-                .trainingHistory(trainingHistory)
-                .name(modelName)
-                .modelType(modelType)
-                .tissueModelPath(tissueModelPath)
-                .cellModelPath(cellModelPath)
-                .build();
-
-        return modelRepository.save(model);
-    }
 }

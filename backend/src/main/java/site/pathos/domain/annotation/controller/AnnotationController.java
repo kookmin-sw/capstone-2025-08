@@ -44,8 +44,8 @@ public class AnnotationController {
             @Parameter(description = "ROI에 대응하는 이미지들", required = true)
             @RequestPart("images") List<MultipartFile> images
     ) {
-        annotationService.saveWithAnnotations(subProjectId, annotationHistoryId, roiLabelSaveRequestDto.rois(), images, roiLabelSaveRequestDto.labels());
-        return ResponseEntity.ok().build();
+        AnnotationHistoryResponseDto response = annotationService.saveWithAnnotations(subProjectId, annotationHistoryId, roiLabelSaveRequestDto.rois(), images, roiLabelSaveRequestDto.labels());
+        return ResponseEntity.ok(response);
     }
 
     @Operation(

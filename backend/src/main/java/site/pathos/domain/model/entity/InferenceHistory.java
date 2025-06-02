@@ -29,13 +29,13 @@ public class InferenceHistory {
     private Model baseModel;
 
     @Column(name = "accuracy")
-    private Float accuracy;
+    private Double accuracy;
 
     @Column(name = "loss")
-    private Float loss;
+    private Double loss;
 
     @Column(name = "loop_performance")
-    private Float loopPerformance;
+    private Double loopPerformance;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false)
@@ -50,8 +50,7 @@ public class InferenceHistory {
         this.baseModel = model;
     }
 
-
-    public void updateResult(float accuracy, float loss, float loopPerformance) {
+    public void updateResult(double accuracy, double loss, double loopPerformance) {
         this.accuracy = accuracy;
         this.loss = loss;
         this.loopPerformance = loopPerformance;

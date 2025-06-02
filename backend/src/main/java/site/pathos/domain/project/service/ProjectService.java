@@ -3,8 +3,8 @@ package site.pathos.domain.project.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,14 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import site.pathos.domain.annotation.entity.AnnotationHistory;
 import site.pathos.domain.annotation.repository.AnnotationHistoryRepository;
-import site.pathos.domain.project.entity.ProjectLabel;
 import site.pathos.domain.annotation.repository.ProjectLabelRepository;
-import site.pathos.domain.model.repository.ModelRepository;
-import site.pathos.domain.model.repository.ProjectModelRepository;
 import site.pathos.domain.model.entity.Model;
-import site.pathos.domain.model.enums.ModelType;
+import site.pathos.domain.model.entity.ProjectMetric;
 import site.pathos.domain.model.entity.ProjectModel;
+import site.pathos.domain.model.enums.MetricType;
+import site.pathos.domain.model.enums.ModelType;
+import site.pathos.domain.model.repository.ModelRepository;
+import site.pathos.domain.model.repository.ProjectMetricRepository;
+import site.pathos.domain.model.repository.ProjectModelRepository;
+import site.pathos.domain.model.repository.UserModelRepository;
 import site.pathos.domain.project.dto.request.CreateProjectRequestDto;
+import site.pathos.domain.project.dto.request.SubProjectTilingRequestDto;
 import site.pathos.domain.project.dto.request.UpdateProjectRequestDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto;
 import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.AnalyticsDto;
@@ -32,21 +36,21 @@ import site.pathos.domain.project.dto.response.GetProjectDetailResponseDto.Slide
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto;
 import site.pathos.domain.project.dto.response.GetProjectsResponseDto.GetProjectsResponseModelsDto;
 import site.pathos.domain.project.entity.Project;
+import site.pathos.domain.project.entity.ProjectLabel;
+import site.pathos.domain.project.entity.SubProject;
 import site.pathos.domain.project.enums.ModelProcessStatusType;
 import site.pathos.domain.project.enums.ProjectSortType;
 import site.pathos.domain.project.repository.ProjectRepository;
-import site.pathos.domain.project.dto.request.SubProjectTilingRequestDto;
-import site.pathos.domain.project.entity.SubProject;
 import site.pathos.domain.project.repository.SubProjectRepository;
 import site.pathos.domain.user.entity.User;
-import site.pathos.domain.user.repository.UserRepository;
-import site.pathos.domain.model.repository.UserModelRepository;
+import site.pathos.domain.user.service.UserService;
 import site.pathos.global.aws.ec2.Ec2Service;
 import site.pathos.global.aws.s3.S3Service;
 import site.pathos.global.aws.s3.dto.S3UploadFileDto;
 import site.pathos.global.common.PaginationResponse;
 import site.pathos.global.error.BusinessException;
 import site.pathos.global.error.ErrorCode;
+import site.pathos.global.security.util.SecurityUtil;
 import site.pathos.global.util.datetime.DateTimeUtils;
 
 @Service
@@ -55,30 +59,29 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final SubProjectRepository subProjectRepository;
     private final AnnotationHistoryRepository annotationHistoryRepository;
-    private final UserRepository userRepository;
     private final S3Service s3Service;
     private final ModelRepository modelRepository;
     private final UserModelRepository userModelRepository;
     private final Ec2Service ec2Service;
+    private final UserService userService;
     private static final int PROJECTS_PAGE_SIZE = 9;
     private final ProjectModelRepository projectModelRepository;
     private final ProjectLabelRepository projectLabelRepository;
+    private final ProjectMetricRepository projectMetricRepository;
 
     @Transactional
     public void createProject(CreateProjectRequestDto requestDto, List<MultipartFile> files) {
-        User user = userRepository.findById(1L) //TODO
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-
+        User user = userService.getCurrentUser();
         Model model;
         if (requestDto.modelId() == null) {
             if (requestDto.modelType() == ModelType.TISSUE) {
-                model = modelRepository.findFirstByTrainingHistoryIsNullAndModelTypeAndTissueModelPathIsNotNullAndCellModelPathIsNullOrderByTrainedAtDesc(ModelType.TISSUE)
+                model = modelRepository.findFirstTissueModelByUser(ModelType.TISSUE, user)
                         .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
             } else if (requestDto.modelType() == ModelType.CELL) {
-                model = modelRepository.findFirstByTrainingHistoryIsNullAndModelTypeAndCellModelPathIsNotNullAndTissueModelPathIsNullOrderByTrainedAtDesc(ModelType.CELL)
+                model = modelRepository.findFirstCellModelByUser(ModelType.CELL, user)
                         .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
             } else if (requestDto.modelType() == ModelType.MULTI) {
-                model = modelRepository.findFirstByTrainingHistoryIsNullAndModelTypeAndCellModelPathIsNotNullAndTissueModelPathIsNotNullOrderByTrainedAtDesc(ModelType.MULTI)
+                model = modelRepository.findFirstMultiModelByUser(ModelType.MULTI, user)
                         .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_ERROR));
             } else {
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR); // 잘못된 modelType 처리
@@ -148,7 +151,8 @@ public class ProjectService {
     }
 
     private List<GetProjectsResponseModelsDto> getModels() {
-        List<Model> models = userModelRepository.findAllModelsByUserId(1L);
+        Long userId = SecurityUtil.getCurrentUserId();
+        List<Model> models = userModelRepository.findAllModelsByUserId(userId);
 
         return models
                 .stream()
@@ -157,13 +161,14 @@ public class ProjectService {
     }
 
     private Page<Project> getProjectPage(String search, ProjectSortType sort, int page) {
+        User user = userService.getCurrentUser();
         Pageable pageable = PageRequest.of(page - 1, PROJECTS_PAGE_SIZE, sort.getSort());
 
         Page<Project> projectPage;
         if (search != null && !search.isBlank()) {
-            projectPage = projectRepository.findByTitleContainingIgnoreCase(search, pageable);
+            projectPage = projectRepository.findByTitleContainingIgnoreCaseAndUser(search, user, pageable);
         } else {
-            projectPage = projectRepository.findAll(pageable);
+            projectPage = projectRepository.findAllByUser(user, pageable);
         }
         return projectPage;
     }
@@ -230,7 +235,7 @@ public class ProjectService {
 
     @Transactional
     public void updateProject(Long projectId, UpdateProjectRequestDto requestDto) {
-        Long userId = 1L;   // TODO
+        Long userId = SecurityUtil.getCurrentUserId();
         Project project = getProject(projectId, userId);
 
         project.updateDetail(requestDto.title(), requestDto.description());
@@ -238,7 +243,7 @@ public class ProjectService {
 
     @Transactional
     public void deleteProject(Long projectId) {
-        Long userId = 1L;   // TODO
+        Long userId = SecurityUtil.getCurrentUserId();
         Project project = getProject(projectId, userId);
 
         project.delete();
@@ -246,7 +251,8 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public GetProjectDetailResponseDto getProjectDetail(Long projectId) {
-        Long userId = 1L;   // TODO
+
+        Long userId = SecurityUtil.getCurrentUserId();
         Project project = getProject(projectId, userId);
 
         List<SubProject> subProjects = getSubProjects(project);
@@ -257,7 +263,7 @@ public class ProjectService {
         ModelProcessDto modelProcessDto = getModelProcessDto();
         List<LabelDto> labels = getLabelDtos(projectId);
         List<SlideDto> slides = getSlideDtos(subProjects);
-        AnalyticsDto analytics = getAnalyticsDto();
+        AnalyticsDto analytics = getAnalyticsDto(project);
 
         return new GetProjectDetailResponseDto(
                 projectId,
@@ -368,14 +374,39 @@ public class ProjectService {
                 .toList();
     }
 
-    private AnalyticsDto getAnalyticsDto() {
-        // TODO 모델 학습 지표 필요
+    private AnalyticsDto getAnalyticsDto(Project project) {
+        List<ProjectMetric> projectMetrics = projectMetricRepository.findAllByProject(project);
         return new AnalyticsDto(
-                List.of(),
-                List.of(),
-                List.of(),
-                0
+                getMetricLoss(projectMetrics),
+                getMetricIou(projectMetrics),
+                getF1Score(projectMetrics)
         );
+    }
+
+    private List<Double> getMetricLoss(List<ProjectMetric> projectMetrics) {
+        return projectMetrics.stream()
+                .filter(projectMetric -> projectMetric.getMetricType() == MetricType.LOSS)
+                .mapToDouble(ProjectMetric::getScore)
+                .boxed()
+                .sorted(Comparator.reverseOrder())
+                .toList();
+    }
+
+    private List<Double> getMetricIou(List<ProjectMetric> projectMetrics) {
+        return projectMetrics.stream()
+                .filter(projectMetric -> projectMetric.getMetricType() == MetricType.IOU)
+                .mapToDouble(ProjectMetric::getScore)
+                .boxed()
+                .sorted()
+                .toList();
+    }
+
+    private double getF1Score(List<ProjectMetric> projectMetrics) {
+        return projectMetrics.stream()
+                .filter(projectMetric -> projectMetric.getMetricType() == MetricType.IOU)
+                .mapToDouble(ProjectMetric::getScore)
+                .average()
+                .orElse(0.0);
     }
 
     //TODO svs 이미지 추가 업로드 구현 필요

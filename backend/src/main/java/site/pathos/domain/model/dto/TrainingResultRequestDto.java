@@ -1,9 +1,9 @@
 package site.pathos.domain.model.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import site.pathos.domain.model.enums.ModelType;
-
 import java.util.List;
+import site.pathos.domain.model.enums.ModelRequestType;
+import site.pathos.domain.model.enums.ModelType;
 
 @Schema(description = "Training/Inference 요청 메시지 DTO")
 public record TrainingResultRequestDto(
@@ -14,13 +14,15 @@ public record TrainingResultRequestDto(
         Long inferenceHistoryId,
 
         @Schema(description = "요청 타입", example = "TRAINING_INFERENCE")
-        String type,
+        ModelRequestType type,
 
         @Schema(description = "모델 종류", example = "MULTI")
         ModelType modelType,
 
         @Schema(description = "모델 이름", example = "custom-model-v1")
         String modelName,
+
+        Long newModelId,
 
         @Schema(description = "생성된 티슈 모델 경로", example = "s3://my-bucket/models/deep-lab-v1.pt")
         String tissueModelPath,

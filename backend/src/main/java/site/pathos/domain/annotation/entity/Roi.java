@@ -23,7 +23,7 @@ public class Roi {
     @JoinColumn(name = "annotation_history_id", nullable = false)
     private AnnotationHistory annotationHistory;
 
-    @OneToMany(mappedBy = "roi", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "roi", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TissueAnnotation> tissueAnnotations = new ArrayList<>();
 
     @Column(name = "x", nullable = false)
@@ -63,5 +63,13 @@ public class Roi {
         this.y = y;
         this.width = width;
         this.height = height;
+    }
+
+    public void changeDisplayOrder(int displayOrder){
+        this.displayOrder = displayOrder;
+    }
+
+    public void changeFaulty(int faulty) {
+        this.faulty = faulty;
     }
 }

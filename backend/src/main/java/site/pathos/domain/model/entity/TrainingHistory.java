@@ -39,4 +39,8 @@ public class TrainingHistory {
         this.project = project;
         this.baseModel = model;
     }
+
+    public void trainEnd(){
+        this.endedAt = LocalDateTime.now();
+    }
 }

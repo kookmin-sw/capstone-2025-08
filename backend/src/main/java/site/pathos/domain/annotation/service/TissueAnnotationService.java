@@ -26,9 +26,7 @@ public class TissueAnnotationService {
     private final TissueAnnotationRepository tissueAnnotationRepository;
     private final RoiRepository roiRepository;
 
-    public void uploadTissueAnnotations(Long subProjectId, Long annotationHistoryId, Long roiId, List<MultipartFile> images) {
-        Roi roi = roiRepository.findById(roiId)
-                .orElseThrow(() -> new RuntimeException("ROI not found: " + roiId));
+    public void uploadTissueAnnotations(Long subProjectId, Long annotationHistoryId, Roi roi, List<MultipartFile> images) {
 
         uploadTiles(subProjectId, annotationHistoryId, roi, images);
         uploadMergedImage(subProjectId, annotationHistoryId, roi, images);
@@ -37,9 +35,13 @@ public class TissueAnnotationService {
     private void uploadTiles(Long subProjectId, Long annotationHistoryId, Roi roi, List<MultipartFile> images) {
         for (MultipartFile image : images) {
             String originalFilename = image.getOriginalFilename().replaceAll("\\s+", "_");
+
+            String fixedFilename = originalFilename.replaceFirst("^-?\\d+", String.valueOf(roi.getId()));
+
             String key = "sub-project/" + subProjectId
                     + "/annotation-history/" + annotationHistoryId
-                    + "/roi" + roi.getId() + "/train/" + originalFilename;
+                    + "/roi/" + roi.getId() + "/tile/" + fixedFilename;
+
 
             TissueAnnotation ta = TissueAnnotation.builder()
                     .roi(roi)
@@ -48,15 +50,9 @@ public class TissueAnnotationService {
                     .build();
             tissueAnnotationRepository.save(ta);
 
-            s3Service.uploadFileAsync(key, image, () ->
-                    {
-                        ta.uploadComplete();
-                        tissueAnnotationRepository.save(ta);
-                    },
-                    ex -> {
-                        log.error("타일 업로드 실패: {}", key, ex);
-                    }
-            );
+            s3Service.uploadFile(key, image);
+            ta.uploadComplete();
+            tissueAnnotationRepository.save(ta);
         }
     }
 
@@ -98,6 +94,22 @@ public class TissueAnnotationService {
     public void saveResultAnnotation(Roi roi, String imagePath) {
         BufferedImage resultImage = s3Service.downloadBufferedImage(imagePath);
 
+        // 1. MERGED 타입 업로드 및 저장
+        String mergedKey = "sub-project/" + roi.getAnnotationHistory().getSubProject().getId() +
+                "/annotation-history/" + roi.getAnnotationHistory().getId() +
+                "/roi" + roi.getId() + "/merged.png";
+
+        s3Service.uploadBufferedImage(resultImage, mergedKey);
+
+        TissueAnnotation mergedAnnotation = TissueAnnotation.builder()
+                .roi(roi)
+                .annotationImagePath(mergedKey)
+                .annotationType(AnnotationType.MERGED)
+                .build();
+
+        tissueAnnotationRepository.save(mergedAnnotation);
+
+        // 2. TILE 타입 업로드 및 저장
         List<ImageTile> tiles = ImageUtils.sliceImageByROIWithPosition(
                 resultImage,
                 roi.getWidth(),
@@ -107,15 +119,15 @@ public class TissueAnnotationService {
         for (ImageTile tile : tiles) {
             String tileKey = "sub-project/" + roi.getAnnotationHistory().getSubProject().getId() +
                     "/annotation-history/" + roi.getAnnotationHistory().getId() +
-                    "/roi-" + roi.getId() +
-                    "/result/" + tile.row() + "_" + tile.col() + ".png";
+                    "/roi" + roi.getId() + "/tile/" + roi.getId() +
+                    "_" + tile.row() + "_" + tile.col() + ".png";
 
             s3Service.uploadBufferedImage(tile.image(), tileKey);
 
             TissueAnnotation tileAnnotation = TissueAnnotation.builder()
                     .roi(roi)
                     .annotationImagePath(tileKey)
-                    .annotationType(AnnotationType.RESULT)
+                    .annotationType(AnnotationType.TILE)
                     .build();
 
             tissueAnnotationRepository.save(tileAnnotation);
@@ -140,7 +152,7 @@ public class TissueAnnotationService {
             } catch (Exception e) {
                 log.error("S3 이미지 삭제 실패: {}", key, e);
             }
-            tissueAnnotationRepository.delete(annotation);
+            annotation.getRoi().getTissueAnnotations().remove(annotation);
         }
 
         log.info("ROI ID {} 관련 TissueAnnotation 모두 삭제 완료", roiId);
