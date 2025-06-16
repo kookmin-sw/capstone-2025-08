@@ -19,6 +19,7 @@ export function Profile() {
         alt={`${user.name} profile image`}
         priority
         className="rounded-full object-cover"
+        unoptimized
       />
 
       {/* 프로필 info(이름, email) */}
